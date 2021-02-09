@@ -17,22 +17,23 @@ def select_dic(version):
                 \d+\s-                        #Section
                 (?P<Segment>\s{0,2}\d+)+\s-\s+    #Segment
                 (?P<Sub>\s{0,2}\d+)\s{1,12}       #Sub-segment
-				(?P<Sensible>-?\d+\.\d+)\s+       #Sensible
-                (?P<Latent>-?\d+\.\d+)\s+)       #Latent
+				(?:(?P<Sensible>-?\d+\.\d+)\s+       #Sensible for tunnels
+                (?P<Latent>-?\d+\.\d+)\s+|\s{28,})       #Latent for tunnels
 				(?P<AirTemp>-?\d+\.\d+)\s+        #Air Temperature
                 (?P<Humidity>-?\d+\.\d+)\s+       #Humidity
-                ((?P<Airflow>-?\d+\.\d+)\s+       #Airflow if first line
-                (?P<AirVel>-?\d+\.\d+)\s+|\s+  #AirVel if first line
+                (?:(?P<Airflow>-?\d+\.\d+)\s+     #Airflow for first line
+                (?P<AirVel>-?\d+\.\d+)\s?|\s?)  #AirVel for first line 
                 )''', re.VERBOSE),
-            'detail_vent_1': re.compile(r'''(
-               \s+\d+\s-\s{0,2}                     #Section
-                (?P<Segment>\d+)\s-\s{0,2}           #Segment
-                (?P<Sub>\d)\s{29,}                   #Sub-segment
-                (?P<AirTemp>-?\d+\.\d+)\s+           #Air Temperature
-                (?P<Humidity>-?\d+\.\d+)\s+          #Humidity
-                ((?P<Airflow>-?\d+\.\d+)\s+          #Airflow
-                (?P<AirVel>-?\d+\.\d+)\s?|\s?)\n     #Air Velocity
-                )''', re.VERBOSE),
+            #'detail_vent_1': re.compile(r'''(
+            #    #TODO Speed-up parse by combining segment_1 and vent_1 with an or statement
+            #    \s+\d+\s-\s{0,2}                     #Section
+            #    (?P<Segment>\d+)\s-\s{0,2}           #Segment
+            #    (?P<Sub>\d)\s{29,}                   #Sub-segment
+            #    (?P<AirTemp>-?\d+\.\d+)\s+           #Air Temperature
+            #    (?P<Humidity>-?\d+\.\d+)\s+          #Humidity
+            #    ((?P<Airflow>-?\d+\.\d+)\s+          #Airflow
+            #    (?P<AirVel>-?\d+\.\d+)\s?|\s?)\n     #Air Velocity
+            #    )''', re.VERBOSE),
             'abb_segment_1': re.compile(r'''(
                 \s+\d+\s-\s{0,2}                 #Section
                 (?P<Segment>\d+)\s{1,11}         #Segment
