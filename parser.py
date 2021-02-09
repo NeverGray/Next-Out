@@ -15,37 +15,26 @@ def select_dic(version):
             'time': re.compile(r'TIME.\s+(?P<Time>\d+.\d{2}).+SECONDS.+TRAIN'), #Find the first time Simulation
             'detail_segment_1': re.compile(r'''(
                 \d+\s-                        #Section
-                (?P<Segment>\d+)+\s-\s+         #Segment
-                (?P<Sub>\d+)\s+                 #Sub-segment
-                (?P<Sensible>-?\d+\.\d+)\s+       #Sensible
-                (?P<Latent>-?\d+\.\d+)\s+         #Latent
-                (?P<AirTemp>-?\d+\.\d+)\s+        #Air Temperature
+                (?P<Segment>\s{0,2}\d+)+\s-\s+    #Segment
+                (?P<Sub>\s{0,2}\d+)\s{1,12}       #Sub-segment
+				(?P<Sensible>-?\d+\.\d+)\s+       #Sensible
+                (?P<Latent>-?\d+\.\d+)\s+)       #Latent
+				(?P<AirTemp>-?\d+\.\d+)\s+        #Air Temperature
                 (?P<Humidity>-?\d+\.\d+)\s+       #Humidity
-                (?P<Airflow>-?\d+\.\d+)\s+        #Airflow
-                (?P<AirVel>-?\d+\.\d+)             #AirVel
-                )''', re.VERBOSE),
-            'detail_segment_2': re.compile(r'''(
-                \d+\s-                       #Section
-                (?P<Segment>\d+)+\s-\s+        #Segment
-                (?P<Sub>\d+)\s{1,12}                #Sub-segment
-                (?P<Sensible>-?\d+\.\d+)\s+    #Sensible
-                (?P<Latent>-?\d+\.\d+)\s+      #Latent
-                (?P<AirTemp>-?\d+\.\d+)\s+     #Air Temperature
-                (?P<Humidity>-?\d+\.\d+)       #Humidity
-                \s                          #no more data available
+                ((?P<Airflow>-?\d+\.\d+)\s+       #Airflow if first line
+                (?P<AirVel>-?\d+\.\d+)\s+|\s+  #AirVel if first line
                 )''', re.VERBOSE),
             'detail_vent_1': re.compile(r'''(
-                \s+\d+\s-\s?                        #Section
-                (?P<Segment>\d+)\s-\s*              #Segment
-                (?P<Sub>\d)\s+                      #Sub-segment
-                (?P<AirTemp>-?\d+\.\d+)\s+          #Air Temperature
-                (?P<Humidity>-?\d+\.\d+)\s+         #Humidity
-                (?P<Airflow>-?\d+\.\d+)\s+          #Airflow
-                (?P<AirVel>-?\d+\.\d+)              #Air Velocity
-                \s?                                 #no more data available
+               \s+\d+\s-\s{0,2}                     #Section
+                (?P<Segment>\d+)\s-\s{0,2}           #Segment
+                (?P<Sub>\d)\s{29,}                   #Sub-segment
+                (?P<AirTemp>-?\d+\.\d+)\s+           #Air Temperature
+                (?P<Humidity>-?\d+\.\d+)\s+          #Humidity
+                ((?P<Airflow>-?\d+\.\d+)\s+          #Airflow
+                (?P<AirVel>-?\d+\.\d+)\s?|\s?)\n     #Air Velocity
                 )''', re.VERBOSE),
             'abb_segment_1': re.compile(r'''(
-                \s+\d+\s-                        #Section
+                \s+\d+\s-\s{0,2}                 #Section
                 (?P<Segment>\d+)\s{1,11}         #Segment
                 (?P<Airflow>-?\d+\.\d+)\s{1,6}   #Sub-segment
 				(?P<AirVel>-?\d+\.\d+)\s{1,8}    #Air Velocity
@@ -102,20 +91,6 @@ def get_input(simname= None, simtime= None, visname= None, version= None, outtyp
         return simname, simtime, visname, version, outtype
    
 def parse_file(filepath, version):
-    """
-    Parse text at given filepath
-
-    Parameters
-    ----------
-    filepath : str
-        Filepath for file_object to be parsed
-
-    Returns
-    -------
-    data : pd.DataFrame
-        Parsed data
-
-    """
     data_segment = []  # create an empty list to collect the data
     # open the file and read through it line by line
     with open(filepath, 'r') as file_object:
@@ -130,7 +105,7 @@ def parse_file(filepath, version):
             m = rx.search(lines[i])
             i +=1
     assert (i < (len(lines) - 1)), 'Cannot find first time! Line variable ' + str(i) 
-    time = m.group('Time')
+    time = float(m.group('Time'))
     while i < len(lines):
         # at each line check for a match with a regex
         m = False
@@ -138,15 +113,15 @@ def parse_file(filepath, version):
             m = rx.search(lines[i]) #using .match searched the beginning of the line
             if m is not None:
                 if key == 'time': #sets time interval
-                    time = m.group('Time')
-                    time = float(time)
+                    time = float(m.group('Time'))
                     break
                 else: #If key is other than time
                     row={'Time':time} #should erase row and reset the values
                     m_dict = m.groupdict()
                     for name, variable in m_dict.items():
-                        temp=float(variable)
-                        row.update({name:float(variable)})    
+                        if variable is not None:
+                            #temp=float(variable)
+                            row.update({name:float(variable)})    
                     if key == 'abb_segment_1':
                         #Code only includes information for segment 1 for abbreviated prints
                         #TODO Capture data for all sub-segments
@@ -166,7 +141,8 @@ def parse_file(filepath, version):
 if __name__ == '__main__':
     repeat = True #Run the program the first time
     #[simname, simtime, visname, version, outtype]= get_input () #Call to get input file names
-    simname = 'NV-6p0-Base02-AB.out'
+    simname = 'siinfern.out'
+    #simname = 'NV-6p0-Base02.out'
     version = 'S'
     data = parse_file(simname, version)#Creates a panda with the airflow out at all time steps
     #simtime = simtime_check(data,simtime)

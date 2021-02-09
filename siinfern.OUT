@@ -1,0 +1,2260 @@
+                                           SUBWAY VENTILATION SIMULATION         
+                                                     VERSION 6                   
+                                                      OCT 2014                   
+                                                                                 
+                                              XXXXX   XXXXXXX   XXXXX            
+                                             X        X        X                 
+                                              XXXXX   XXXXX     XXXXX            
+                                                   X  X              X           
+                                                   X  X              X           
+                                             XXXXXX   XXXXXXX  XXXXXX            
+                                                                                 
+                                                 XXXXX   XXXXXXX                 
+                                                X           X                    
+                                                 XXXXX      X                    
+                                                      X     X                    
+                                                      X     X                    
+                                                XXXXXX   XXXXXXX                 
+
+
+                                            SUBWAY VENTILATION SIMULATION
+
+                                                  SIMULATION OF
+
+                         SAMPLE SES INPUT FILE FOR EMERGENCY SIMULATION (FIRE MODEL)                     
+
+                         A 6-CAR TRAIN IS IN A TUNNEL WITH A 3 PERCENT GRADE                             
+
+                         A FIRE OCCURS IN THE 4TH CAR                                                    
+
+                         FIRE HEAT RELEASE RATE = 14.068 MW                                              
+
+                         DOWNHILL VENTILATION WITH A FAN CAPACITY OF 141.58 M3/S                         
+
+                                    DESIGN TIME 1700 HRS   JULY       1984
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+                                                                                 DEVELOPED BY -
+                                                                                   WSP | PARSONS BRINCKERHOFF
+                                                                                   NEW YORK CITY, NEW YORK
+                                                                                   VERSION   6.6.1   
+  FILE: siinfern.INP                                                                 LICENSED TO: Justin Edenbaum           
+
+
+                                           INPUT VERIFICATION OF GENERAL DATA
+
+                                                                                                               FORM 1C
+                            TRAIN PERFORMANCE OPTION                              1     IMPLICIT
+
+                            TEMPERATURE / HUMIDITY SIMULATION OPTION              1     YES
+
+                            HUMIDITY DISPLAY OPTION                               1     HUMIDITY RATIO
+
+                            ENVIRONMENTAL CONTROL LOAD EVALUATION OPTION          0     BYPASS
+
+                            HEAT SINK SUMMARY PRINT OPTION                        0     BYPASS
+
+                            SUPPLEMENTARY OUTPUT OPTION                           0
+
+                            ALLOWABLE SIMULATION ERRORS                          10
+
+                            ALLOWABLE INPUT ERRORS                                0
+
+
+                            NUMBER OF LINE SEGMENTS                               4                            FORM 1D
+
+                            TOTAL NUMBER OF SECTIONS                              3
+
+                            NUMBER OF VENTILATION SHAFT SECTIONS                  1
+
+                            NUMBER OF NODES                                       4
+
+                            NUMBER OF BRANCHED JUNCTIONS                          1
+
+                            NUMBER OF UNSTEADY HEAT SOURCES                       1
+
+                            NUMBER OF FAN TYPES                                   1
+
+
+                            NUMBER OF TRAIN ROUTES                                1                            FORM 1E
+
+                            NUMBER OF TRAIN TYPES                                 1
+
+                            NUMBER OF ENVIRONMENTAL CONTROL ZONES                 0
+
+                            FAN STOPPING/WINDMILLING OPTION                       1     SIMULATION TERMINATION
+
+                            NUMBER OF TRAINS IN OPERATION AT INITIALIZATION       1
+
+                            NUMBER OF IMPULSE FAN TYPES                           0
+
+                            INITIALIZATION FILE WRITING OPTION                    0
+
+                            INITIALIZATION FILE READING OPTION                    0
+
+
+                                           INPUT VERIFICATION OF GENERAL DATA
+
+
+                                                 DESIGN HOUR WEATHER DATA
+
+AMBIENT AIR DRY-BULB TEMPERATURE                                                        29.4   DEG C           FORM 1F
+
+AMBIENT AIR WET-BULB TEMPERATURE                                                        23.3   DEG C
+
+AMBIENT BAROMETRIC PRESSURE                                                           101.32   KPA
+
+  AMBIENT AIR DENSITY                                                                1.17006   KG/M**3
+  AMBIENT HUMIDITY RATIO                                                             0.01551   KG/KG OF DRY AIR
+  AMBIENT RELATIVE HUMIDITY                                                             60.0   PERCENT
+
+                                                 DAILY WEATHER DATA
+
+MORNING AMBIENT AIR DRY-BULB TEMPERATURE                                                23.9   DEG C
+
+MORNING AMBIENT AIR WET-BULB TEMPERATURE                                                18.3   DEG C
+
+  AMBIENT HUMIDITY RATIO                                                             0.01087   KG/KG OF DRY AIR
+  AMBIENT RELATIVE HUMIDITY                                                             58.8   PERCENT
+
+EVENING OR OFF HOUR AMBIENT AIR DRY-BULB TEMPERATURE                                    29.4   DEG C
+
+EVENING OR OFF HOUR AMBIENT AIR WET-BULB TEMPERATURE                                    23.3   DEG C
+
+  AMBIENT HUMIDITY RATIO                                                             0.01551   KG/KG OF DRY AIR
+  AMBIENT RELATIVE HUMIDITY                                                             60.0   PERCENT
+
+                                                 ANNUAL WEATHER DATA
+
+AMPLITUDE OF ANNUAL TEMPERATURE FLUCTUATION                                             16.1   DEG C
+
+
+AVERAGE PATRON WEIGHT                                                                    68.   KG              FORM 1G
+
+PERCENT OF HEAT FROM TRAIN PROPULSION/BRAKING SYSTEM
+CAPTURED BY THE TRACKWAY EXHAUST SYSTEM WHEN TRAIN IS STOPPED                            0.0   PERCENT
+
+PERCENT OF HEAT FROM TRAIN PROPULSION/BRAKING SYSTEM
+CAPTURED BY THE TRACKWAY EXHAUST SYSTEM WHEN TRAIN IS MOVING                             0.0   PERCENT
+
+PERCENT OF SENSIBLE HEAT FROM TRAIN AUXILIARIES AND PASSENGERS
+CAPTURED BY THE TRACKWAY EXHAUST SYSTEM WHEN TRAIN IS STOPPED                            0.0   PERCENT
+
+PERCENT OF SENSIBLE HEAT FROM TRAIN AUXILIARIES AND PASSENGERS
+CAPTURED BY THE TRACKWAY EXHAUST SYSTEM WHEN TRAIN IS MOVING                             0.0   PERCENT
+
+MAXIMUM TRAIN SPEED AT WHICH THE TRACKWAY EXHAUST SYSTEM OPERATES                        0.0   KPH
+
+FIRE SIMULATION OPTION                                                                     1   YES
+
+EFFECTIVE EMMISSIVITY OF COMBUSTION PRODUCTS                                           0.200
+
+NUMBER OF AIR CURTAIN TYPES                                                                0                   FORM 1H
+
+NUMBER OF YEARS FOR HEAT SINK CALCULATIONS                                              30.0   YEARS
+
+HEAT SINK ATTENUATION FACTOR                                                            0.50
+
+NIGHTTIME COOLING OPTION                                                                   0   OFF
+
+NUMBER OF COOLING PIPES                                                                    0
+
+
+                                                   SYSTEM GEOMETRY
+
+                         SECTION        STARTING        ENDING         NUMBER        INITIAL
+                     IDENTIFICATION       NODE           NODE            OF          AIR FLOW
+                         NUMBER          NUMBER         NUMBER        SEGMENTS      (M**3/S)
+
+LINE SECTIONS                                                                                                  FORM 2A
+
+                            1               1              2              1            0.000
+
+                            2               2              3              3            0.000
+
+VENTILATION SHAFT SECTIONS                                                                                     FORM 2B
+
+                            5               2              4                           0.000
+
+INPUT VERIFICATION FOR LINE SEGMENT    1 -  1           WEST PORTAL TO VENTILATION SHAFT                       FORM 3A
+
+LINE SEGMENT TYPE                                                                          1   (TUNNEL)
+
+LENGTH                                                                                609.60   M
+
+CROSS SECTION AREA                                                                     17.53   M**2
+
+STACK HEIGHT                                                                           18.29   M
+
+  GRADE OF LINE SEGMENT                                                                3.000   PERCENT
+
+CONSTANT PRESSURE ACROSS SEGMENT                                                        0.00   PA
+
+SEGMENT                                                                                                        FORM 3B
+ PERIMETERS        16.25                                                           TOTAL PERIMETER       16.25  M
+
+ROUGHNESS                                                                          WEIGHTED AVERAGE
+ LENGTHS           36.58                                                           ROUGHNESS LENGTH      36.58  MM
+
+   HYDRAULIC DIAMETER                                                                   4.32   M
+   RELATIVE ROUGHNESS   ( E/D )                                                      0.00847
+   FULLY TURBULENT FRICTION FACTOR (FROM AVERAGE ROUGHNESS)                           0.0360
+
+SEGMENT TOTAL HEAD LOSS COEFFICIENTS                 POSITIVE             NEGATIVE                             FORM 3C
+                                                       FLOW                 FLOW
+
+   AT FORWARD LIMIT                                    0.50                 1.00
+   AT BACKWARD LIMIT                                   0.00                 0.00
+
+WETTED WALL SURFACE                                                                      0.0   PERCENT
+
+NUMBER OF SUBSEGMENTS                                                                     10
+
+NUMBER OF STEADY-STATE HEAT SOURCES                                                        0
+
+ STARTING        ENDING                                                                                        FORM 3E
+SUBSEGMENT     SUBSEGMENT     WALL SURFACE      INITIAL AIR TEMPERATURE
+  NUMBER         NUMBER       TEMPERATURE       DRY-BULB       WET-BULB
+                                (DEG C)         (DEG C)        (DEG C)
+
+     1     THRU    10             29.4            29.4           23.3
+
+INPUT VERIFICATION FOR LINE SEGMENT    2 -  2           VENTILATION SHAFT TO STA. 25+00                        FORM 3A
+
+LINE SEGMENT TYPE                                                                          1   (TUNNEL)
+
+LENGTH                                                                                152.40   M
+
+CROSS SECTION AREA                                                                     17.53   M**2
+
+STACK HEIGHT                                                                            4.57   M
+
+  GRADE OF LINE SEGMENT                                                                3.000   PERCENT
+
+                                                XXXXXXXXXXXXXXX                            1   (SPECIAL 'FIRE' SEGMENT)
+
+CONSTANT PRESSURE ACROSS SEGMENT                                                        0.00   PA
+
+SEGMENT                                                                                                        FORM 3B
+ PERIMETERS        16.25                                                           TOTAL PERIMETER       16.25  M
+
+ROUGHNESS                                                                          WEIGHTED AVERAGE
+ LENGTHS           36.58                                                           ROUGHNESS LENGTH      36.58  MM
+
+   HYDRAULIC DIAMETER                                                                   4.32   M
+   RELATIVE ROUGHNESS   ( E/D )                                                      0.00847
+   FULLY TURBULENT FRICTION FACTOR (FROM AVERAGE ROUGHNESS)                           0.0360
+
+SEGMENT TOTAL HEAD LOSS COEFFICIENTS                 POSITIVE             NEGATIVE                             FORM 3C
+                                                       FLOW                 FLOW
+
+   AT FORWARD LIMIT                                    0.00                 0.00
+   AT BACKWARD LIMIT                                   0.00                 0.00
+
+WETTED WALL SURFACE                                                                      0.0   PERCENT
+
+NUMBER OF SUBSEGMENTS                                                                      2
+
+NUMBER OF STEADY-STATE HEAT SOURCES                                                        0
+
+ STARTING        ENDING                                                                                        FORM 3E
+SUBSEGMENT     SUBSEGMENT     WALL SURFACE      INITIAL AIR TEMPERATURE
+  NUMBER         NUMBER       TEMPERATURE       DRY-BULB       WET-BULB
+                                (DEG C)         (DEG C)        (DEG C)
+
+     1     THRU     2             29.4            29.4           23.3
+
+INPUT VERIFICATION FOR LINE SEGMENT    2 -  3           STA. 25+00 TO STA. 35+00                               FORM 3A
+
+LINE SEGMENT TYPE                                                                          1   (TUNNEL)
+
+LENGTH                                                                                304.80   M
+
+CROSS SECTION AREA                                                                     17.53   M**2
+
+STACK HEIGHT                                                                            9.14   M
+
+  GRADE OF LINE SEGMENT                                                                3.000   PERCENT
+
+                                                XXXXXXXXXXXXXXX                            1   (SPECIAL 'FIRE' SEGMENT)
+
+CONSTANT PRESSURE ACROSS SEGMENT                                                        0.00   PA
+
+SEGMENT                                                                                                        FORM 3B
+ PERIMETERS        16.25                                                           TOTAL PERIMETER       16.25  M
+
+ROUGHNESS                                                                          WEIGHTED AVERAGE
+ LENGTHS           36.58                                                           ROUGHNESS LENGTH      36.58  MM
+
+   HYDRAULIC DIAMETER                                                                   4.32   M
+   RELATIVE ROUGHNESS   ( E/D )                                                      0.00847
+   FULLY TURBULENT FRICTION FACTOR (FROM AVERAGE ROUGHNESS)                           0.0360
+
+SEGMENT TOTAL HEAD LOSS COEFFICIENTS                 POSITIVE             NEGATIVE                             FORM 3C
+                                                       FLOW                 FLOW
+
+   AT FORWARD LIMIT                                    0.00                 0.00
+   AT BACKWARD LIMIT                                   0.00                 0.00
+
+WETTED WALL SURFACE                                                                      0.0   PERCENT
+
+NUMBER OF SUBSEGMENTS                                                                     14
+
+NUMBER OF STEADY-STATE HEAT SOURCES                                                        0
+
+ STARTING        ENDING                                                                                        FORM 3E
+SUBSEGMENT     SUBSEGMENT     WALL SURFACE      INITIAL AIR TEMPERATURE
+  NUMBER         NUMBER       TEMPERATURE       DRY-BULB       WET-BULB
+                                (DEG C)         (DEG C)        (DEG C)
+
+     1     THRU    14             29.4            29.4           23.3
+
+INPUT VERIFICATION FOR LINE SEGMENT    2 -  4           STA.  35+00 TO STA. 40+00                              FORM 3A
+
+LINE SEGMENT TYPE                                                                          1   (TUNNEL)
+
+LENGTH                                                                                152.40   M
+
+CROSS SECTION AREA                                                                     17.53   M**2
+
+STACK HEIGHT                                                                            4.57   M
+
+  GRADE OF LINE SEGMENT                                                                3.000   PERCENT
+
+                                                XXXXXXXXXXXXXXX                            1   (SPECIAL 'FIRE' SEGMENT)
+
+CONSTANT PRESSURE ACROSS SEGMENT                                                        0.00   PA
+
+SEGMENT                                                                                                        FORM 3B
+ PERIMETERS        16.25                                                           TOTAL PERIMETER       16.25  M
+
+ROUGHNESS                                                                          WEIGHTED AVERAGE
+ LENGTHS           36.58                                                           ROUGHNESS LENGTH      36.58  MM
+
+   HYDRAULIC DIAMETER                                                                   4.32   M
+   RELATIVE ROUGHNESS   ( E/D )                                                      0.00847
+   FULLY TURBULENT FRICTION FACTOR (FROM AVERAGE ROUGHNESS)                           0.0360
+
+SEGMENT TOTAL HEAD LOSS COEFFICIENTS                 POSITIVE             NEGATIVE                             FORM 3C
+                                                       FLOW                 FLOW
+
+   AT FORWARD LIMIT                                    1.00                 0.50
+   AT BACKWARD LIMIT                                   0.00                 0.00
+
+WETTED WALL SURFACE                                                                      0.0   PERCENT
+
+NUMBER OF SUBSEGMENTS                                                                      2
+
+NUMBER OF STEADY-STATE HEAT SOURCES                                                        0
+
+ STARTING        ENDING                                                                                        FORM 3E
+SUBSEGMENT     SUBSEGMENT     WALL SURFACE      INITIAL AIR TEMPERATURE
+  NUMBER         NUMBER       TEMPERATURE       DRY-BULB       WET-BULB
+                                (DEG C)         (DEG C)        (DEG C)
+
+     1     THRU     2             29.4            29.4           23.3
+
+
+
+
+INPUT VERIFICATION OF FIRE/UNSTEADY HEAT SOURCE NUMBER  1   FIRE SOURCE - 1 VEH. FULLY INVOLVED                FORM 4
+
+
+LOCATION OF SOURCE  ( LINE SECTION - SEGMENT - SUBSEGMENT )                      2 -  3 - 11
+
+SENSIBLE HEAT RATE                                                                 14070000.   WATTS
+
+LATENT HEAT RATE                                                                          0.   WATTS
+
+SIMULATION TIME AFTER WHICH SOURCE BECOMES ACTIVE                                         0.   SECONDS
+
+SIMULATION TIME AFTER WHICH SOURCE BECOMES INACTIVE                                    5000.   SECONDS
+
+FIRE SOURCE EFFECTIVE FLAME TEMPERATURE                                               1093.3   DEG C
+
+FIRE SOURCE EFFECTIVE AREA FOR RADIATION                                               17.80   M**2
+
+INPUT VERIFICATION FOR VENTILATION SHAFT    5 -  5     VENTILATION SHAFT                                       FORM 5A
+
+SECTION TYPE                                                                               1   (VENTILATION SHAFT)
+
+NUMBER OF SEGMENTS IN THIS VENT SHAFT                                                      1                   FORM 5B
+
+NUMBER OF SUBSEGMENTS IN RESULTING EQUIVALENT VENT SHAFT                                   2
+
+GRATE FREE AREA                                                                        46.45   M**2
+
+DESIGN MAXIMUM OUTFLOW AIR VELOCITY AT GRATE                                            7.62   M/S
+
+WALL SURFACE TEMPERATURE                                                                29.4   DEG C
+
+INITIAL AIR DRY-BULB TEMPERATURE                                                        29.4   DEG C
+
+INITIAL AIR WET-BULB TEMPERATURE                                                        23.3   DEG C
+
+STACK HEIGHT                                                                           24.38   M
+
+FAN TYPE                                                                                   1                   FORM 5C
+
+SIMULATION TIME AFTER WHICH FAN SWITCHES ON                                                0   SECONDS
+
+SIMULATION TIME AFTER WHICH FAN SWITCHES OFF                                            5000   SECONDS
+
+DIRECTION OF FAN OPERATION                                                                 1   (OUTFLOW OR EXHAUST)
+
+SEGMENT CHARACTERISTICS                                                                                        FORM 5D
+                                                                    SEGMENT TOTAL HEAD LOSS COEFFICIENTS
+
+                LENGTH          AREA         PERIMETER          FORWARD    FORWARD       BACKWARD   BACKWARD
+                 (M)           (M**2)           (M)             POSITIVE   NEGATIVE      POSITIVE   NEGATIVE
+
+        1       24.38           27.87          24.38             48.12      48.12          0.00       0.00
+
+EQUIVALENT VENTILATION SHAFT PROPERTIES
+
+     LENGTH                  24.38   M                           TOTAL HEAD CHANGE COEFFICIENTS
+
+     AREA                    27.87   M**2                 POSITIVE FLOW          48.12
+
+     PERIMETER               24.38   M                    NEGATIVE FLOW          48.12
+
+
+                                            INPUT VERIFICATION OF NODE DATA
+
+
+NODE NUMBER                                                                                1                   FORM 6A
+
+NODE AERODYNAMIC TYPE                                                                      0   STRAIGHT-THROUGH JUNCTION OR PORTAL
+
+NODE THERMODYNAMIC TYPE                                                                    3   (TEMP/HUMID B.C.)
+
+DRY-BULB TEMPERATURE AT BOUNDARY                                                        29.4   DEG C           FORM 6B
+
+WET-BULB TEMPERATURE AT BOUNDARY                                                        23.3   DEG C
+
+    HUMIDITY RATIO AT BOUNDARY                                                       0.01551   KG/KG OF DRY AIR
+ 
+
+
+NODE NUMBER                                                                                2                   FORM 6A
+
+NODE AERODYNAMIC TYPE                                                                      3   'T' JUNCTION
+
+NODE THERMODYNAMIC TYPE                                                                    1   (MIXING NODE)
+
+BRANCH NUMBER  1                                                         SECTION NUMBER    1
+
+BRANCH NUMBER  2                                                         SECTION NUMBER    2
+
+BRANCH NUMBER  3                                                         SECTION NUMBER    5
+
+JUNCTION ASPECT RATIO                                                                 1.0000
+
+
+                                            INPUT VERIFICATION OF NODE DATA
+
+
+NODE NUMBER                                                                                3                   FORM 6A
+
+NODE AERODYNAMIC TYPE                                                                      0   STRAIGHT-THROUGH JUNCTION OR PORTAL
+
+NODE THERMODYNAMIC TYPE                                                                    3   (TEMP/HUMID B.C.)
+
+DRY-BULB TEMPERATURE AT BOUNDARY                                                        29.4   DEG C           FORM 6B
+
+WET-BULB TEMPERATURE AT BOUNDARY                                                        23.3   DEG C
+
+    HUMIDITY RATIO AT BOUNDARY                                                       0.01551   KG/KG OF DRY AIR
+ 
+
+
+NODE NUMBER                                                                                4                   FORM 6A
+
+NODE AERODYNAMIC TYPE                                                                      0   STRAIGHT-THROUGH JUNCTION OR PORTAL
+
+NODE THERMODYNAMIC TYPE                                                                    3   (TEMP/HUMID B.C.)
+
+DRY-BULB TEMPERATURE AT BOUNDARY                                                        29.4   DEG C           FORM 6B
+
+WET-BULB TEMPERATURE AT BOUNDARY                                                        23.3   DEG C
+
+    HUMIDITY RATIO AT BOUNDARY                                                       0.01551   KG/KG OF DRY AIR
+
+INPUT VERIFICATION FOR FAN TYPE 1               TYPICAL FAN CURVE                                              FORM 7A
+
+
+
+BI-DIRECTIONAL FAN PERFORMANCE CHARACTERISTICS
+
+        AIR DENSITY AT WHICH THE FAN PERFORMANCE CURVE WAS MEASURED                  1.20138   KG/M**3
+
+        TIME REQUIRED FOR FAN TO REACH FULL OPERATING SPEED                             20.0   SECONDS
+
+        FAN LOWER FLOW LIMIT (POINT OF MOTOR BREAKDOWN TORQUE OR STOPPING)            -23.60   M**3/S
+
+        FAN UPPER FLOW LIMIT (POINT OF WINDMILLING)                                   188.80   M**3/S
+
+                BI-DIRECTIONAL (OUTFLOW(EXHAUST) AND INFLOW(SUPPLY)) FAN PERFORMANCE CURVE INFORMATION         FORM 7B
+FAN PERFORMANCE CURVE DATA POINTS
+
+        FAN TOTAL PRESSURE           1245          1146           872             0            PA
+             VS
+        VOLUME FLOWRATE             0.000        70.800       141.600       188.800            M**3/S
+
+FITTED FAN PERFORMANCE CURVE
+
+
+        FAN TOTAL PRESSURE      1371     1322     1280     1244     1213     1187     1166     PA
+             VS
+        VOLUME FLOWRATE      -20.000  -15.000  -10.000   -5.000    0.000    5.000   10.000     M**3/S
+
+        FAN TOTAL PRESSURE      1148     1135     1125     1118     1113     1110     1109     PA
+             VS
+        VOLUME FLOWRATE       15.000   20.000   25.000   30.000   35.000   40.000   45.000     M**3/S
+
+        FAN TOTAL PRESSURE      1110     1111     1113     1114     1116     1116     1116     PA
+             VS
+        VOLUME FLOWRATE       50.000   55.000   60.000   65.000   70.000   75.000   80.000     M**3/S
+
+        FAN TOTAL PRESSURE      1114     1109     1103     1093     1080     1064     1043     PA
+             VS
+        VOLUME FLOWRATE       85.000   90.000   95.000  100.000  105.000  110.000  115.000     M**3/S
+
+        FAN TOTAL PRESSURE      1018      989      953      913      865      812      751     PA
+             VS
+        VOLUME FLOWRATE      120.000  125.000  130.000  135.000  140.000  145.000  150.000     M**3/S
+
+        FAN TOTAL PRESSURE       684      608      524      432      330      219       99     PA
+             VS
+        VOLUME FLOWRATE      155.000  160.000  165.000  170.000  175.000  180.000  185.000     M**3/S
+
+        FAN TOTAL PRESSURE       -32     -174     -327     -491     -667     -855    -1056     PA
+             VS
+        VOLUME FLOWRATE      190.000  195.000  200.000  205.000  210.000  215.000  220.000     M**3/S
+
+
+INPUT VERIFICATION FOR TRAIN ROUTE  1   EASTBOUND ROUTE                                                        FORM 8A
+
+
+                                               TRAIN SCHEDULING DATA
+
+
+TRAIN SCHEDULING ORIGIN                                                                 0.00   M
+
+NUMBER OF GROUPS OF TRAINS THAT COULD ENTER ROUTE                                          1
+
+NUMBER OF TRACK SECTIONS IN THIS ROUTE                                                     1
+
+DELAY TIME BEFORE DISPATCHING FIRST TRAIN                                               5000   SECONDS
+
+MINIMUM TRAIN SPEED ALLOWED ON THIS ROUTE DURING COASTING                               40.2   KPH
+
+ROUTE COASTING OPTION                                                                      0   MAINTAIN MINIMUM SPEED
+
+
+                                             TRAIN GROUP INFORMATION                                           FORM 8B
+
+          GROUP              NUMBER OF           TRAIN                              TIME LAST TRAIN IN GROUP
+          NUMBER              TRAINS             TYPE             HEADWAY             BECOMES OPERATIONAL
+                                                                 (SECONDS)                 (SECONDS)
+
+
+               1                 1                 1               5000                      5000
+
+INPUT VERIFICATION FOR TRAIN ROUTE  1   EASTBOUND ROUTE                                                        CONTINUED
+
+
+                                                  TRACK SECTION DATA                                           FORM 8C
+
+ TRACK        LOCATION OF                                ELEVATION                     MAXIMUM
+SECTION     FORWARD END OF                RADIUS OF      OF FORWARD                   ALLOWABLE        ENERGY     REGENERATION    COASTING
+NUMBER      TRACK SECTION     LENGTH      CURVATURE         END           GRADE     TRAIN VELOCITY     SECTOR         FACTOR      PARAMETER
+                 (M)                         (M)            (M)         (PERCENT)        (KPH)
+
+
+   1          1828.80        1828.80                       54.86           3.00          80.47            0           0.00
+
+INPUT VERIFICATION FOR TRAIN ROUTE  1   EASTBOUND ROUTE                                                        CONTINUED
+
+
+                                                SCHEDULED STOPS DATA                                           FORM 8D
+
+NUMBER OF SCHEDULED STOPS                                                                  0
+
+NUMBER OF PERSONS ABOARD TRAIN AT SCHEDULING ORIGIN                                      500
+
+INPUT VERIFICATION FOR TRAIN ROUTE  1   EASTBOUND ROUTE                                                        CONTINUED
+
+
+                                          SECTION SEQUENCING FOR ROUTE                                         FORM 8F
+
+
+
+NUMBER OF SECTIONS THROUGH WHICH ROUTE PASSES                                              2
+
+DISTANCE FROM ROUTE ORIGIN TO PORTAL OR FIRST NODE ON ROUTE                           304.80   M
+
+                                SECTIONS AND SEGMENTS THROUGH WHICH ROUTE PASSES
+
+                          SECTION             SEGMENT           LOCATION OF SEGMENT ALONG ROUTE
+                          NUMBER              NUMBER                  (M)               (M)
+
+
+                             1                   1                     304.80  TO       914.40
+
+                             2                   2                     914.40  TO      1066.80
+                                                 3                    1066.80  TO      1371.60
+                                                 4                    1371.60  TO      1524.00
+
+INPUT VERIFICATION FOR TRAIN TYPE 1   TYPICAL SUBWAY TRAIN                                                     FORM 9A
+
+
+TOTAL NUMBER OF CARS PER TRAIN                                                             6
+
+NUMBER OF POWERED CARS PER TRAIN                                                           6
+
+TOTAL LENGTH OF TRAIN                                                                 128.02   M
+
+FRONTAL AREA OF TRAIN                                                                   8.83   M**2
+
+PERIMETER OF CAR                                                                       11.49   M               FORM 9B
+
+SKIN FRICTION COEFFICIENT                                                             0.0230
+
+DRAG COEFFICIENT WEIGHTED TOTAL TRUCK AREA                                              0.00   M**2
+
+FRONT OF TRAIN DRAG COEFFICIENT                                                       0.7000
+
+REAR  OF TRAIN DRAG COEFFICIENT                                                       0.0419
+
+TRAIN HEAT DATA                                                                                                FORM 9C
+
+SENSIBLE HEAT REJECTION FROM AUXILIARY SYSTEMS FOR AN EMPTY CAR EXCLUDING
+PROPULSION SYSTEM                                                                    23329.9   WATTS PER CAR
+
+LATENT HEAT REJECTION FROM AUXILIARY SYSTEMS FOR AN EMPTY CAR EXCLUDING
+PROPULSION SYSTEM                                                                        0.0   WATTS PER CAR
+
+SENSIBLE HEAT REJECTION FROM PASSENGERS AND AUXILIARY SYSTEMS PER PATRON IN CAR        154.2   WATTS PER PATRON
+
+LATENT HEAT REJECTION FROM PASSENGERS AND AUXILIARY SYSTEMS PER PATRON IN CAR           63.0   WATTS PER PATRON
+
+POWER CONSUMPTION BY VEHICLE AUXILIARY SYSTEMS FOR AN EMPTY CAR                         23.3   KW PER CAR
+
+POWER CONSUMPTION BY VEHICLE AUXILIARY SYSTEMS PER PATRON IN CAR                       0.068   KW PER PATRON
+
+RESISTOR GRID PHYSICAL CHARACTERISTICS  (PER POWERED CAR)        ACCELERATION       DECELERATION               FORM 9D
+                                                                     GRID               GRID
+
+       TOTAL MASS OF RESISTANCE ELEMENTS                              0.0               45.8   KG
+
+       EFFECTIVE DIAMETER OF AN ELEMENT                               0.0              38.10   MM
+
+       EFFECTIVE SURFACE AREA FOR CONVECTION                          0.0               2.00   M**2
+
+       EFFECTIVE SURFACE AREA FOR RADIATION                           0.0               1.12   M**2
+
+       EMISSIVITY OF RESISTANCE ELEMENT                              0.00               0.90
+
+       SPECIFIC HEAT OF RESISTANCE ELEMENT                          0.000              456.4   J/KG-K
+
+       INITIAL GRID TEMPERATURES                                     29.4              648.9   DEG C
+
+A VALUE OF ZERO FOR THE ACCELERATION GRID RESISTANCE ELEMENT MASS INDICATES THAT THE HEAT GENERATED FROM TRAIN
+ACCELERATION IS TO BE INSTANTANEOUSLY REJECTED TO THE SYSTEM.
+
+       FORCED GRID AIR VELOCITY                                      0.00               0.00   M/S
+
+A VALUE OF ZERO FOR THE FORCED GRID AIR VELOCITY INDICATES THAT THE ANNULAR VELOCITY OF THE TRAIN
+WILL BE USED IN THE RESISTOR GRID HEAT TRANSFER EQUATIONS.
+
+A VALUE OF ZERO FOR THE FORCED GRID AIR VELOCITY INDICATES THAT THE ANNULAR VELOCITY OF THE TRAIN
+WILL BE USED IN THE RESISTOR GRID HEAT TRANSFER EQUATIONS.
+
+INPUT VERIFICATION FOR TRAIN TYPE 1   TYPICAL SUBWAY TRAIN                                                     CONTINUED
+
+
+AVERAGE EMPTY CAR MASS                                                                 33.11   TONNES          FORM 9E
+
+NUMBER OF MOTORS PER POWERED CAR                                                          2.
+
+TRAIN ROLLING RESISTANCE COEFFICIENTS      FIRST                                        6.37   N/TONNE
+
+                                           SECOND                                     515.99   N
+
+                                           THIRD                                      0.1371   N/TONNE-KPH
+
+EQUIVALENT MASS OF ACCELERATING ROTATING PARTS PER CAR                                    9.   KG
+
+                      MOTOR TYPE   TYPICAL TRACTION MOTOR                                                      FORM 9F
+
+MANUFACTURER'S MOTOR DATA CORRECTIONS                           MANUFACTURER'S        VEHICLE
+                                                                     DATA               DATA
+
+       WHEEL DIAMETER                                              660.40             660.40   MM
+
+       GEAR RATIO                                                    5.60               5.60
+
+       SUPPLY VOLTAGE                                               600.0              600.0   VOLTS
+
+MOTOR TERMINAL VOLTAGE AT BASE SPEED                                                   600.0   VOLTS/MOTOR
+
+TRACTIVE EFFORT AVAILABLE AND CURRENT REQUIRED BASED ON MANUFACTURER'S DATA
+
+       TRAIN SPEED                22.5        24.1        64.4        96.6                     KPH             FORM 9G
+
+       TRACTIVE EFFORT         31391.1     31391.1     12023.5      7570.9                     N
+
+       MOTOR CURRENT             900.0       900.0       900.0       900.0                     AMPS
+
+TRAIN CONTROLLER OPTION                                                                    2   CHOPPER CONTROL
+
+
+INPUT VERIFICATION FOR TRAIN TYPE 1   TYPICAL SUBWAY TRAIN                                                     CONTINUED
+
+
+LINE CURRENT REQUIRED BASED ON MANUFACTURER'S DATA                                                             FORM 9H
+
+       LINE CURRENT               51.0       959.0       959.0       959.0       959.0         AMPS/POWERED CAR
+
+
+CHOPPER EFFICIENCY FOR SPEEDS OF ZERO TO U1                                             95.0   PERCENT
+
+SPEED U1                                                                                96.6   KPH
+
+CHOPPER EFFICIENCY FOR SPEEDS GREATER THAN U1                                           95.0   PERCENT
+
+REGENERATIVE BRAKING EFFECTIVENESS                                                       0.0   PERCENT
+
+ON-BOARD FLYWHEEL SIMULATION OPTION                                                        1   BYPASS
+
+
+
+VERIFICATION OF TRACTIVE EFFORT AVAILABLE AND CURRENT REQUIRED BASED ON THE VEHICLE DATA
+
+          --------------------FULL POWER--------------------   |   --------------------HALF POWER--------------------
+           TRACTIVE      MOTOR       LINE     TRACTION POWER   |    TRACTIVE      MOTOR       LINE     TRACTION POWER
+   SPEED     EFFORT    CURRENT    CURRENT      PER CAR (KW)    |      EFFORT    CURRENT    CURRENT      PER CAR (KW)
+   (KPH)  (N/MOTOR)  (A/MOTOR)   (A/PCAR)     INPUT   OUTPUT   |   (N/MOTOR)  (A/MOTOR)   (A/PCAR)     INPUT   OUTPUT
+                                                               |
+     0.0     31391.       900.        51.       31.       0.   |      15696.       636.        26.       15.       0.
+     5.0     31391.       900.       253.      152.      87.   |      15696.       636.       126.       76.      44.
+    10.0     31391.       900.       454.      272.     174.   |      15696.       636.       227.      136.      87.
+    15.0     31391.       900.       656.      393.     262.   |      15696.       636.       328.      197.     131.
+    20.0     31391.       900.       857.      514.     349.   |      15696.       636.       429.      257.     174.
+    25.0     30451.       900.       959.      575.     423.   |      15225.       636.       480.      288.     211.
+    30.0     25857.       900.       959.      575.     431.   |      12928.       636.       480.      288.     215.
+    35.0     22379.       900.       959.      575.     435.   |      11190.       636.       480.      288.     218.
+    40.0     19664.       900.       959.      575.     437.   |       9832.       636.       480.      288.     218.
+    45.0     17489.       900.       959.      575.     437.   |       8744.       636.       480.      288.     219.
+    50.0     15709.       900.       959.      575.     436.   |       7854.       636.       480.      288.     218.
+    55.0     14226.       900.       959.      575.     435.   |       7113.       636.       480.      288.     217.
+    60.0     12972.       900.       959.      575.     432.   |       6486.       636.       480.      288.     216.
+    65.0     11898.       900.       959.      575.     430.   |       5949.       636.       480.      288.     215.
+    70.0     10968.       900.       959.      575.     427.   |       5484.       636.       480.      288.     213.
+    75.0     10155.       900.       959.      575.     423.   |       5077.       636.       480.      288.     212.
+    80.0      9438.       900.       959.      575.     419.   |       4719.       636.       480.      288.     210.
+    85.0      8801.       900.       959.      575.     416.   |       4401.       636.       480.      288.     208.
+    90.0      8232.       900.       959.      575.     412.   |       4116.       636.       480.      288.     206.
+    95.0      7720.       900.       959.      575.     407.   |       3860.       636.       480.      288.     204.
+   100.0      7258.       900.       959.      575.     403.   |       3629.       636.       480.      288.     202.
+   105.0      6837.       900.       959.      575.     399.   |       3419.       636.       480.      288.     199.
+   110.0      6454.       900.       959.      575.     394.   |       3227.       636.       480.      288.     197.
+   115.0      6102.       900.       959.      575.     390.   |       3051.       636.       480.      288.     195.
+   120.0      5779.       900.       959.      575.     385.   |       2889.       636.       480.      288.     193.
+   125.0      5481.       900.       959.      575.     381.   |       2740.       636.       480.      288.     190.
+   130.0      5205.       900.       959.      575.     376.   |       2603.       636.       480.      288.     188.
+
+
+INTERNAL MOTOR RESISTANCE                                                              0.018   OHMS/MOTOR      FORM 9I
+
+MAXIMUM ALLOWABLE ACCELERATION RATE                                                      1.3   M/S**2          FORM 9J
+
+NORMAL DECELERATION RATE FROM SPEED V1 TO ZERO                                           1.3   M/S**2 
+
+SPEED V1                                                                                96.6   KPH
+
+NORMAL DECELERATION RATE AT SPEED V2                                                     0.9   M/S**2 
+
+SPEED V2                                                                               128.7   KPH
+
+
+
+                                   INPUT VERIFICATION OF TRAIN INITIALIZATION DATA                             FORM 10
+
+
+NUMBER OF TRAINS IN OPERATION AT INITIALIZATION    1
+
+                                                                       ACCELERATION   DECELERATION      REMAINING
+TRAIN         LOCATION        TRAIN         ROUTE           TRAIN          GRID           GRID            DWELL
+NUMBER        ON ROUTE        SPEED         NUMBER          TYPE       TEMPERATURE    TEMPERATURE         TIME       COASTING
+               (M)            (KPH)                                      (DEG C)        (DEG C)         (SECONDS)
+
+
+
+   1          1371.30          0.00           1               1           29.44         648.89            900.0
+
+
+
+                                  INPUT VERIFICATION OF CONTROL GROUP INFORMATION                              FORM 12
+
+
+TEMPERATURE TABULATION INCREMENT                                                         2.8   DEG C
+
+NUMBER OF CONTROL GROUPS                                                                   3
+
+
+  GROUP     NUMBER OF   INTERVAL    NUMBER OF         SUMMARY OPTION                NUMBER OF    NUMBER OF      TIME OF       BIF
+  NUMBER    INTERVALS    LENGTH    ABBREVIATED                                     CYCLES PER    CYCLES PER    LAST PRINT  INTERVAL
+                                   PRINTS PER                                      AERODYNAMIC  THERMODYNAMIC   IN GROUP    LENGTH
+                                   DETAIL PRINT                                    EVALUATION    EVALUATION      (SEC)
+
+
+
+     1         10         10.00        10         0 - NEITHER SUMMARY NOR INITIALIZE    1             5          100.00       1.0
+
+     2         10         20.00        10         0 - NEITHER SUMMARY NOR INITIALIZE    1             5          300.00       1.0
+
+     3          4         50.00         4         0 - NEITHER SUMMARY NOR INITIALIZE    1             5          500.00       1.0
+
+
+
+                                                   PROGRAM CONTROLS                                            FORM 13
+
+
+TIME INCREMENT PER CYCLE                                                                0.20   SECONDS
+
+MAXIMUM SIMULATION TIME                                                               500.00   SECONDS
+
+NUMBER OF CYCLES PER COMPLETE TRAIN EVALUATION                                            10
+
+NUMBER OF THERMODYNAMIC CYCLES PER WALL TEMPERATURE EVALUATION                             2
+
+
+
+TIME      0.00 SECONDS                           1 TRAIN(S) ARE OPERATIONAL
+
+      R T                             AIR    AIR  TRACTIVE   MOTOR     LINE     FLY  MOTOR       GRID TEMP.         HEAT      HEAT
+TRAIN T Y  LOCATION  SPEED   ACCEL   DRAG   DRAG    EFFORT CURRENT  CURRENT   WHEEL    EFF    ACCEL.    DECEL.      GEN.   REJECT.
+ NO.  E P       (M)  (KPH) (M/S^2)   (KN)  COEFF (N/MOTOR)  (AMPS)   (AMPS)   (RPM)    (%)   (DEG C)   (DEG C)     (W/M)     (W/M)
+
+  1   1 1   1371.30   0.00    0.00   0.00   0.00        0.    0.00     0.00      0.   0.00     29.44    648.89   1695.72   1695.72
+-----------------------------------------------------------------------------------------------------------------------------------
+             SYSTEM         SENSIBLE       LATENT            AIR       HUMIDITY     AIR         AIR     TRAIN POSITION-ROUTE NUMBER
+ LENGTH   PARTITIONING      HEAT LOAD     HEAT LOAD      TEMPERATURE    RATIO       FLOW     VELOCITY   0 0 0 0 0 0 0 0 0 1 1 1 1 1
+  (M)                       (WATTS)       (WATTS)          (DEG C)     (KG/KG)     (M**3/S)    (M/S)    1 2 3 4 5 6 7 8 9 0 1 2 3 4
+
+
+  609.6    1 -  1     (TUNNEL)                  WEST PORTAL TO VENTILATION SHAFT    
+
+           1 -  1 -  1           0.0           0.0           29.44     0.01551       0.000      0.00                               
+           1 -  1 -  2           0.0           0.0           29.44     0.01551                                                     
+           1 -  1 -  3           0.0           0.0           29.44     0.01551                                                     
+           1 -  1 -  4           0.0           0.0           29.44     0.01551                                                     
+           1 -  1 -  5           0.0           0.0           29.44     0.01551                                                     
+           1 -  1 -  6           0.0           0.0           29.44     0.01551                                                     
+           1 -  1 -  7           0.0           0.0           29.44     0.01551                                                     
+           1 -  1 -  8           0.0           0.0           29.44     0.01551                                                     
+           1 -  1 -  9           0.0           0.0           29.44     0.01551                                                     
+           1 -  1 - 10           0.0           0.0           29.44     0.01551                                                     
+
+  152.4    2 -  2     (TUNNEL)                  VENTILATION SHAFT TO STA. 25+00     
+
+           2 -  2 -  1           0.0           0.0           29.44     0.01551       0.000      0.00                               
+           2 -  2 -  2           0.0           0.0           29.44     0.01551                                                     
+
+  304.8    2 -  3     (TUNNEL)                  STA. 25+00 TO STA. 35+00            
+
+           2 -  3 -  1           0.0           0.0           29.44     0.01551       0.000      0.00                               
+           2 -  3 -  2           0.0           0.0           29.44     0.01551                                                     
+           2 -  3 -  3           0.0           0.0           29.44     0.01551                                                     
+           2 -  3 -  4           0.0           0.0           29.44     0.01551                                                     
+           2 -  3 -  5           0.0           0.0           29.44     0.01551                                                     
+           2 -  3 -  6           0.0           0.0           29.44     0.01551                                                     
+           2 -  3 -  7           0.0           0.0           29.44     0.01551                                                     
+           2 -  3 -  8           0.0           0.0           29.44     0.01551                                                     
+           2 -  3 -  9       33005.1        4789.3           29.44     0.01551                          1                          
+           2 -  3 - 10       36918.3        5357.1           29.44     0.01551                          1                          
+           2 -  3 - 11    14106918.0        5357.1           29.44     0.01551                          1                          
+           2 -  3 - 12       36918.3        5357.1           29.44     0.01551                          1                          
+           2 -  3 - 13       36918.3        5357.1           29.44     0.01551                          1                          
+           2 -  3 - 14       36401.3        5282.1           29.44     0.01551                          1                          
+
+  152.4    2 -  4     (TUNNEL)                  STA.  35+00 TO STA. 40+00           
+
+           2 -  4 -  1           0.0           0.0           29.44     0.01551       0.000      0.00                               
+           2 -  4 -  2           0.0           0.0           29.44     0.01551                                                     
+
+   24.4    5 -  5     (VENTILATION SHAFT)       VENTILATION SHAFT                   
+
+           5 -  5 -  1                                       29.44     0.01551       0.000      0.00
+           5 -  5 -  2                                       29.44     0.01551
+
+
+
+           SYSTEM           WALL SURFACE          HEAT TRANSFER TO WALL
+        PARTITIONING        TEMPERATURE         CONVECTION      RADIATION
+                              (DEG C)            (WATTS)        (WATTS)
+
+         2 -  2 -  1            29.4                 0.0            0.0
+         2 -  2 -  2            29.4                 0.0            0.0
+         2 -  3 -  1            29.4                 0.0            0.0
+         2 -  3 -  2            29.4                 0.0            0.0
+         2 -  3 -  3            29.4                 0.0            0.0
+         2 -  3 -  4            29.4                 0.0            0.0
+         2 -  3 -  5            29.4                 0.0            0.0
+         2 -  3 -  6            29.4                 0.0            0.0
+         2 -  3 -  7            29.4                 0.0            0.0
+         2 -  3 -  8            29.4                 0.0            0.0
+         2 -  3 -  9            29.4                 0.0            0.0
+         2 -  3 - 10            29.4                 0.0            0.0
+         2 -  3 - 11            29.4                -0.2      3512710.5
+         2 -  3 - 12            29.4                 0.0            0.0
+         2 -  3 - 13            29.4                 0.0            0.0
+         2 -  3 - 14            29.4                 0.0            0.0
+         2 -  4 -  1            29.4                 0.0            0.0
+         2 -  4 -  2            29.4                 0.0            0.0
+
+
+
+               END OF SES INPUT VERIFICATION.   0 ERRORS WERE FOUND.
+
+               EXECUTION OF THIS SUBWAY ENVIRONMENT SIMULATION IS TO PROCEED.
+
+INTEGRATION STEP SIZE
+     AERODYNAMIC    RATIO = 1     INTEGRATION INCREMENT ( TWO CYCLES ) = 0.40 SEC
+     THERMODYNAMIC  RATIO = 5     INTEGRATION INCREMENT ( TWO CYCLES ) = 2.00 SEC
+
+
+TIME     10.00 SECONDS                           1 TRAIN(S) ARE OPERATIONAL
+
+      R T                             AIR    AIR  TRACTIVE   MOTOR     LINE     FLY  MOTOR       GRID TEMP.         HEAT      HEAT
+TRAIN T Y  LOCATION  SPEED   ACCEL   DRAG   DRAG    EFFORT CURRENT  CURRENT   WHEEL    EFF    ACCEL.    DECEL.      GEN.   REJECT.
+ NO.  E P       (M)  (KPH) (M/S^2)   (KN)  COEFF (N/MOTOR)  (AMPS)   (AMPS)   (RPM)    (%)   (DEG C)   (DEG C)     (W/M)     (W/M)
+
+  1   1 1   1371.30   0.00    0.00   1.79   0.00        0.    0.00     0.00      0.   0.00     29.44    622.47   1695.72   5843.39
+
+   SYSTEM            AIR     AIR     TEMPERATURE (DEG C)
+PARTITIONING        FLOW     VEL.    -------------------
+                  (M**3/S)   (M/S)   HUMIDITY    (KG/KG)
+
+    1 -  1         72.390     4.13      29.4      29.4      29.4      29.4      29.4      29.4      29.4      29.4
+                                     0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551
+                                        29.4      29.4
+                                     0.01551   0.01551
+    2 -  2        -52.326    -2.98      29.4      29.4
+                                     0.01551   0.01551
+    2 -  3        -52.326    -2.98      29.4      29.4      29.4      29.4      29.5      29.7      31.6      43.8
+                                     0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01552   0.01554
+                                       103.5     182.8     218.8      33.8      33.1      31.6
+                                     0.01561   0.01563   0.01563   0.01560   0.01559   0.01556
+    2 -  4        -52.326    -2.98      29.4      29.4
+                                     0.01551   0.01551
+    5 -  5        124.717     4.47      29.4      29.4
+                                     0.01551   0.01551
+
+
+
+           SYSTEM           WALL SURFACE          HEAT TRANSFER TO WALL
+        PARTITIONING        TEMPERATURE         CONVECTION      RADIATION
+                              (DEG C)            (WATTS)        (WATTS)
+
+         2 -  2 -  1            29.4                 0.0            0.0
+         2 -  2 -  2            29.4                 0.0            0.0
+         2 -  3 -  1            29.4                 0.0            0.0
+         2 -  3 -  2            29.4                 0.0            0.0
+         2 -  3 -  3            29.4                 0.0            0.0
+         2 -  3 -  4            29.4                 0.0            0.0
+         2 -  3 -  5            29.4                 0.0            0.0
+         2 -  3 -  6            29.4               302.2           32.0
+         2 -  3 -  7            29.5              3559.8          378.0
+         2 -  3 -  8            29.5             33136.7         3617.6
+         2 -  3 -  9            30.9            477917.2        30207.9
+         2 -  3 - 10            34.7           1390582.6       120821.6
+         2 -  3 - 11            68.4           1842263.8      3739389.8
+         2 -  3 - 12            29.6             37879.8         1819.1
+         2 -  3 - 13            29.6             33336.7         1597.8
+         2 -  3 - 14            29.6             20920.7         1005.2
+         2 -  4 -  1            29.4                 0.0            0.0
+         2 -  4 -  2            29.4                 0.0            0.0
+
+
+
+TIME     20.00 SECONDS                           1 TRAIN(S) ARE OPERATIONAL
+
+      R T                             AIR    AIR  TRACTIVE   MOTOR     LINE     FLY  MOTOR       GRID TEMP.         HEAT      HEAT
+TRAIN T Y  LOCATION  SPEED   ACCEL   DRAG   DRAG    EFFORT CURRENT  CURRENT   WHEEL    EFF    ACCEL.    DECEL.      GEN.   REJECT.
+ NO.  E P       (M)  (KPH) (M/S^2)   (KN)  COEFF (N/MOTOR)  (AMPS)   (AMPS)   (RPM)    (%)   (DEG C)   (DEG C)     (W/M)     (W/M)
+
+  1   1 1   1371.30   0.00    0.00   1.06   0.00        0.    0.00     0.00      0.   0.00     29.44    594.88   1695.72   5523.09
+
+   SYSTEM            AIR     AIR     TEMPERATURE (DEG C)
+PARTITIONING        FLOW     VEL.    -------------------
+                  (M**3/S)   (M/S)   HUMIDITY    (KG/KG)
+
+    1 -  1         92.067     5.25      29.4      29.4      29.4      29.4      29.4      29.4      29.4      29.4
+                                     0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551
+                                        29.4      29.4
+                                     0.01551   0.01551
+    2 -  2        -48.650    -2.78      29.4      29.4
+                                     0.01551   0.01551
+    2 -  3        -48.650    -2.78      29.5      29.6      30.0      31.5      36.7      51.1      80.9     121.4
+                                     0.01551   0.01551   0.01551   0.01551   0.01552   0.01555   0.01559   0.01565
+                                       150.8     169.5     194.0      34.2      32.8      31.2
+                                     0.01571   0.01569   0.01566   0.01562   0.01558   0.01555
+    2 -  4        -48.650    -2.78      29.4      29.4
+                                     0.01551   0.01551
+    5 -  5        140.717     5.05      29.4      29.4
+                                     0.01551   0.01551
+
+
+
+           SYSTEM           WALL SURFACE          HEAT TRANSFER TO WALL
+        PARTITIONING        TEMPERATURE         CONVECTION      RADIATION
+                              (DEG C)            (WATTS)        (WATTS)
+
+         2 -  2 -  1            29.4                 0.0            0.0
+         2 -  2 -  2            29.4                 0.0            0.0
+         2 -  3 -  1            29.4                 0.0            0.0
+         2 -  3 -  2            29.4               282.0           31.6
+         2 -  3 -  3            29.4              1364.7          153.3
+         2 -  3 -  4            29.5              5908.9          666.9
+         2 -  3 -  5            29.5             22306.9         2559.7
+         2 -  3 -  6            29.8             71131.6         8632.9
+         2 -  3 -  7            30.4            183609.3        25250.8
+         2 -  3 -  8            31.8            355543.1        58907.6
+         2 -  3 -  9            37.5           1003584.8        92120.5
+         2 -  3 - 10            40.9           1211257.5       113989.9
+         2 -  3 - 11            79.9           1089453.8      3632723.8
+         2 -  3 - 12            29.8             42964.3         2016.4
+         2 -  3 - 13            29.7             34230.0         1413.2
+         2 -  3 - 14            29.6             21198.5          727.5
+         2 -  4 -  1            29.4                 0.0            0.0
+         2 -  4 -  2            29.4                 0.0            0.0
+
+
+
+TIME     30.00 SECONDS                           1 TRAIN(S) ARE OPERATIONAL
+
+      R T                             AIR    AIR  TRACTIVE   MOTOR     LINE     FLY  MOTOR       GRID TEMP.         HEAT      HEAT
+TRAIN T Y  LOCATION  SPEED   ACCEL   DRAG   DRAG    EFFORT CURRENT  CURRENT   WHEEL    EFF    ACCEL.    DECEL.      GEN.   REJECT.
+ NO.  E P       (M)  (KPH) (M/S^2)   (KN)  COEFF (N/MOTOR)  (AMPS)   (AMPS)   (RPM)    (%)   (DEG C)   (DEG C)     (W/M)     (W/M)
+
+  1   1 1   1371.30   0.00    0.00   0.89   0.00        0.    0.00     0.00      0.   0.00     29.44    570.64   1695.72   5064.76
+
+   SYSTEM            AIR     AIR     TEMPERATURE (DEG C)
+PARTITIONING        FLOW     VEL.    -------------------
+                  (M**3/S)   (M/S)   HUMIDITY    (KG/KG)
+
+    1 -  1         97.387     5.56      29.4      29.5      29.5      29.5      29.5      29.5      29.5      29.5
+                                     0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551
+                                        29.5      29.5
+                                     0.01551   0.01551
+    2 -  2        -43.504    -2.48      29.5      29.5
+                                     0.01551   0.01551
+    2 -  3        -43.504    -2.48      30.1      31.6      35.6      44.9      62.6      89.1     118.5     142.7
+                                     0.01551   0.01551   0.01552   0.01554   0.01557   0.01562   0.01567   0.01571
+                                       161.7     185.3     213.9      34.3      32.9      31.3
+                                     0.01574   0.01571   0.01567   0.01563   0.01559   0.01555
+    2 -  4        -43.504    -2.48      29.4      29.4
+                                     0.01551   0.01551
+    5 -  5        140.891     5.06      29.5      29.5
+                                     0.01551   0.01551
+
+
+
+           SYSTEM           WALL SURFACE          HEAT TRANSFER TO WALL
+        PARTITIONING        TEMPERATURE         CONVECTION      RADIATION
+                              (DEG C)            (WATTS)        (WATTS)
+
+         2 -  2 -  1            29.4                 0.0            0.0
+         2 -  2 -  2            29.4                 0.0            0.0
+         2 -  3 -  1            29.5              1985.8          244.2
+         2 -  3 -  2            29.5              6450.3          797.1
+         2 -  3 -  3            29.5             18872.7         2364.8
+         2 -  3 -  4            29.7             48807.0         6347.5
+         2 -  3 -  5            30.2            109034.1        15312.9
+         2 -  3 -  6            31.0            205646.5        32377.4
+         2 -  3 -  7            32.2            316997.7        57193.6
+         2 -  3 -  8            33.8            410696.0        82807.5
+         2 -  3 -  9            40.6            965034.2       103185.2
+         2 -  3 - 10            44.4           1216838.9       134427.5
+         2 -  3 - 11            90.3           1091282.0      3658139.0
+         2 -  3 - 12            29.9             42988.1         1992.6
+         2 -  3 - 13            29.8             34250.4         1392.8
+         2 -  3 - 14            29.7             21205.0          721.0
+         2 -  4 -  1            29.4                 0.0            0.0
+         2 -  4 -  2            29.4                 0.0            0.0
+
+
+
+TIME     40.00 SECONDS                           1 TRAIN(S) ARE OPERATIONAL
+
+      R T                             AIR    AIR  TRACTIVE   MOTOR     LINE     FLY  MOTOR       GRID TEMP.         HEAT      HEAT
+TRAIN T Y  LOCATION  SPEED   ACCEL   DRAG   DRAG    EFFORT CURRENT  CURRENT   WHEEL    EFF    ACCEL.    DECEL.      GEN.   REJECT.
+ NO.  E P       (M)  (KPH) (M/S^2)   (KN)  COEFF (N/MOTOR)  (AMPS)   (AMPS)   (RPM)    (%)   (DEG C)   (DEG C)     (W/M)     (W/M)
+
+  1   1 1   1371.30   0.00    0.00   0.82   0.00        0.    0.00     0.00      0.   0.00     29.44    549.02   1695.72   4732.06
+
+   SYSTEM            AIR     AIR     TEMPERATURE (DEG C)
+PARTITIONING        FLOW     VEL.    -------------------
+                  (M**3/S)   (M/S)   HUMIDITY    (KG/KG)
+
+    1 -  1        100.132     5.71      29.4      29.5      29.5      29.5      29.5      29.5      29.5      29.5
+                                     0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551
+                                        29.5      29.5
+                                     0.01551   0.01551
+    2 -  2        -40.758    -2.32      29.5      30.1
+                                     0.01551   0.01551
+    2 -  3        -40.758    -2.32      33.7      39.3      50.1      67.6      90.6     114.9     136.4     154.9
+                                     0.01552   0.01553   0.01555   0.01559   0.01563   0.01568   0.01572   0.01574
+                                       172.8     197.6     227.6      34.3      32.9      31.3
+                                     0.01576   0.01572   0.01568   0.01564   0.01560   0.01555
+    2 -  4        -40.758    -2.32      29.4      29.4
+                                     0.01551   0.01551
+    5 -  5        140.890     5.06      29.5      29.5
+                                     0.01551   0.01551
+
+
+
+           SYSTEM           WALL SURFACE          HEAT TRANSFER TO WALL
+        PARTITIONING        TEMPERATURE         CONVECTION      RADIATION
+                              (DEG C)            (WATTS)        (WATTS)
+
+         2 -  2 -  1            29.4               797.5          105.2
+         2 -  2 -  2            29.5              6133.3          811.1
+         2 -  3 -  1            29.5             12479.5         1637.1
+         2 -  3 -  2            29.6             29984.9         4016.8
+         2 -  3 -  3            29.9             64416.6         9053.0
+         2 -  3 -  4            30.4            122390.5        18577.4
+         2 -  3 -  5            31.2            202786.8        34007.8
+         2 -  3 -  6            32.4            289042.9        54284.3
+         2 -  3 -  7            33.8            366197.3        75883.3
+         2 -  3 -  8            35.3            432165.1        97202.3
+         2 -  3 -  9            43.2            997583.1       117462.8
+         2 -  3 - 10            47.6           1241229.5       153127.4
+         2 -  3 - 11            99.4           1082827.0      3676170.0
+         2 -  3 - 12            30.0             43006.0         1974.8
+         2 -  3 - 13            29.9             34268.4         1374.8
+         2 -  3 - 14            29.7             21219.4          706.6
+         2 -  4 -  1            29.4                 0.0            0.0
+         2 -  4 -  2            29.4                 0.0            0.0
+
+
+
+TIME     50.00 SECONDS                           1 TRAIN(S) ARE OPERATIONAL
+
+      R T                             AIR    AIR  TRACTIVE   MOTOR     LINE     FLY  MOTOR       GRID TEMP.         HEAT      HEAT
+TRAIN T Y  LOCATION  SPEED   ACCEL   DRAG   DRAG    EFFORT CURRENT  CURRENT   WHEEL    EFF    ACCEL.    DECEL.      GEN.   REJECT.
+ NO.  E P       (M)  (KPH) (M/S^2)   (KN)  COEFF (N/MOTOR)  (AMPS)   (AMPS)   (RPM)    (%)   (DEG C)   (DEG C)     (W/M)     (W/M)
+
+  1   1 1   1371.30   0.00    0.00   0.77   0.00        0.    0.00     0.00      0.   0.00     29.44    529.35   1695.72   4476.89
+
+   SYSTEM            AIR     AIR     TEMPERATURE (DEG C)
+PARTITIONING        FLOW     VEL.    -------------------
+                  (M**3/S)   (M/S)   HUMIDITY    (KG/KG)
+
+    1 -  1        101.679     5.80      29.4      29.5      29.5      29.5      29.5      29.5      29.5      29.5
+                                     0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551
+                                        29.5      29.5
+                                     0.01551   0.01551
+    2 -  2        -39.163    -2.23      29.9      31.9
+                                     0.01551   0.01552
+    2 -  3        -39.163    -2.23      41.9      53.0      69.4      89.6     110.6     129.9     147.1     163.6
+                                     0.01554   0.01556   0.01560   0.01564   0.01569   0.01572   0.01575   0.01576
+                                       180.6     205.8     236.6      34.3      32.9      31.3
+                                     0.01577   0.01574   0.01569   0.01565   0.01560   0.01556
+    2 -  4        -39.163    -2.23      29.4      29.4
+                                     0.01551   0.01551
+    5 -  5        140.843     5.05      29.5      29.5
+                                     0.01551   0.01551
+
+
+
+           SYSTEM           WALL SURFACE          HEAT TRANSFER TO WALL
+        PARTITIONING        TEMPERATURE         CONVECTION      RADIATION
+                              (DEG C)            (WATTS)        (WATTS)
+
+         2 -  2 -  1            29.5              4084.8          559.8
+         2 -  2 -  2            29.5             24627.7         3403.6
+         2 -  3 -  1            29.7             37735.7         5286.9
+         2 -  3 -  2            30.0             72664.9        10702.3
+         2 -  3 -  3            30.6            125770.8        19918.2
+         2 -  3 -  4            31.4            194170.0        33577.8
+         2 -  3 -  5            32.4            265867.7        50699.6
+         2 -  3 -  6            33.7            331856.8        69165.9
+         2 -  3 -  7            35.1            391108.1        87980.0
+         2 -  3 -  8            36.6            446899.5       108197.3
+         2 -  3 -  9            45.6           1011844.8       127941.7
+         2 -  3 - 10            50.4           1253432.5       166232.5
+         2 -  3 - 11           107.4           1072161.0      3686836.0
+         2 -  3 - 12            30.1             43049.6         1931.2
+         2 -  3 - 13            30.0             34306.2         1337.0
+         2 -  3 - 14            29.8             21244.2          681.8
+         2 -  4 -  1            29.4                 0.0            0.0
+         2 -  4 -  2            29.4                 0.0            0.0
+
+
+
+TIME     60.00 SECONDS                           1 TRAIN(S) ARE OPERATIONAL
+
+      R T                             AIR    AIR  TRACTIVE   MOTOR     LINE     FLY  MOTOR       GRID TEMP.         HEAT      HEAT
+TRAIN T Y  LOCATION  SPEED   ACCEL   DRAG   DRAG    EFFORT CURRENT  CURRENT   WHEEL    EFF    ACCEL.    DECEL.      GEN.   REJECT.
+ NO.  E P       (M)  (KPH) (M/S^2)   (KN)  COEFF (N/MOTOR)  (AMPS)   (AMPS)   (RPM)    (%)   (DEG C)   (DEG C)     (W/M)     (W/M)
+
+  1   1 1   1371.30   0.00    0.00   0.74   0.00        0.    0.00     0.00      0.   0.00     29.44    511.23   1695.72   4268.97
+
+   SYSTEM            AIR     AIR     TEMPERATURE (DEG C)
+PARTITIONING        FLOW     VEL.    -------------------
+                  (M**3/S)   (M/S)   HUMIDITY    (KG/KG)
+
+    1 -  1        102.611     5.85      29.4      29.5      29.5      29.5      29.5      29.5      29.5      29.5
+                                     0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551
+                                        29.5      29.5
+                                     0.01551   0.01551
+    2 -  2        -38.137    -2.18      30.8      35.8
+                                     0.01551   0.01553
+    2 -  3        -38.137    -2.18      54.5      69.6      87.5     106.0     123.3     139.1     154.3     169.7
+                                     0.01557   0.01561   0.01565   0.01569   0.01572   0.01575   0.01577   0.01578
+                                       186.0     211.6     243.0      34.3      32.9      31.3
+                                     0.01579   0.01575   0.01570   0.01565   0.01560   0.01556
+    2 -  4        -38.137    -2.18      29.4      29.4
+                                     0.01551   0.01551
+    5 -  5        140.748     5.05      29.7      29.7
+                                     0.01551   0.01551
+
+
+
+           SYSTEM           WALL SURFACE          HEAT TRANSFER TO WALL
+        PARTITIONING        TEMPERATURE         CONVECTION      RADIATION
+                              (DEG C)            (WATTS)        (WATTS)
+
+         2 -  2 -  1            29.5             13182.1         1857.9
+         2 -  2 -  2            29.6             63654.9         9159.6
+         2 -  3 -  1            30.1             76437.6        11592.5
+         2 -  3 -  2            30.7            124427.2        20180.2
+         2 -  3 -  3            31.4            183584.3        32202.7
+         2 -  3 -  4            32.4            245182.9        46844.8
+         2 -  3 -  5            33.6            302629.5        62697.4
+         2 -  3 -  6            34.9            355316.2        79053.7
+         2 -  3 -  7            36.3            405587.4        96497.1
+         2 -  3 -  8            37.8            456261.1       116215.7
+         2 -  3 -  9            47.7           1018375.6       135309.2
+         2 -  3 - 10            52.9           1256685.9       175488.7
+         2 -  3 - 11           114.6           1037763.8      3692719.2
+         2 -  3 - 12            30.2             43110.0         1870.8
+         2 -  3 - 13            30.0             34354.6         1288.6
+         2 -  3 - 14            29.8             21273.5          652.5
+         2 -  4 -  1            29.4                 0.0            0.0
+         2 -  4 -  2            29.4                 0.0            0.0
+
+
+
+TIME     70.00 SECONDS                           1 TRAIN(S) ARE OPERATIONAL
+
+      R T                             AIR    AIR  TRACTIVE   MOTOR     LINE     FLY  MOTOR       GRID TEMP.         HEAT      HEAT
+TRAIN T Y  LOCATION  SPEED   ACCEL   DRAG   DRAG    EFFORT CURRENT  CURRENT   WHEEL    EFF    ACCEL.    DECEL.      GEN.   REJECT.
+ NO.  E P       (M)  (KPH) (M/S^2)   (KN)  COEFF (N/MOTOR)  (AMPS)   (AMPS)   (RPM)    (%)   (DEG C)   (DEG C)     (W/M)     (W/M)
+
+  1   1 1   1371.30   0.00    0.00   0.72   0.00        0.    0.00     0.00      0.   0.00     29.44    494.40   1695.72   4091.32
+
+   SYSTEM            AIR     AIR     TEMPERATURE (DEG C)
+PARTITIONING        FLOW     VEL.    -------------------
+                  (M**3/S)   (M/S)   HUMIDITY    (KG/KG)
+
+    1 -  1        103.192     5.89      29.4      29.5      29.5      29.5      29.5      29.5      29.5      29.5
+                                     0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551
+                                        29.5      29.5
+                                     0.01551   0.01551
+    2 -  2        -37.391    -2.13      32.6      41.7
+                                     0.01552   0.01554
+    2 -  3        -37.391    -2.13      68.8      84.8     101.2     116.8     131.3     145.2     159.3     174.1
+                                     0.01561   0.01565   0.01569   0.01573   0.01575   0.01577   0.01578   0.01579
+                                       190.0     215.9     247.8      34.2      32.8      31.2
+                                     0.01579   0.01575   0.01570   0.01566   0.01561   0.01556
+    2 -  4        -37.391    -2.13      29.4      29.4
+                                     0.01551   0.01551
+    5 -  5        140.583     5.04      30.2      30.0
+                                     0.01551   0.01551
+
+
+
+           SYSTEM           WALL SURFACE          HEAT TRANSFER TO WALL
+        PARTITIONING        TEMPERATURE         CONVECTION      RADIATION
+                              (DEG C)            (WATTS)        (WATTS)
+
+         2 -  2 -  1            29.5             31266.0         4521.4
+         2 -  2 -  2            29.8            124085.7        18697.6
+         2 -  3 -  1            30.7            120476.2        19809.6
+         2 -  3 -  2            31.4            172160.9        30371.4
+         2 -  3 -  3            32.3            226045.9        42977.0
+         2 -  3 -  4            33.4            276581.6        56631.6
+         2 -  3 -  5            34.6            323562.8        70803.9
+         2 -  3 -  6            35.9            368788.3        85840.8
+         2 -  3 -  7            37.3            414013.2       102612.6
+         2 -  3 -  8            38.9            461684.2       122075.5
+         2 -  3 -  9            49.6           1020204.3       140733.3
+         2 -  3 - 10            55.2           1255927.5       182428.8
+         2 -  3 - 11           121.1           1011152.8      3695963.2
+         2 -  3 - 12            30.3             43177.0         1803.8
+         2 -  3 - 13            30.1             34406.3         1236.9
+         2 -  3 - 14            29.8             21303.8          622.2
+         2 -  4 -  1            29.4                 0.0            0.0
+         2 -  4 -  2            29.4                 0.0            0.0
+
+
+
+TIME     80.00 SECONDS                           1 TRAIN(S) ARE OPERATIONAL
+
+      R T                             AIR    AIR  TRACTIVE   MOTOR     LINE     FLY  MOTOR       GRID TEMP.         HEAT      HEAT
+TRAIN T Y  LOCATION  SPEED   ACCEL   DRAG   DRAG    EFFORT CURRENT  CURRENT   WHEEL    EFF    ACCEL.    DECEL.      GEN.   REJECT.
+ NO.  E P       (M)  (KPH) (M/S^2)   (KN)  COEFF (N/MOTOR)  (AMPS)   (AMPS)   (RPM)    (%)   (DEG C)   (DEG C)     (W/M)     (W/M)
+
+  1   1 1   1371.30   0.00    0.00   0.70   0.00        0.    0.00     0.00      0.   0.00     29.44    478.70   1695.72   3935.11
+
+   SYSTEM            AIR     AIR     TEMPERATURE (DEG C)
+PARTITIONING        FLOW     VEL.    -------------------
+                  (M**3/S)   (M/S)   HUMIDITY    (KG/KG)
+
+    1 -  1        103.543     5.91      29.4      29.5      29.5      29.5      29.5      29.5      29.5      29.5
+                                     0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551
+                                        29.5      29.5
+                                     0.01551   0.01551
+    2 -  2        -36.781    -2.10      35.5      49.2
+                                     0.01553   0.01557
+    2 -  3        -36.781    -2.10      81.7      96.4     110.6     123.8     136.6     149.5     163.0     177.5
+                                     0.01566   0.01570   0.01573   0.01575   0.01577   0.01578   0.01579   0.01580
+                                       193.3     219.5     251.9      34.1      32.7      31.2
+                                     0.01580   0.01576   0.01571   0.01566   0.01561   0.01556
+    2 -  4        -36.781    -2.10      29.4      29.4
+                                     0.01551   0.01551
+    5 -  5        140.325     5.03      30.8      30.6
+                                     0.01551   0.01551
+
+
+
+           SYSTEM           WALL SURFACE          HEAT TRANSFER TO WALL
+        PARTITIONING        TEMPERATURE         CONVECTION      RADIATION
+                              (DEG C)            (WATTS)        (WATTS)
+
+         2 -  2 -  1            29.6             59823.7         8889.3
+         2 -  2 -  2            30.0            198895.8        31590.8
+         2 -  3 -  1            31.4            160404.0        28333.9
+         2 -  3 -  2            32.2            208070.2        39238.2
+         2 -  3 -  3            33.2            252832.2        51040.2
+         2 -  3 -  4            34.3            294873.9        63330.5
+         2 -  3 -  5            35.5            335386.7        76320.4
+         2 -  3 -  6            36.8            376428.8        90653.4
+         2 -  3 -  7            38.2            418697.2       107128.4
+         2 -  3 -  8            39.9            464600.1       126576.3
+         2 -  3 -  9            51.4           1019528.1       145073.8
+         2 -  3 - 10            57.3           1253310.2       188146.1
+         2 -  3 - 11           127.0            985163.5      3697920.5
+         2 -  3 - 12            30.3             43244.4         1736.4
+         2 -  3 - 13            30.1             34457.3         1185.8
+         2 -  3 - 14            29.9             21333.2          592.8
+         2 -  4 -  1            29.4                 0.0            0.0
+         2 -  4 -  2            29.4                 0.0            0.0
+
+
+
+TIME     90.00 SECONDS                           1 TRAIN(S) ARE OPERATIONAL
+
+      R T                             AIR    AIR  TRACTIVE   MOTOR     LINE     FLY  MOTOR       GRID TEMP.         HEAT      HEAT
+TRAIN T Y  LOCATION  SPEED   ACCEL   DRAG   DRAG    EFFORT CURRENT  CURRENT   WHEEL    EFF    ACCEL.    DECEL.      GEN.   REJECT.
+ NO.  E P       (M)  (KPH) (M/S^2)   (KN)  COEFF (N/MOTOR)  (AMPS)   (AMPS)   (RPM)    (%)   (DEG C)   (DEG C)     (W/M)     (W/M)
+
+  1   1 1   1371.30   0.00    0.00   0.68   0.00        0.    0.00     0.00      0.   0.00     29.44    464.00   1695.72   3795.15
+
+   SYSTEM            AIR     AIR     TEMPERATURE (DEG C)
+PARTITIONING        FLOW     VEL.    -------------------
+                  (M**3/S)   (M/S)   HUMIDITY    (KG/KG)
+
+    1 -  1        103.732     5.92      29.4      29.5      29.5      29.5      29.5      29.5      29.5      29.5
+                                     0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551
+                                        29.5      29.5
+                                     0.01551   0.01551
+    2 -  2        -36.241    -2.07      39.3      57.2
+                                     0.01554   0.01559
+    2 -  3        -36.241    -2.07      91.8     104.6     116.8     128.5     140.3     152.7     165.9     180.3
+                                     0.01570   0.01573   0.01575   0.01577   0.01578   0.01579   0.01580   0.01580
+                                       196.1     222.7     255.6      34.0      32.7      31.2
+                                     0.01581   0.01576   0.01571   0.01566   0.01561   0.01556
+    2 -  4        -36.241    -2.07      29.4      29.4
+                                     0.01551   0.01551
+    5 -  5        139.973     5.02      31.7      31.5
+                                     0.01552   0.01552
+
+
+
+           SYSTEM           WALL SURFACE          HEAT TRANSFER TO WALL
+        PARTITIONING        TEMPERATURE         CONVECTION      RADIATION
+                              (DEG C)            (WATTS)        (WATTS)
+
+         2 -  2 -  1            29.7             97763.3        14981.6
+         2 -  2 -  2            30.4            277783.9        46529.4
+         2 -  3 -  1            32.1            190865.8        35702.8
+         2 -  3 -  2            33.0            230980.0        45938.6
+         2 -  3 -  3            34.0            268732.0        56624.9
+         2 -  3 -  4            35.1            305173.2        67886.4
+         2 -  3 -  5            36.3            341938.2        80207.2
+         2 -  3 -  6            37.6            380347.0        94228.0
+         2 -  3 -  7            39.1            421134.6       110661.9
+         2 -  3 -  8            40.8            466104.9       130308.5
+         2 -  3 -  9            53.0           1017765.5       148868.5
+         2 -  3 - 10            59.2           1250081.9       193278.5
+         2 -  3 - 11           132.6            960924.8      3699367.2
+         2 -  3 - 12            30.4             43308.8         1672.0
+         2 -  3 - 13            30.2             34505.7         1137.5
+         2 -  3 - 14            29.9             21360.9          565.1
+         2 -  4 -  1            29.4                 0.0            0.0
+         2 -  4 -  2            29.4                 0.0            0.0
+
+
+
+TIME    100.00 SECONDS                           1 TRAIN(S) ARE OPERATIONAL
+
+      R T                             AIR    AIR  TRACTIVE   MOTOR     LINE     FLY  MOTOR       GRID TEMP.         HEAT      HEAT
+TRAIN T Y  LOCATION  SPEED   ACCEL   DRAG   DRAG    EFFORT CURRENT  CURRENT   WHEEL    EFF    ACCEL.    DECEL.      GEN.   REJECT.
+ NO.  E P       (M)  (KPH) (M/S^2)   (KN)  COEFF (N/MOTOR)  (AMPS)   (AMPS)   (RPM)    (%)   (DEG C)   (DEG C)     (W/M)     (W/M)
+
+  1   1 1   1371.30   0.00    0.00   0.67   0.00        0.    0.00     0.00      0.   0.00     29.44    450.19   1695.72   3668.40
+
+   SYSTEM            AIR     AIR     TEMPERATURE (DEG C)
+PARTITIONING        FLOW     VEL.    -------------------
+                  (M**3/S)   (M/S)   HUMIDITY    (KG/KG)
+
+    1 -  1        103.803     5.92      29.4      29.5      29.5      29.5      29.5      29.5      29.5      29.5
+                                     0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551
+                                        29.5      29.5
+                                     0.01551   0.01551
+    2 -  2        -35.744    -2.04      43.8      64.8
+                                     0.01556   0.01563
+    2 -  3        -35.744    -2.04      98.9     110.1     120.9     131.8     143.1     155.2     168.3     182.7
+                                     0.01573   0.01575   0.01577   0.01578   0.01579   0.01580   0.01580   0.01581
+                                       198.7     225.7     259.1      33.9      32.6      31.1
+                                     0.01581   0.01577   0.01571   0.01566   0.01561   0.01556
+    2 -  4        -35.744    -2.04      29.4      29.4
+                                     0.01551   0.01551
+    5 -  5        139.547     5.01      32.8      32.5
+                                     0.01552   0.01552
+
+
+
+           SYSTEM           WALL SURFACE          HEAT TRANSFER TO WALL
+        PARTITIONING        TEMPERATURE         CONVECTION      RADIATION
+                              (DEG C)            (WATTS)        (WATTS)
+
+         2 -  2 -  1            29.9            141707.3        22507.7
+         2 -  2 -  2            30.8            351492.7        61883.1
+         2 -  3 -  1            32.8            210853.0        41314.3
+         2 -  3 -  2            33.7            244864.4        50636.7
+         2 -  3 -  3            34.7            277769.4        60440.1
+         2 -  3 -  4            35.8            310851.3        71089.7
+         2 -  3 -  5            37.0            345491.8        83099.9
+         2 -  3 -  6            38.3            382377.4        97060.0
+         2 -  3 -  7            39.9            422377.9       113636.1
+         2 -  3 -  8            41.6            466930.2       133632.9
+         2 -  3 -  9            54.5           1015735.9       152397.0
+         2 -  3 - 10            61.0           1246898.8       198132.9
+         2 -  3 - 11           137.8            938708.0      3700628.5
+         2 -  3 - 12            30.4             43369.1         1611.6
+         2 -  3 - 13            30.2             34550.9         1092.3
+         2 -  3 - 14            29.9             21386.7          539.3
+         2 -  4 -  1            29.4                 0.0            0.0
+         2 -  4 -  2            29.4                 0.0            0.0
+
+INTEGRATION STEP SIZE
+     AERODYNAMIC    RATIO = 1     INTEGRATION INCREMENT ( TWO CYCLES ) = 0.40 SEC
+     THERMODYNAMIC  RATIO = 5     INTEGRATION INCREMENT ( TWO CYCLES ) = 2.00 SEC
+
+
+TIME    120.00 SECONDS                           1 TRAIN(S) ARE OPERATIONAL
+
+      R T                             AIR    AIR  TRACTIVE   MOTOR     LINE     FLY  MOTOR       GRID TEMP.         HEAT      HEAT
+TRAIN T Y  LOCATION  SPEED   ACCEL   DRAG   DRAG    EFFORT CURRENT  CURRENT   WHEEL    EFF    ACCEL.    DECEL.      GEN.   REJECT.
+ NO.  E P       (M)  (KPH) (M/S^2)   (KN)  COEFF (N/MOTOR)  (AMPS)   (AMPS)   (RPM)    (%)   (DEG C)   (DEG C)     (W/M)     (W/M)
+
+  1   1 1   1371.30   0.00    0.00   0.64   0.00        0.    0.00     0.00      0.   0.00     29.44    424.98   1695.72   3447.69
+
+   SYSTEM            AIR     AIR     TEMPERATURE (DEG C)
+PARTITIONING        FLOW     VEL.    -------------------
+                  (M**3/S)   (M/S)   HUMIDITY    (KG/KG)
+
+    1 -  1        103.738     5.92      29.4      29.5      29.5      29.5      29.5      29.5      29.5      29.5
+                                     0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551
+                                        29.5      29.5
+                                     0.01551   0.01551
+    2 -  2        -34.873    -1.99      53.5      77.0
+                                     0.01560   0.01568
+    2 -  3        -34.873    -1.99     107.2     116.4     126.0     136.2     147.2     159.2     172.5     187.1
+                                     0.01577   0.01578   0.01579   0.01580   0.01581   0.01581   0.01581   0.01582
+                                       203.5     231.2     265.6      33.8      32.5      31.1
+                                     0.01582   0.01577   0.01572   0.01567   0.01561   0.01556
+    2 -  4        -34.873    -1.99      29.4      29.4
+                                     0.01551   0.01551
+    5 -  5        138.610     4.97      35.2      34.8
+                                     0.01553   0.01553
+
+
+
+           SYSTEM           WALL SURFACE          HEAT TRANSFER TO WALL
+        PARTITIONING        TEMPERATURE         CONVECTION      RADIATION
+                              (DEG C)            (WATTS)        (WATTS)
+
+         2 -  2 -  1            30.4            233319.8        39807.7
+         2 -  2 -  2            31.6            465307.3        88892.9
+         2 -  3 -  1            33.9            230428.8        48077.9
+         2 -  3 -  2            34.8            257568.7        56158.9
+         2 -  3 -  3            35.8            285716.6        65129.4
+         2 -  3 -  4            37.0            315803.7        75384.7
+         2 -  3 -  5            38.3            348655.1        87373.0
+         2 -  3 -  6            39.7            384199.8       101630.0
+         2 -  3 -  7            41.3            423689.2       118790.2
+         2 -  3 -  8            43.2            468090.5       139686.5
+         2 -  3 -  9            57.2           1012260.6       159002.0
+         2 -  3 - 10            64.4           1241516.4       207281.3
+         2 -  3 - 11           147.3            898248.5      3702690.0
+         2 -  3 - 12            30.4             23242.8         1552.4
+         2 -  3 - 13            30.3             34632.4         1010.7
+         2 -  3 - 14            30.0             21433.5          492.5
+         2 -  4 -  1            29.4                 0.0            0.0
+         2 -  4 -  2            29.4                 0.0            0.0
+
+
+
+TIME    140.00 SECONDS                           1 TRAIN(S) ARE OPERATIONAL
+
+      R T                             AIR    AIR  TRACTIVE   MOTOR     LINE     FLY  MOTOR       GRID TEMP.         HEAT      HEAT
+TRAIN T Y  LOCATION  SPEED   ACCEL   DRAG   DRAG    EFFORT CURRENT  CURRENT   WHEEL    EFF    ACCEL.    DECEL.      GEN.   REJECT.
+ NO.  E P       (M)  (KPH) (M/S^2)   (KN)  COEFF (N/MOTOR)  (AMPS)   (AMPS)   (RPM)    (%)   (DEG C)   (DEG C)     (W/M)     (W/M)
+
+  1   1 1   1371.30   0.00    0.00   0.62   0.00        0.    0.00     0.00      0.   0.00     29.44    402.49   1695.72   3263.32
+
+   SYSTEM            AIR     AIR     TEMPERATURE (DEG C)
+PARTITIONING        FLOW     VEL.    -------------------
+                  (M**3/S)   (M/S)   HUMIDITY    (KG/KG)
+
+    1 -  1        103.574     5.91      29.4      29.5      29.5      29.5      29.5      29.5      29.5      29.5
+                                     0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551
+                                        29.5      29.5
+                                     0.01551   0.01551
+    2 -  2        -34.182    -1.95      62.1      85.0
+                                     0.01565   0.01573
+    2 -  3        -34.182    -1.95     111.4     120.0     129.3     139.4     150.5     162.7     176.1     191.0
+                                     0.01579   0.01580   0.01581   0.01581   0.01581   0.01582   0.01582   0.01582
+                                       207.6     236.0     271.0      33.7      32.4      31.0
+                                     0.01583   0.01578   0.01572   0.01567   0.01562   0.01556
+    2 -  4        -34.182    -1.95      29.4      29.4
+                                     0.01551   0.01551
+    5 -  5        137.757     4.94      37.2      36.9
+                                     0.01554   0.01554
+
+
+
+           SYSTEM           WALL SURFACE          HEAT TRANSFER TO WALL
+        PARTITIONING        TEMPERATURE         CONVECTION      RADIATION
+                              (DEG C)            (WATTS)        (WATTS)
+
+         2 -  2 -  1            30.9            312325.2        56668.3
+         2 -  2 -  2            32.4            534021.1       108001.2
+         2 -  3 -  1            34.9            237557.3        51531.7
+         2 -  3 -  2            35.8            262189.8        59235.9
+         2 -  3 -  3            36.9            288835.1        68105.4
+         2 -  3 -  4            38.0            318081.8        78486.5
+         2 -  3 -  5            39.4            350393.8        90793.4
+         2 -  3 -  6            40.9            385602.7       105546.9
+         2 -  3 -  7            42.6            425029.3       123375.2
+         2 -  3 -  8            44.6            469437.7       145137.9
+         2 -  3 -  9            59.8           1009199.4       164902.1
+         2 -  3 - 10            67.5           1236947.2       215348.0
+         2 -  3 - 11           156.0            861674.2      3703393.2
+         2 -  3 - 12            30.4             22101.0         1498.8
+         2 -  3 - 13            30.2             14510.4          993.3
+         2 -  3 - 14            30.0             21475.5          450.5
+         2 -  4 -  1            29.4                 0.0            0.0
+         2 -  4 -  2            29.4                 0.0            0.0
+
+
+
+TIME    160.00 SECONDS                           1 TRAIN(S) ARE OPERATIONAL
+
+      R T                             AIR    AIR  TRACTIVE   MOTOR     LINE     FLY  MOTOR       GRID TEMP.         HEAT      HEAT
+TRAIN T Y  LOCATION  SPEED   ACCEL   DRAG   DRAG    EFFORT CURRENT  CURRENT   WHEEL    EFF    ACCEL.    DECEL.      GEN.   REJECT.
+ NO.  E P       (M)  (KPH) (M/S^2)   (KN)  COEFF (N/MOTOR)  (AMPS)   (AMPS)   (RPM)    (%)   (DEG C)   (DEG C)     (W/M)     (W/M)
+
+  1   1 1   1371.30   0.00    0.00   0.60   0.00        0.    0.00     0.00      0.   0.00     29.44    382.30   1695.72   3107.99
+
+   SYSTEM            AIR     AIR     TEMPERATURE (DEG C)
+PARTITIONING        FLOW     VEL.    -------------------
+                  (M**3/S)   (M/S)   HUMIDITY    (KG/KG)
+
+    1 -  1        103.426     5.90      29.4      29.5      29.5      29.5      29.5      29.5      29.5      29.5
+                                     0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551
+                                        29.5      29.5
+                                     0.01551   0.01551
+    2 -  2        -33.670    -1.92      68.8      90.0
+                                     0.01569   0.01576
+    2 -  3        -33.670    -1.92     114.2     122.7     132.0     142.1     153.3     165.6     179.3     194.3
+                                     0.01581   0.01581   0.01582   0.01582   0.01582   0.01582   0.01583   0.01583
+                                       211.1     239.9     275.5      33.5      32.3      31.0
+                                     0.01583   0.01578   0.01573   0.01567   0.01562   0.01556
+    2 -  4        -33.670    -1.92      29.4      29.4
+                                     0.01551   0.01551
+    5 -  5        137.095     4.92      38.8      38.5
+                                     0.01555   0.01555
+
+
+
+           SYSTEM           WALL SURFACE          HEAT TRANSFER TO WALL
+        PARTITIONING        TEMPERATURE         CONVECTION      RADIATION
+                              (DEG C)            (WATTS)        (WATTS)
+
+         2 -  2 -  1            31.5            370980.5        70559.6
+         2 -  2 -  2            33.1            572678.8       120369.9
+         2 -  3 -  1            35.7            240938.4        53722.9
+         2 -  3 -  2            36.7            264825.3        61452.4
+         2 -  3 -  3            37.8            291080.1        70481.0
+         2 -  3 -  4            39.0            320138.5        81131.1
+         2 -  3 -  5            40.4            352140.4        93807.1
+         2 -  3 -  6            42.0            387270.4       109019.4
+         2 -  3 -  7            43.9            426608.9       127410.5
+         2 -  3 -  8            46.0            470901.3       149862.9
+         2 -  3 -  9            62.1           1006356.6       169866.6
+         2 -  3 - 10            70.3           1232368.9       222001.9
+         2 -  3 - 11           163.9            826868.8      3702194.8
+         2 -  3 - 12            30.4             20939.2         1436.4
+         2 -  3 - 13            30.2             14180.0          967.4
+         2 -  3 - 14            30.1             21514.3          411.7
+         2 -  4 -  1            29.4                 0.0            0.0
+         2 -  4 -  2            29.4                 0.0            0.0
+
+
+
+TIME    180.00 SECONDS                           1 TRAIN(S) ARE OPERATIONAL
+
+      R T                             AIR    AIR  TRACTIVE   MOTOR     LINE     FLY  MOTOR       GRID TEMP.         HEAT      HEAT
+TRAIN T Y  LOCATION  SPEED   ACCEL   DRAG   DRAG    EFFORT CURRENT  CURRENT   WHEEL    EFF    ACCEL.    DECEL.      GEN.   REJECT.
+ NO.  E P       (M)  (KPH) (M/S^2)   (KN)  COEFF (N/MOTOR)  (AMPS)   (AMPS)   (RPM)    (%)   (DEG C)   (DEG C)     (W/M)     (W/M)
+
+  1   1 1   1371.30   0.00    0.00   0.59   0.00        0.    0.00     0.00      0.   0.00     29.44    364.06   1695.72   2974.71
+
+   SYSTEM            AIR     AIR     TEMPERATURE (DEG C)
+PARTITIONING        FLOW     VEL.    -------------------
+                  (M**3/S)   (M/S)   HUMIDITY    (KG/KG)
+
+    1 -  1        103.325     5.89      29.4      29.5      29.5      29.5      29.5      29.5      29.5      29.5
+                                     0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551
+                                        29.5      29.5
+                                     0.01551   0.01551
+    2 -  2        -33.298    -1.90      73.7      93.3
+                                     0.01573   0.01578
+    2 -  3        -33.298    -1.90     116.4     124.9     134.3     144.5     155.8     168.2     181.9     197.1
+                                     0.01582   0.01582   0.01582   0.01583   0.01583   0.01583   0.01583   0.01583
+                                       214.0     243.1     279.1      33.4      32.2      30.9
+                                     0.01584   0.01579   0.01573   0.01567   0.01562   0.01556
+    2 -  4        -33.298    -1.90      29.4      29.4
+                                     0.01551   0.01551
+    5 -  5        136.624     4.90      40.0      39.7
+                                     0.01556   0.01556
+
+
+
+           SYSTEM           WALL SURFACE          HEAT TRANSFER TO WALL
+        PARTITIONING        TEMPERATURE         CONVECTION      RADIATION
+                              (DEG C)            (WATTS)        (WATTS)
+
+         2 -  2 -  1            32.0            411276.6        80955.7
+         2 -  2 -  2            33.7            595184.4       128504.7
+         2 -  3 -  1            36.4            243438.6        55451.2
+         2 -  3 -  2            37.5            267126.9        63323.0
+         2 -  3 -  3            38.6            293269.7        72553.8
+         2 -  3 -  4            39.9            322243.3        83458.1
+         2 -  3 -  5            41.4            353962.2        96441.8
+         2 -  3 -  6            43.1            388952.9       112013.3
+         2 -  3 -  7            45.0            428120.4       130836.1
+         2 -  3 -  8            47.2            472213.3       153817.6
+         2 -  3 -  9            64.3           1003484.9       173901.8
+         2 -  3 - 10            73.0           1227518.4       227313.5
+         2 -  3 - 11           171.2            793062.0      3699221.5
+         2 -  3 - 12            30.4             19934.6         1379.0
+         2 -  3 - 13            30.2             13596.7          935.5
+         2 -  3 - 14            30.1             21550.6          375.4
+         2 -  4 -  1            29.4                 0.0            0.0
+         2 -  4 -  2            29.4                 0.0            0.0
+
+
+
+TIME    200.00 SECONDS                           1 TRAIN(S) ARE OPERATIONAL
+
+      R T                             AIR    AIR  TRACTIVE   MOTOR     LINE     FLY  MOTOR       GRID TEMP.         HEAT      HEAT
+TRAIN T Y  LOCATION  SPEED   ACCEL   DRAG   DRAG    EFFORT CURRENT  CURRENT   WHEEL    EFF    ACCEL.    DECEL.      GEN.   REJECT.
+ NO.  E P       (M)  (KPH) (M/S^2)   (KN)  COEFF (N/MOTOR)  (AMPS)   (AMPS)   (RPM)    (%)   (DEG C)   (DEG C)     (W/M)     (W/M)
+
+  1   1 1   1371.30   0.00    0.00   0.59   0.00        0.    0.00     0.00      0.   0.00     29.44    347.50   1695.72   2859.58
+
+   SYSTEM            AIR     AIR     TEMPERATURE (DEG C)
+PARTITIONING        FLOW     VEL.    -------------------
+                  (M**3/S)   (M/S)   HUMIDITY    (KG/KG)
+
+    1 -  1        103.268     5.89      29.4      29.5      29.5      29.5      29.5      29.5      29.5      29.5
+                                     0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551
+                                        29.5      29.5
+                                     0.01551   0.01551
+    2 -  2        -33.027    -1.88      77.1      95.7
+                                     0.01576   0.01580
+    2 -  3        -33.027    -1.88     118.3     126.9     136.3     146.6     157.9     170.4     184.2     199.4
+                                     0.01582   0.01583   0.01583   0.01583   0.01583   0.01584   0.01584   0.01584
+                                       216.5     245.8     282.0      33.3      32.2      30.9
+                                     0.01584   0.01579   0.01573   0.01568   0.01562   0.01556
+    2 -  4        -33.027    -1.88      29.4      29.4
+                                     0.01551   0.01551
+    5 -  5        136.295     4.89      40.8      40.5
+                                     0.01557   0.01557
+
+
+
+           SYSTEM           WALL SURFACE          HEAT TRANSFER TO WALL
+        PARTITIONING        TEMPERATURE         CONVECTION      RADIATION
+                              (DEG C)            (WATTS)        (WATTS)
+
+         2 -  2 -  1            32.5            438238.4        88439.5
+         2 -  2 -  2            34.3            608817.5       134279.7
+         2 -  3 -  1            37.1            245678.9        56944.3
+         2 -  3 -  2            38.2            269272.0        64960.0
+         2 -  3 -  3            39.4            295318.2        74362.7
+         2 -  3 -  4            40.8            324177.2        85468.5
+         2 -  3 -  5            42.3            355599.6        98690.8
+         2 -  3 -  6            44.1            390415.8       114541.3
+         2 -  3 -  7            46.1            429390.7       133704.4
+         2 -  3 -  8            48.4            473277.6       157111.2
+         2 -  3 -  9            66.3           1000476.4       177182.1
+         2 -  3 - 10            75.5           1223283.9       231548.0
+         2 -  3 - 11           178.0            760215.0      3694886.5
+         2 -  3 - 12            30.4             19048.6         1325.8
+         2 -  3 - 13            30.2             13050.2          903.5
+         2 -  3 - 14            30.1             21584.5          341.4
+         2 -  4 -  1            29.4                 0.0            0.0
+         2 -  4 -  2            29.4                 0.0            0.0
+
+
+
+TIME    220.00 SECONDS                           1 TRAIN(S) ARE OPERATIONAL
+
+      R T                             AIR    AIR  TRACTIVE   MOTOR     LINE     FLY  MOTOR       GRID TEMP.         HEAT      HEAT
+TRAIN T Y  LOCATION  SPEED   ACCEL   DRAG   DRAG    EFFORT CURRENT  CURRENT   WHEEL    EFF    ACCEL.    DECEL.      GEN.   REJECT.
+ NO.  E P       (M)  (KPH) (M/S^2)   (KN)  COEFF (N/MOTOR)  (AMPS)   (AMPS)   (RPM)    (%)   (DEG C)   (DEG C)     (W/M)     (W/M)
+
+  1   1 1   1371.30   0.00    0.00   0.58   0.00        0.    0.00     0.00      0.   0.00     29.44    332.39   1695.72   2758.81
+
+   SYSTEM            AIR     AIR     TEMPERATURE (DEG C)
+PARTITIONING        FLOW     VEL.    -------------------
+                  (M**3/S)   (M/S)   HUMIDITY    (KG/KG)
+
+    1 -  1        103.241     5.89      29.4      29.5      29.5      29.5      29.5      29.5      29.5      29.5
+                                     0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551
+                                        29.5      29.5
+                                     0.01551   0.01551
+    2 -  2        -32.823    -1.87      79.6      97.6
+                                     0.01578   0.01581
+    2 -  3        -32.823    -1.87     119.9     128.5     138.0     148.3     159.7     172.2     186.1     201.4
+                                     0.01583   0.01583   0.01583   0.01584   0.01584   0.01584   0.01584   0.01584
+                                       218.5     248.0     284.4      33.2      32.1      30.9
+                                     0.01584   0.01579   0.01573   0.01568   0.01562   0.01556
+    2 -  4        -32.823    -1.87      29.4      29.4
+                                     0.01551   0.01551
+    5 -  5        136.063     4.88      41.3      41.1
+                                     0.01557   0.01557
+
+
+
+           SYSTEM           WALL SURFACE          HEAT TRANSFER TO WALL
+        PARTITIONING        TEMPERATURE         CONVECTION      RADIATION
+                              (DEG C)            (WATTS)        (WATTS)
+
+         2 -  2 -  1            33.0            456479.4        93851.5
+         2 -  2 -  2            34.8            618497.2       138720.7
+         2 -  3 -  1            37.8            247658.0        58246.2
+         2 -  3 -  2            38.9            271148.2        66379.1
+         2 -  3 -  3            40.2            297076.8        75917.7
+         2 -  3 -  4            41.6            325803.0        87183.2
+         2 -  3 -  5            43.2            356947.1       100599.2
+         2 -  3 -  6            45.0            391598.3       116680.8
+         2 -  3 -  7            47.1            430402.2       136132.2
+         2 -  3 -  8            49.6            474113.6       159904.9
+         2 -  3 -  9            68.3            997746.4       179912.1
+         2 -  3 - 10            77.8           1219827.1       235004.7
+         2 -  3 - 11           184.4            728528.0      3689631.5
+         2 -  3 - 12            30.4             18261.7         1276.9
+         2 -  3 - 13            30.2             12551.8          873.0
+         2 -  3 - 14            30.2             21616.2          309.8
+         2 -  4 -  1            29.4                 0.0            0.0
+         2 -  4 -  2            29.4                 0.0            0.0
+
+
+
+TIME    240.00 SECONDS                           1 TRAIN(S) ARE OPERATIONAL
+
+      R T                             AIR    AIR  TRACTIVE   MOTOR     LINE     FLY  MOTOR       GRID TEMP.         HEAT      HEAT
+TRAIN T Y  LOCATION  SPEED   ACCEL   DRAG   DRAG    EFFORT CURRENT  CURRENT   WHEEL    EFF    ACCEL.    DECEL.      GEN.   REJECT.
+ NO.  E P       (M)  (KPH) (M/S^2)   (KN)  COEFF (N/MOTOR)  (AMPS)   (AMPS)   (RPM)    (%)   (DEG C)   (DEG C)     (W/M)     (W/M)
+
+  1   1 1   1371.30   0.00    0.00   0.58   0.00        0.    0.00     0.00      0.   0.00     29.44    318.58   1695.72   2669.65
+
+   SYSTEM            AIR     AIR     TEMPERATURE (DEG C)
+PARTITIONING        FLOW     VEL.    -------------------
+                  (M**3/S)   (M/S)   HUMIDITY    (KG/KG)
+
+    1 -  1        103.232     5.89      29.4      29.5      29.5      29.5      29.5      29.5      29.5      29.5
+                                     0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551
+                                        29.5      29.5
+                                     0.01551   0.01551
+    2 -  2        -32.661    -1.86      81.4      99.1
+                                     0.01580   0.01582
+    2 -  3        -32.661    -1.86     121.4     130.0     139.5     149.9     161.3     173.8     187.7     203.2
+                                     0.01583   0.01584   0.01584   0.01584   0.01584   0.01584   0.01584   0.01584
+                                       220.4     250.0     286.4      33.1      32.0      30.8
+                                     0.01584   0.01579   0.01574   0.01568   0.01562   0.01556
+    2 -  4        -32.661    -1.86      29.4      29.4
+                                     0.01551   0.01551
+    5 -  5        135.893     4.88      41.7      41.5
+                                     0.01558   0.01558
+
+
+
+           SYSTEM           WALL SURFACE          HEAT TRANSFER TO WALL
+        PARTITIONING        TEMPERATURE         CONVECTION      RADIATION
+                              (DEG C)            (WATTS)        (WATTS)
+
+         2 -  2 -  1            33.4            469221.9        97880.3
+         2 -  2 -  2            35.3            625862.4       142319.0
+         2 -  3 -  1            38.4            249324.3        59372.6
+         2 -  3 -  2            39.6            272705.8        67600.9
+         2 -  3 -  3            40.9            298518.1        77252.8
+         2 -  3 -  4            42.4            327057.9        88655.9
+         2 -  3 -  5            44.0            358027.7       102240.6
+         2 -  3 -  6            45.9            392543.9       118528.6
+         2 -  3 -  7            48.1            431211.2       138239.9
+         2 -  3 -  8            50.7            474783.1       162343.9
+         2 -  3 -  9            70.1            995399.9       182258.6
+         2 -  3 - 10            80.1           1216908.2       237923.6
+         2 -  3 - 11           190.3            698161.2      3683798.2
+         2 -  3 - 12            30.4             17559.2         1232.1
+         2 -  3 - 13            30.2             12099.9          844.7
+         2 -  3 - 14            30.2             21645.6          280.4
+         2 -  4 -  1            29.4                 0.0            0.0
+         2 -  4 -  2            29.4                 0.0            0.0
+
+
+
+TIME    260.00 SECONDS                           1 TRAIN(S) ARE OPERATIONAL
+
+      R T                             AIR    AIR  TRACTIVE   MOTOR     LINE     FLY  MOTOR       GRID TEMP.         HEAT      HEAT
+TRAIN T Y  LOCATION  SPEED   ACCEL   DRAG   DRAG    EFFORT CURRENT  CURRENT   WHEEL    EFF    ACCEL.    DECEL.      GEN.   REJECT.
+ NO.  E P       (M)  (KPH) (M/S^2)   (KN)  COEFF (N/MOTOR)  (AMPS)   (AMPS)   (RPM)    (%)   (DEG C)   (DEG C)     (W/M)     (W/M)
+
+  1   1 1   1371.30   0.00    0.00   0.57   0.00        0.    0.00     0.00      0.   0.00     29.44    305.90   1695.72   2590.07
+
+   SYSTEM            AIR     AIR     TEMPERATURE (DEG C)
+PARTITIONING        FLOW     VEL.    -------------------
+                  (M**3/S)   (M/S)   HUMIDITY    (KG/KG)
+
+    1 -  1        103.233     5.89      29.4      29.5      29.5      29.5      29.5      29.5      29.5      29.5
+                                     0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551
+                                        29.5      29.5
+                                     0.01551   0.01551
+    2 -  2        -32.529    -1.86      82.9     100.4
+                                     0.01581   0.01583
+    2 -  3        -32.529    -1.86     122.6     131.3     140.8     151.2     162.7     175.3     189.2     204.7
+                                     0.01584   0.01584   0.01584   0.01584   0.01584   0.01584   0.01584   0.01584
+                                       222.0     251.7     288.3      33.0      32.0      30.8
+                                     0.01585   0.01579   0.01574   0.01568   0.01562   0.01556
+    2 -  4        -32.529    -1.86      29.4      29.4
+                                     0.01551   0.01551
+    5 -  5        135.763     4.87      42.1      41.8
+                                     0.01558   0.01558
+
+
+
+           SYSTEM           WALL SURFACE          HEAT TRANSFER TO WALL
+        PARTITIONING        TEMPERATURE         CONVECTION      RADIATION
+                              (DEG C)            (WATTS)        (WATTS)
+
+         2 -  2 -  1            33.8            478478.2       100993.9
+         2 -  2 -  2            35.8            631658.8       145327.9
+         2 -  3 -  1            39.0            250695.0        60349.5
+         2 -  3 -  2            40.2            273980.8        68662.4
+         2 -  3 -  3            41.5            299697.0        78417.2
+         2 -  3 -  4            43.1            328042.7        89947.9
+         2 -  3 -  5            44.8            358908.7       103687.1
+         2 -  3 -  6            46.8            393319.9       120167.6
+         2 -  3 -  7            49.1            431879.8       140121.5
+         2 -  3 -  8            51.7            475319.7       164533.7
+         2 -  3 -  9            71.9            993320.1       184338.5
+         2 -  3 - 10            82.2           1214362.9       240469.0
+         2 -  3 - 11           195.9            669171.2      3677612.8
+         2 -  3 - 12            30.4             16929.0         1191.4
+         2 -  3 - 13            30.2             11691.1          818.6
+         2 -  3 - 14            30.2             21673.1          252.9
+         2 -  4 -  1            29.4                 0.0            0.0
+         2 -  4 -  2            29.4                 0.0            0.0
+
+
+
+TIME    280.00 SECONDS                           1 TRAIN(S) ARE OPERATIONAL
+
+      R T                             AIR    AIR  TRACTIVE   MOTOR     LINE     FLY  MOTOR       GRID TEMP.         HEAT      HEAT
+TRAIN T Y  LOCATION  SPEED   ACCEL   DRAG   DRAG    EFFORT CURRENT  CURRENT   WHEEL    EFF    ACCEL.    DECEL.      GEN.   REJECT.
+ NO.  E P       (M)  (KPH) (M/S^2)   (KN)  COEFF (N/MOTOR)  (AMPS)   (AMPS)   (RPM)    (%)   (DEG C)   (DEG C)     (W/M)     (W/M)
+
+  1   1 1   1371.30   0.00    0.00   0.57   0.00        0.    0.00     0.00      0.   0.00     29.44    294.25   1695.72   2518.56
+
+   SYSTEM            AIR     AIR     TEMPERATURE (DEG C)
+PARTITIONING        FLOW     VEL.    -------------------
+                  (M**3/S)   (M/S)   HUMIDITY    (KG/KG)
+
+    1 -  1        103.241     5.89      29.4      29.5      29.5      29.5      29.5      29.5      29.5      29.5
+                                     0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551
+                                        29.5      29.5
+                                     0.01551   0.01551
+    2 -  2        -32.417    -1.85      84.1     101.5
+                                     0.01582   0.01583
+    2 -  3        -32.417    -1.85     123.8     132.5     142.0     152.4     163.9     176.6     190.6     206.2
+                                     0.01584   0.01584   0.01584   0.01584   0.01584   0.01585   0.01585   0.01585
+                                       223.6     253.3     290.0      32.9      31.9      30.8
+                                     0.01585   0.01580   0.01574   0.01568   0.01562   0.01556
+    2 -  4        -32.417    -1.85      29.4      29.4
+                                     0.01551   0.01551
+    5 -  5        135.658     4.87      42.3      42.1
+                                     0.01558   0.01558
+
+
+
+           SYSTEM           WALL SURFACE          HEAT TRANSFER TO WALL
+        PARTITIONING        TEMPERATURE         CONVECTION      RADIATION
+                              (DEG C)            (WATTS)        (WATTS)
+
+         2 -  2 -  1            34.1            485461.7       103490.2
+         2 -  2 -  2            36.2            636319.5       147902.5
+         2 -  3 -  1            39.5            251829.8        61209.6
+         2 -  3 -  2            40.8            275040.0        69602.4
+         2 -  3 -  3            42.2            300682.1        79455.2
+         2 -  3 -  4            43.8            328866.7        91107.4
+         2 -  3 -  5            45.6            359652.8       104994.3
+         2 -  3 -  6            47.6            393982.3       121658.6
+         2 -  3 -  7            50.0            432457.8       141843.5
+         2 -  3 -  8            52.7            475682.5       166549.7
+         2 -  3 -  9            73.6            991430.2       186228.3
+         2 -  3 - 10            84.3           1212083.5       242748.3
+         2 -  3 - 11           201.2            641541.2      3671218.2
+         2 -  3 - 12            30.4             16361.4         1154.3
+         2 -  3 - 13            30.2             11320.5          794.6
+         2 -  3 - 14            30.3             21698.7          227.3
+         2 -  4 -  1            29.4                 0.0            0.0
+         2 -  4 -  2            29.4                 0.0            0.0
+
+
+
+TIME    300.00 SECONDS                           1 TRAIN(S) ARE OPERATIONAL
+
+      R T                             AIR    AIR  TRACTIVE   MOTOR     LINE     FLY  MOTOR       GRID TEMP.         HEAT      HEAT
+TRAIN T Y  LOCATION  SPEED   ACCEL   DRAG   DRAG    EFFORT CURRENT  CURRENT   WHEEL    EFF    ACCEL.    DECEL.      GEN.   REJECT.
+ NO.  E P       (M)  (KPH) (M/S^2)   (KN)  COEFF (N/MOTOR)  (AMPS)   (AMPS)   (RPM)    (%)   (DEG C)   (DEG C)     (W/M)     (W/M)
+
+  1   1 1   1371.30   0.00    0.00   0.57   0.00        0.    0.00     0.00      0.   0.00     29.44    283.53   1695.72   2453.94
+
+   SYSTEM            AIR     AIR     TEMPERATURE (DEG C)
+PARTITIONING        FLOW     VEL.    -------------------
+                  (M**3/S)   (M/S)   HUMIDITY    (KG/KG)
+
+    1 -  1        103.253     5.89      29.4      29.5      29.5      29.5      29.5      29.5      29.5      29.5
+                                     0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551
+                                        29.5      29.5
+                                     0.01551   0.01551
+    2 -  2        -32.318    -1.84      85.1     102.5
+                                     0.01583   0.01584
+    2 -  3        -32.318    -1.84     124.8     133.5     143.1     153.6     165.1     177.8     191.9     207.6
+                                     0.01584   0.01584   0.01584   0.01585   0.01585   0.01585   0.01585   0.01585
+                                       225.0     254.8     291.5      32.8      31.9      30.8
+                                     0.01585   0.01580   0.01574   0.01568   0.01562   0.01556
+    2 -  4        -32.318    -1.84      29.4      29.4
+                                     0.01551   0.01551
+    5 -  5        135.571     4.86      42.5      42.3
+                                     0.01558   0.01558
+
+
+
+           SYSTEM           WALL SURFACE          HEAT TRANSFER TO WALL
+        PARTITIONING        TEMPERATURE         CONVECTION      RADIATION
+                              (DEG C)            (WATTS)        (WATTS)
+
+         2 -  2 -  1            34.5            490915.4       105558.7
+         2 -  2 -  2            36.6            640147.2       150152.6
+         2 -  3 -  1            40.1            252791.0        61982.3
+         2 -  3 -  2            41.4            275945.0        70453.2
+         2 -  3 -  3            42.8            301531.9        80401.3
+         2 -  3 -  4            44.4            329582.0        92171.8
+         2 -  3 -  5            46.3            360305.8       106201.5
+         2 -  3 -  6            48.4            394569.7       123042.7
+         2 -  3 -  7            50.8            432973.4       143448.1
+         2 -  3 -  8            53.6            476003.1       168433.8
+         2 -  3 -  9            75.2            989680.7       187977.8
+         2 -  3 - 10            86.3           1210000.2       244831.7
+         2 -  3 - 11           206.3            615211.2      3664704.8
+         2 -  3 - 12            30.4             15848.3         1120.5
+         2 -  3 - 13            30.2             10984.3          772.8
+         2 -  3 - 14            30.3             21722.7          203.2
+         2 -  4 -  1            29.4                 0.0            0.0
+         2 -  4 -  2            29.4                 0.0            0.0
+
+INTEGRATION STEP SIZE
+     AERODYNAMIC    RATIO = 1     INTEGRATION INCREMENT ( TWO CYCLES ) = 0.40 SEC
+     THERMODYNAMIC  RATIO = 5     INTEGRATION INCREMENT ( TWO CYCLES ) = 2.00 SEC
+
+
+TIME    350.00 SECONDS                           1 TRAIN(S) ARE OPERATIONAL
+
+      R T                             AIR    AIR  TRACTIVE   MOTOR     LINE     FLY  MOTOR       GRID TEMP.         HEAT      HEAT
+TRAIN T Y  LOCATION  SPEED   ACCEL   DRAG   DRAG    EFFORT CURRENT  CURRENT   WHEEL    EFF    ACCEL.    DECEL.      GEN.   REJECT.
+ NO.  E P       (M)  (KPH) (M/S^2)   (KN)  COEFF (N/MOTOR)  (AMPS)   (AMPS)   (RPM)    (%)   (DEG C)   (DEG C)     (W/M)     (W/M)
+
+  1   1 1   1371.30   0.00    0.00   0.56   0.00        0.    0.00     0.00      0.   0.00     29.44    260.20   1695.72   2316.90
+
+   SYSTEM            AIR     AIR     TEMPERATURE (DEG C)
+PARTITIONING        FLOW     VEL.    -------------------
+                  (M**3/S)   (M/S)   HUMIDITY    (KG/KG)
+
+    1 -  1        103.291     5.89      29.4      29.5      29.5      29.5      29.5      29.5      29.5      29.5
+                                     0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551
+                                        29.5      29.5
+                                     0.01551   0.01551
+    2 -  2        -32.112    -1.83      87.2     104.5
+                                     0.01584   0.01584
+    2 -  3        -32.112    -1.83     127.0     135.8     145.5     156.1     167.8     180.6     194.8     210.6
+                                     0.01585   0.01585   0.01585   0.01585   0.01585   0.01585   0.01585   0.01585
+                                       228.3     258.2     295.0      32.7      31.8      30.7
+                                     0.01585   0.01580   0.01574   0.01568   0.01562   0.01556
+    2 -  4        -32.112    -1.83      29.4      29.4
+                                     0.01551   0.01551
+    5 -  5        135.403     4.86      42.9      42.7
+                                     0.01559   0.01559
+
+
+
+           SYSTEM           WALL SURFACE          HEAT TRANSFER TO WALL
+        PARTITIONING        TEMPERATURE         CONVECTION      RADIATION
+                              (DEG C)            (WATTS)        (WATTS)
+
+         2 -  2 -  1            35.3            500584.8       109581.0
+         2 -  2 -  2            37.6            647421.1       154850.8
+         2 -  3 -  1            41.3            254733.2        63668.8
+         2 -  3 -  2            42.7            277800.4        72329.0
+         2 -  3 -  3            44.3            303298.4        82506.2
+         2 -  3 -  4            46.0            331078.5        94557.7
+         2 -  3 -  5            48.0            361682.3       108923.0
+         2 -  3 -  6            50.3            395809.2       126175.6
+         2 -  3 -  7            52.9            434051.1       147089.3
+         2 -  3 -  8            55.9            476633.2       172714.0
+         2 -  3 -  9            79.0            985776.9       191881.6
+         2 -  3 - 10            90.8           1182819.6       249548.5
+         2 -  3 - 11           217.9            554570.5      3648232.5
+         2 -  3 - 12            30.4             14761.3         1048.5
+         2 -  3 - 13            30.2             10269.2          725.9
+         2 -  3 - 14            30.4             21776.7          149.3
+         2 -  4 -  1            29.4                 0.0            0.0
+         2 -  4 -  2            29.4                 0.0            0.0
+
+
+
+TIME    400.00 SECONDS                           1 TRAIN(S) ARE OPERATIONAL
+
+      R T                             AIR    AIR  TRACTIVE   MOTOR     LINE     FLY  MOTOR       GRID TEMP.         HEAT      HEAT
+TRAIN T Y  LOCATION  SPEED   ACCEL   DRAG   DRAG    EFFORT CURRENT  CURRENT   WHEEL    EFF    ACCEL.    DECEL.      GEN.   REJECT.
+ NO.  E P       (M)  (KPH) (M/S^2)   (KN)  COEFF (N/MOTOR)  (AMPS)   (AMPS)   (RPM)    (%)   (DEG C)   (DEG C)     (W/M)     (W/M)
+
+  1   1 1   1371.30   0.00    0.00   0.56   0.00        0.    0.00     0.00      0.   0.00     29.44    241.04   1695.72   2207.13
+
+   SYSTEM            AIR     AIR     TEMPERATURE (DEG C)
+PARTITIONING        FLOW     VEL.    -------------------
+                  (M**3/S)   (M/S)   HUMIDITY    (KG/KG)
+
+    1 -  1        103.331     5.89      29.4      29.5      29.5      29.5      29.5      29.5      29.5      29.5
+                                     0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551
+                                        29.5      29.5
+                                     0.01551   0.01551
+    2 -  2        -31.940    -1.82      88.8     106.3
+                                     0.01584   0.01585
+    2 -  3        -31.940    -1.82     129.0     137.9     147.6     158.3     170.1     183.1     197.5     213.4
+                                     0.01585   0.01585   0.01585   0.01585   0.01585   0.01585   0.01585   0.01585
+                                       231.2     261.3     298.1      32.6      31.7      30.6
+                                     0.01585   0.01580   0.01574   0.01568   0.01562   0.01557
+    2 -  4        -31.940    -1.82      29.4      29.4
+                                     0.01551   0.01551
+    5 -  5        135.272     4.85      43.3      43.0
+                                     0.01559   0.01559
+
+
+
+           SYSTEM           WALL SURFACE          HEAT TRANSFER TO WALL
+        PARTITIONING        TEMPERATURE         CONVECTION      RADIATION
+                              (DEG C)            (WATTS)        (WATTS)
+
+         2 -  2 -  1            36.0            507285.6       112703.1
+         2 -  2 -  2            38.4            652878.9       158773.1
+         2 -  3 -  1            42.5            256284.8        65136.3
+         2 -  3 -  2            43.9            279290.5        73971.9
+         2 -  3 -  3            45.6            304718.7        84359.1
+         2 -  3 -  4            47.5            332268.6        96667.0
+         2 -  3 -  5            49.6            362768.8       111338.2
+         2 -  3 -  6            52.0            396778.8       128967.5
+         2 -  3 -  7            54.8            434887.0       150350.9
+         2 -  3 -  8            58.0            477093.9       176572.5
+         2 -  3 -  9            82.6            982297.2       195361.3
+         2 -  3 - 10            94.9           1171965.0       253742.9
+         2 -  3 - 11           228.3            500296.5      3631781.8
+         2 -  3 - 12            30.4             13823.7          985.6
+         2 -  3 - 13            30.2              9587.6          680.3
+         2 -  3 - 14            30.2              1655.6          184.8
+         2 -  4 -  1            29.4                 0.0            0.0
+         2 -  4 -  2            29.4                 0.0            0.0
+
+
+
+TIME    450.00 SECONDS                           1 TRAIN(S) ARE OPERATIONAL
+
+      R T                             AIR    AIR  TRACTIVE   MOTOR     LINE     FLY  MOTOR       GRID TEMP.         HEAT      HEAT
+TRAIN T Y  LOCATION  SPEED   ACCEL   DRAG   DRAG    EFFORT CURRENT  CURRENT   WHEEL    EFF    ACCEL.    DECEL.      GEN.   REJECT.
+ NO.  E P       (M)  (KPH) (M/S^2)   (KN)  COEFF (N/MOTOR)  (AMPS)   (AMPS)   (RPM)    (%)   (DEG C)   (DEG C)     (W/M)     (W/M)
+
+  1   1 1   1371.30   0.00    0.00   0.56   0.00        0.    0.00     0.00      0.   0.00     29.44    225.24   1695.72   2118.01
+
+   SYSTEM            AIR     AIR     TEMPERATURE (DEG C)
+PARTITIONING        FLOW     VEL.    -------------------
+                  (M**3/S)   (M/S)   HUMIDITY    (KG/KG)
+
+    1 -  1        103.372     5.90      29.4      29.5      29.5      29.5      29.5      29.5      29.5      29.5
+                                     0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551
+                                        29.5      29.5
+                                     0.01551   0.01551
+    2 -  2        -31.789    -1.81      90.2     107.9
+                                     0.01585   0.01585
+    2 -  3        -31.789    -1.81     130.8     139.8     149.6     160.4     172.3     185.4     199.9     216.0
+                                     0.01585   0.01585   0.01585   0.01585   0.01585   0.01585   0.01585   0.01585
+                                       233.9     264.1     301.0      32.4      31.6      30.6
+                                     0.01585   0.01580   0.01574   0.01568   0.01562   0.01557
+    2 -  4        -31.789    -1.81      29.4      29.4
+                                     0.01551   0.01551
+    5 -  5        135.161     4.85      43.5      43.3
+                                     0.01559   0.01559
+
+
+
+           SYSTEM           WALL SURFACE          HEAT TRANSFER TO WALL
+        PARTITIONING        TEMPERATURE         CONVECTION      RADIATION
+                              (DEG C)            (WATTS)        (WATTS)
+
+         2 -  2 -  1            36.6            512546.0       115362.8
+         2 -  2 -  2            39.2            657345.8       162246.9
+         2 -  3 -  1            43.5            257599.4        66466.1
+         2 -  3 -  2            45.1            280563.9        75469.6
+         2 -  3 -  3            46.9            305898.7        86058.8
+         2 -  3 -  4            48.8            333299.7        98611.4
+         2 -  3 -  5            51.1            363717.9       113574.5
+         2 -  3 -  6            53.7            397628.9       131561.5
+         2 -  3 -  7            56.6            435616.1       153387.8
+         2 -  3 -  8            60.0            477477.9       180169.4
+         2 -  3 -  9            85.9            979085.9       198572.6
+         2 -  3 - 10            98.7           1161376.0       257580.5
+         2 -  3 - 11           237.8            451277.5      3615511.5
+         2 -  3 - 12            30.4             12976.9          928.3
+         2 -  3 - 13            30.2              8974.0          639.0
+         2 -  3 - 14            30.1              1630.5          210.0
+         2 -  4 -  1            29.4                 0.0            0.0
+         2 -  4 -  2            29.4                 0.0            0.0
+
+
+
+TIME    500.00 SECONDS                           1 TRAIN(S) ARE OPERATIONAL
+
+      R T                             AIR    AIR  TRACTIVE   MOTOR     LINE     FLY  MOTOR       GRID TEMP.         HEAT      HEAT
+TRAIN T Y  LOCATION  SPEED   ACCEL   DRAG   DRAG    EFFORT CURRENT  CURRENT   WHEEL    EFF    ACCEL.    DECEL.      GEN.   REJECT.
+ NO.  E P       (M)  (KPH) (M/S^2)   (KN)  COEFF (N/MOTOR)  (AMPS)   (AMPS)   (RPM)    (%)   (DEG C)   (DEG C)     (W/M)     (W/M)
+
+  1   1 1   1371.30   0.00    0.00   0.55   0.00        0.    0.00     0.00      0.   0.00     29.44    212.19   1695.72   2044.85
+
+   SYSTEM            AIR     AIR     TEMPERATURE (DEG C)
+PARTITIONING        FLOW     VEL.    -------------------
+                  (M**3/S)   (M/S)   HUMIDITY    (KG/KG)
+
+    1 -  1        103.411     5.90      29.4      29.5      29.5      29.5      29.5      29.5      29.5      29.5
+                                     0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551   0.01551
+                                        29.5      29.5
+                                     0.01551   0.01551
+    2 -  2        -31.651    -1.81      91.4     109.3
+                                     0.01585   0.01585
+    2 -  3        -31.651    -1.81     132.4     141.5     151.4     162.3     174.3     187.5     202.1     218.4
+                                     0.01585   0.01585   0.01585   0.01585   0.01585   0.01585   0.01585   0.01586
+                                       236.5     266.7     303.6      32.4      31.5      30.5
+                                     0.01586   0.01580   0.01574   0.01568   0.01562   0.01557
+    2 -  4        -31.651    -1.81      29.4      29.4
+                                     0.01551   0.01551
+    5 -  5        135.062     4.85      43.8      43.5
+                                     0.01559   0.01559
+
+
+
+           SYSTEM           WALL SURFACE          HEAT TRANSFER TO WALL
+        PARTITIONING        TEMPERATURE         CONVECTION      RADIATION
+                              (DEG C)            (WATTS)        (WATTS)
+
+         2 -  2 -  1            37.2            516996.4       117751.2
+         2 -  2 -  2            40.0            661226.2       165440.8
+         2 -  3 -  1            44.5            258772.2        67707.4
+         2 -  3 -  2            46.2            281703.8        76872.0
+         2 -  3 -  3            48.0            306877.2        87655.5
+         2 -  3 -  4            50.1            334218.2       100438.2
+         2 -  3 -  5            52.5            364564.0       115680.7
+         2 -  3 -  6            55.2            398386.6       134010.3
+         2 -  3 -  7            58.4            436265.2       156261.3
+         2 -  3 -  8            61.9            477811.9       183580.4
+         2 -  3 -  9            89.1            976055.9       201602.6
+         2 -  3 - 10           102.3           1151611.8       261191.1
+         2 -  3 - 11           246.6            406815.5      3599558.0
+         2 -  3 - 12            30.4             12326.6          884.5
+         2 -  3 - 13            30.2              8512.6          608.0
+         2 -  3 - 14            30.1              1622.2          218.2
+         2 -  4 -  1            29.4                 0.0            0.0
+         2 -  4 -  2            29.4                 0.0            0.0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                            END OF SIMULATION

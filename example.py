@@ -15,7 +15,7 @@ from turboactivate import (
 )
 
 # TODO: paste your Version GUID here.
-TA_GUID = "18324776654b3946fc44a5f3.49025204"
+TA_GUID = "e2w5q6vbvtkm4tgdesasnyyob76wbgy"
 
 # TODO: paste the path to your dat file here
 TA_DAT = "TurboActivate.dat"
