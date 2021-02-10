@@ -1,6 +1,9 @@
 import re
 import pandas as pd
 import logging
+import zipfile
+import xml.etree.ElementTree as ET
+import os
 logging.basicConfig(level=logging.DEBUG, format=' %(asctime)s - %(levelname)s - %(message)s')
 
 
@@ -24,16 +27,6 @@ def select_dic(version):
                 (?:(?P<Airflow>-?\d+\.\d+)\s+     #Airflow for first line
                 (?P<AirVel>-?\d+\.\d+)\s?|\s?)  #AirVel for first line 
                 )''', re.VERBOSE),
-            #'detail_vent_1': re.compile(r'''(
-            #    #TODO Speed-up parse by combining segment_1 and vent_1 with an or statement
-            #    \s+\d+\s-\s{0,2}                     #Section
-            #    (?P<Segment>\d+)\s-\s{0,2}           #Segment
-            #    (?P<Sub>\d)\s{29,}                   #Sub-segment
-            #    (?P<AirTemp>-?\d+\.\d+)\s+           #Air Temperature
-            #    (?P<Humidity>-?\d+\.\d+)\s+          #Humidity
-            #    ((?P<Airflow>-?\d+\.\d+)\s+          #Airflow
-            #    (?P<AirVel>-?\d+\.\d+)\s?|\s?)\n     #Air Velocity
-            #    )''', re.VERBOSE),
             'abb_segment_1': re.compile(r'''(
                 \s+\d+\s-\s{0,2}                 #Section
                 (?P<Segment>\d+)\s{1,11}         #Segment
@@ -137,7 +130,95 @@ def parse_file(filepath, version):
     df_segment = pd.DataFrame(data_segment)
     # set the Time and Segment as the index
     df_segment.set_index(['Time', 'Segment','Sub'], inplace=True)
-    return data_segment
+    return df_segment
+
+def get_visXML(visname):
+    VZip = zipfile.ZipFile(visname)
+    vxml = VZip.read('visio/pages/page1.xml') #reads the string TODO - Just bring over the string name, not the xml
+    vxmlname = 'page1.xml' #FF Eventually read all pages in this directory
+    return vxml, vxmlname
+
+#code to modify XML file for emergency simualtions
+def emod_visXML(vxml, airflow_dic, simname="Not Available", simtime = 0.00): 
+    P1root=ET.fromstring(vxml) #create XML element from the string
+    ET.register_namespace('','http://schemas.microsoft.com/office/visio/2012/main') #Need to register name space to reproduce file.
+    ns = {'Visio': 'http://schemas.microsoft.com/office/visio/2012/main'} #Namespace dictionary to ease file navigation
+    #Find all shape with sub-child NV01_SegID. The "../.." at the end of the string moves the selection up two tiers to Shape
+    for Shape in P1root.findall(".//Visio:Row[@N='NV01_SegID']../.." , ns): 
+        SegID=int(Shape.find(".//Visio:Row[@N='NV01_SegID']/Visio:Cell",ns).get('V')) #Get the value for the Segment ID from XML and save as SegID
+        SubID=1
+        try:
+            real_airflow = data.loc[(simtime,SegID,SubID),"Airflow"] #Pull airflow from the dataframe
+        except:
+            real_airflow = 999.9
+        airflow=str(round(abs(real_airflow),1))
+        ShapeChild=Shape.find(".//Visio:Shape[@Name='NV01_AirFlow']/Visio:Text",ns)#Finds all NV01_Airflow Shapes with text elements originally in file
+        #ShapeChild2=Shape.find(".//Viqsio:Shape[@Name='NV01_AirFlow']/Text",ns)#FF - Move to Else statement to speed code. Code below finds all NV01_Airflow Shapes, text elements modified in file 
+        if ET.iselement(ShapeChild): #If an original text element exists, replace with proper value.
+            ShapeChild.text=airflow #previously str(Airflow)
+        else:
+            ShapeChild2=Shape.find(".//Visio:Shape[@Name='NV01_AirFlow']/Text",ns)
+            if ET.iselement(ShapeChild2):
+                ShapeChild2.text=airflow
+            else: #Create a text element because none existed 
+                ShapeChild3=Shape.find(".//Visio:Shape[@Name='NV01_AirFlow']",ns)
+                ET.SubElement(ShapeChild3,"Text").text=airflow #previously str(Airflow)
+        #Determine arrow direction
+        if (real_airflow >= 0):
+            Flip=0
+        else:
+            Flip=1    
+        ShapeChild=Shape.find(".//Visio:Cell[@N='FlipX']",ns) #Find all Flipx properties originally in the file       
+        if ET.iselement(ShapeChild):
+            ShapeChild.set('V',str(Flip))
+        else:
+            ShapeChild2=Shape.find(".//Cell[@N='FlipX']",ns) #Find all Flipx properities create by modifications (something is wrong with namespace)
+            if ET.iselement(ShapeChild2): 
+                ShapeChild2.set('V',str(Flip))
+            else: #Create a flip element because none existed
+                ET.SubElement(Shape,"Cell",V=str(Flip),N='FlipX')
+    #Simulation Name
+    for Shape in P1root.findall(".//Visio:Shape[@Name='NV01_SimNam']../..",ns):
+        ShapeChild=Shape.find(".//Visio:Shape[@Name='NV01_SimNam']/Visio:Text",ns)#Finds all NV01_Airflow Shapes with text elements originally in file
+        if ET.iselement(ShapeChild): #If an original text element exists, replace with proper value.
+            ShapeChild.text = simname #previously str(Airflow)
+        else:
+            ShapeChild2=Shape.find(".//Visio:Shape[@Name='NV01_SimNam']/Text",ns)
+            if ET.iselement(ShapeChild2):
+                ShapeChild2.text = simname
+            else: #Create a text element because none existed 
+                ShapeChild3=Shape.find(".//Visio:Shape[@Name='NV01_SimNam']",ns)
+                ET.SubElement(ShapeChild3,"Text").text=simname #previously str(Airflow)
+    #Simulation Time
+    for Shape in P1root.findall(".//Visio:Shape[@Name='NV01_SimTime']../..",ns):
+        ShapeChild=Shape.find(".//Visio:Shape[@Name='NV01_SimTime']/Visio:Text",ns)#Finds all NV01_Airflow Shapes with text elements originally in file
+        time = simtime
+        if ET.iselement(ShapeChild): #If an original text element exists, replace with proper value.
+            ShapeChild.text = str(time) #previously str(Airflow)
+        else:
+            ShapeChild2=Shape.find(".//Visio:Shape[@Name='NV01_SimTime']/Text",ns)
+            if ET.iselement(ShapeChild2):
+                ShapeChild2.text = str(time)
+            else: #Create a text element because none existed 
+                ShapeChild3=Shape.find(".//Visio:Shape[@Name='NV01_SimTime']",ns)
+                ET.SubElement(ShapeChild3,"Text").text = str(time) #previously str(Airflow)
+    ET.ElementTree(P1root).write("page1.xml",encoding='utf-8') #TODO eliminate writing to disk in this procedure
+
+def write_visio(visname, new_visio):
+    #Sample Zip source code from https://stackoverflow.com/questions/513788/delete-file-from-zipfile-with-the-zipfile-module
+    zin = zipfile.ZipFile (visname, 'r')
+    zout = zipfile.ZipFile (new_visio, 'w')
+    for item in zin.infolist(): 
+        buffer = zin.read(item.filename)
+        if (item.filename != 'visio/pages/page1.xml'): #writes all files except the page2.xml file to a new zip
+            zout.writestr(item, buffer)
+            #print(item.filename)
+    zin.close()
+    zout.close()
+    zappend = zipfile.ZipFile (new_visio, 'a') #open file for appending
+    zappend.write('page1.xml','visio/pages/page1.xml')
+    zappend.close()
+    os.remove('page1.xml')
 
 if __name__ == '__main__':
     repeat = True #Run the program the first time
@@ -146,4 +227,14 @@ if __name__ == '__main__':
     #simname = 'NV-6p0-Base02.out'
     version = 'S'
     data = parse_file(simname, version)#Creates a panda with the airflow out at all time steps
-    #simtime = simtime_check(data,simtime)
+    if True: #Create Visio Diagram
+        simtime = 500
+        visname = "Sample003.vsdx"
+        [vxml,vxmlname] = get_visXML(visname) #gets the Page 1 XML. TODO - Will search all Pages in Visio
+        emod_visXML(vxml,data, simname[:-4], simtime)
+        new_visio = simname[:-4] + "-" + str(simtime) + ".vsdx"
+        write_visio(visname, new_visio)
+        print('\n     Created Visio Diagram',new_visio)
+        open_v = input('Open Visio file (Y/N): ') 
+        if open_v.upper() == 'Y':
+            os.startfile(new_visio)
