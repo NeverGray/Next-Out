@@ -204,37 +204,38 @@ def write_visio(visname, new_visio):
     #Sample Zip source code from https://stackoverflow.com/questions/513788/delete-file-from-zipfile-with-the-zipfile-module
     with zipfile.ZipFile(visname, 'r') as zin:
         with zipfile.ZipFile(new_visio, 'w') as zout:
-    #zin = zipfile.ZipFile (visname, 'r')
-    #zout = zipfile.ZipFile (new_visio, 'w')
             for item in zin.infolist(): 
                 buffer = zin.read(item.filename)
                 if (item.filename != 'visio/pages/page1.xml'): #writes all files except the page2.xml file to a new zip
                     zout.writestr(item, buffer,compress_type=compression)
-    #zin.close()
-    #zout.close()
+            zout.comment= b'VISO updated by Next-Vis owned by Never Gray'
     with zipfile.ZipFile (new_visio, 'a') as zappend:
         zappend = zipfile.ZipFile (new_visio, 'a') #open file for appending
         zappend.write('page1.xml','visio/pages/page1.xml',compress_type=compression)
-    #zappend.close()
     os.remove('page1.xml')
 
 if __name__ == '__main__':
     repeat = True #Run the program the first time
     testing = True
     if testing:
-        simname = 'functions4.out'
-        visname = "Sample021.vsdx"
-        simtime = 50.0
-        version = 'S'
-        data=[] #Data variable
+        settings={
+            'simname' : 'functions7.out',
+            'visname' : 'Sample021.vsdx',
+            'simtime' : 50.0,
+            'version' : 'S',
+        }
+        data=[] #Blank data variable
     else:
         [simname, simtime, visname, version, outtype]= get_input () #Call to get input file names
         data = parse_file(simname, version)#Creates a panda with the airflow out at all time steps
     if True: #Create Visio Diagram
-        [vxml,vxmlname] = get_visXML(visname) #gets the Page 1 XML. TODO - Will search all Pages in Visio
-        emod_visXML(vxml,data, simname[:-4], simtime)
-        new_visio = simname[:-4] + "-" + str(int(simtime)) + ".vsdx"
-        write_visio(visname, new_visio)
+        #new_visio = simname[:-4] + "-" + str(int(simtime)) + ".vsdx"
+        time_4_name = int(settings['simtime'])
+        new_visio = settings['simname'][:-4] +"-" + str(time_4_name)+ ".vsdx"
+        [vxml,vxmlname] = get_visXML(settings['visname']) #gets the Page 1 XML. TODO - Will search all Pages in Visio
+        emod_visXML(vxml,data, settings['visname'][:-5], settings['simtime'])
+        write_visio(settings['visname'], new_visio)
+    
         print('\n     Created Visio Diagram',new_visio)
         #open_v = input('Open Visio file (Y/N): ') 
         #if open_v.upper() == 'Y':
