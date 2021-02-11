@@ -141,9 +141,13 @@ def parse_file(filepath, version):
 
 def get_visXML(visname):
     VZip = zipfile.ZipFile(visname)
-    vxml = VZip.read('visio/pages/page1.xml') #reads the string TODO - Just bring over the string name, not the xml
-    vxmlname = 'page1.xml' #FF Eventually read all pages in this directory
-    return vxml, vxmlname
+    names = VZip.namelist()
+    vxmls={}
+    for name in names:
+        m = re.match('visio/pages/[^/]+[.xml]$',name)
+        if m:
+            vxmls[name] = VZip.read(name) #Create dictionary of name paths and files
+    return vxmls
 
 #TODO Write function to update text of elements in Visio XML file
 
@@ -187,7 +191,6 @@ def emod_visXML(vxml, data, simname="Not Available", simtime = 0.00):
         ]
     for ts in text_shapes: #Iterate through all samples with simple text
         P1root = text_update(ts[0],ts[1],P1root,ns)
-
     ET.ElementTree(P1root).write("page1.xml",encoding='utf-8',xml_declaration=True) #TODO eliminate writing to disk in this procedure
 
 def text_update(find_string, text_value, root, ns):
@@ -215,21 +218,20 @@ def write_visio(visname, new_visio):
     os.remove('page1.xml')
 
 def update_visio(settings,data):
-    [vxml,vxmlname] = get_visXML(settings['visname']) #gets the Page 1 XML. TODO - Will search all Pages in Visio
-    emod_visXML(vxml,data, settings['simname'][:-5], settings['simtime'])
+    vxmls = get_visXML(settings['visname']) #gets the pages in the VISIO XML.
+    emod_visXML(vxmls["visio/pages/page1.xml"],data, settings['simname'][:-4], settings['simtime'])    
     write_visio(settings['visname'], new_visio)
     print('\n     Created Visio Diagram',new_visio)
     #open_v = input('Open Visio file (Y/N): ') 
     #if open_v.upper() == 'Y':
     #    os.startfile(new_visio)
 
-
 if __name__ == '__main__':
     repeat = True #Run the program the first time
     testing = True
     if testing:
         settings={
-            'simname' : 'functions9.out',
+            'simname' : 'functions10.out',
             'visname' : 'Sample021.vsdx',
             'simtime' : 50.0,
             'version' : 'S',
@@ -242,5 +244,5 @@ if __name__ == '__main__':
         #new_visio = simname[:-4] + "-" + str(int(simtime)) + ".vsdx"
         time_4_name = int(settings['simtime'])
         new_visio = settings['simname'][:-4] +"-" + str(time_4_name)+ ".vsdx"
-        settings['new_visio']=new_visio
+        settings['new_visio'] = new_visio
         update_visio(settings,data)
