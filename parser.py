@@ -173,30 +173,20 @@ def emod_visXML(vxml, data, simname="Not Available", simtime = 0.00):
         else:
             ET.SubElement(Shape,"Cell",V=str(Flip),N='FlipX')
     #Find all shape with sub-child NV01_SegID. The "../.." at the end of the string moves the selection up two tiers to Shape
-    for Shape in P1root.findall(".//Visio:Shape[@Name='NV01_SimNam']../..",ns):
-        ShapeChild=Shape.find(".//Visio:Shape[@Name='NV01_SimNam']/Visio:Text",ns)#Finds all NV01_Airflow Shapes with text elements originally in file
+    for Shape in P1root.findall(".//Visio:Shape[@Name='NV01_SimNam']",ns):
+        ShapeChild=Shape.find(".//Visio:Text",ns) #Finds all NV01_Airflow Shapes with text elements originally in file
         if ET.iselement(ShapeChild): #If an original text element exists, replace with proper value.
             ShapeChild.text = simname #previously str(Airflow)
         else:
-            ShapeChild2=Shape.find(".//Visio:Shape[@Name='NV01_SimNam']/Text",ns)
-            if ET.iselement(ShapeChild2):
-                ShapeChild2.text = simname
-            else: #Create a text element because none existed 
-                ShapeChild3=Shape.find(".//Visio:Shape[@Name='NV01_SimNam']",ns)
-                ET.SubElement(ShapeChild3,"Text").text=simname #previously str(Airflow)
-    #Simulation Time
-    for Shape in P1root.findall(".//Visio:Shape[@Name='NV01_SimTime']../..",ns):
-        ShapeChild=Shape.find(".//Visio:Shape[@Name='NV01_SimTime']/Visio:Text",ns)#Finds all NV01_Airflow Shapes with text elements originally in file
+            ET.SubElement(Shape,"Text").text=simname #previously str(Airflow)
+    #Simulation Time 
+    for Shape in P1root.findall(".//Visio:Shape[@Name='NV01_SimTime']",ns):
+        ShapeChild=Shape.find(".//Visio:Text",ns)#Finds all NV01_Airflow Shapes with text elements originally in file
         time = int(simtime)
         if ET.iselement(ShapeChild): #If an original text element exists, replace with proper value.
             ShapeChild.text = str(time) #previously str(Airflow)
         else:
-            ShapeChild2=Shape.find(".//Visio:Shape[@Name='NV01_SimTime']/Text",ns)
-            if ET.iselement(ShapeChild2):
-                ShapeChild2.text = str(time)
-            else: #Create a text element because none existed 
-                ShapeChild3=Shape.find(".//Visio:Shape[@Name='NV01_SimTime']",ns)
-                ET.SubElement(ShapeChild3,"Text").text = str(time) #previously str(Airflow)
+            ET.SubElement(Shape,"Text").text = str(time) #previously str(Airflow)
 
     ET.ElementTree(P1root).write("page1.xml",encoding='utf-8',xml_declaration=True) #TODO eliminate writing to disk in this procedure
 
@@ -221,8 +211,8 @@ if __name__ == '__main__':
     testing = True
     if testing:
         simname = 'siinfern.out'
-        visname = "Sample021.vsdx"
-        simtime = 500.0
+        visname = "Sample023.vsdx"
+        simtime = 200.0
         version = 'S'
         data=[] #Data variable
     else:
