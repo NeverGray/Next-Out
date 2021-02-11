@@ -2,6 +2,11 @@ import re
 import pandas as pd
 import logging
 import zipfile
+try:
+    import zlib
+    compression = zipfile.ZIP_DEFLATED
+except:
+    compression = zipfile.ZIP_STORED
 import xml.etree.ElementTree as ET
 import os
 logging.basicConfig(level=logging.DEBUG, format=' %(asctime)s - %(levelname)s - %(message)s')
@@ -197,25 +202,27 @@ def text_update(find_string, text_value, root, ns):
 
 def write_visio(visname, new_visio):
     #Sample Zip source code from https://stackoverflow.com/questions/513788/delete-file-from-zipfile-with-the-zipfile-module
-    zin = zipfile.ZipFile (visname, 'r')
-    zout = zipfile.ZipFile (new_visio, 'w')
-    for item in zin.infolist(): 
-        buffer = zin.read(item.filename)
-        if (item.filename != 'visio/pages/page1.xml'): #writes all files except the page2.xml file to a new zip
-            zout.writestr(item, buffer)
-            #print(item.filename)
-    zin.close()
-    zout.close()
-    zappend = zipfile.ZipFile (new_visio, 'a') #open file for appending
-    zappend.write('page1.xml','visio/pages/page1.xml')
-    zappend.close()
+    with zipfile.ZipFile(visname, 'r') as zin:
+        with zipfile.ZipFile(new_visio, 'w') as zout:
+    #zin = zipfile.ZipFile (visname, 'r')
+    #zout = zipfile.ZipFile (new_visio, 'w')
+            for item in zin.infolist(): 
+                buffer = zin.read(item.filename)
+                if (item.filename != 'visio/pages/page1.xml'): #writes all files except the page2.xml file to a new zip
+                    zout.writestr(item, buffer,compress_type=compression)
+    #zin.close()
+    #zout.close()
+    with zipfile.ZipFile (new_visio, 'a') as zappend:
+        zappend = zipfile.ZipFile (new_visio, 'a') #open file for appending
+        zappend.write('page1.xml','visio/pages/page1.xml',compress_type=compression)
+    #zappend.close()
     os.remove('page1.xml')
 
 if __name__ == '__main__':
     repeat = True #Run the program the first time
     testing = True
     if testing:
-        simname = 'functions.out'
+        simname = 'functions4.out'
         visname = "Sample021.vsdx"
         simtime = 50.0
         version = 'S'
