@@ -191,7 +191,8 @@ def emod_visXML(vxml, data, simname="Not Available", simtime = 0.00):
         ]
     for ts in text_shapes: #Iterate through all samples with simple text
         P1root = text_update(ts[0],ts[1],P1root,ns)
-    ET.ElementTree(P1root).write("page1.xml",encoding='utf-8',xml_declaration=True) #TODO eliminate writing to disk in this procedure
+    #ET.ElementTree(P1root).write("page1.xml",encoding='utf-8',xml_declaration=True) #TODO eliminate writing to disk in this procedure
+    return P1root
 
 def text_update(find_string, text_value, root, ns):
     for Shape in root.findall(find_string,ns):
@@ -203,24 +204,30 @@ def text_update(find_string, text_value, root, ns):
     return root
 
 
-def write_visio(visname, new_visio):
+def write_visio(vxmls, visname, new_visio):
     #Sample Zip source code from https://stackoverflow.com/questions/513788/delete-file-from-zipfile-with-the-zipfile-module
     with zipfile.ZipFile(visname, 'r') as zin:
         with zipfile.ZipFile(new_visio, 'w') as zout:
             for item in zin.infolist(): 
                 buffer = zin.read(item.filename)
-                if (item.filename != 'visio/pages/page1.xml'): #writes all files except the page2.xml file to a new zip
-                    zout.writestr(item, buffer,compress_type=compression)
-            zout.comment= b'VISO updated by Next-Vis owned by Never Gray'
+                if not (item.filename in vxmls): #File was not updated by this code
+                    zout.writestr(item, buffer,compress_type=compression)                   
+            zout.comment= b'Mfwfs_Hsbz'
     with zipfile.ZipFile (new_visio, 'a') as zappend:
-        zappend = zipfile.ZipFile (new_visio, 'a') #open file for appending
-        zappend.write('page1.xml','visio/pages/page1.xml',compress_type=compression)
-    os.remove('page1.xml')
+        for name, vxml in vxmls.items():
+            #TODO speedup file writing by using memory instead of harddrive
+            ET.ElementTree(vxml).write("temp.xml",encoding='utf-8',xml_declaration=True)
+            zappend.write('temp.xml',name,compress_type = compression)
+            os.remove('temp.xml')
 
 def update_visio(settings,data):
     vxmls = get_visXML(settings['visname']) #gets the pages in the VISIO XML.
-    emod_visXML(vxmls["visio/pages/page1.xml"],data, settings['simname'][:-4], settings['simtime'])    
-    write_visio(settings['visname'], new_visio)
+    #emod_visXML(vxmls["visio/pages/page1.xml"],data, settings['simname'][:-4], settings['simtime'])    
+    #For each file, in bype form replace with a the XML root type
+    for name, vxml in vxmls.items():
+        vxmls[name] = emod_visXML(vxmls[name],data, settings['simname'][:-4], settings['simtime'])
+    
+    write_visio(vxmls, settings['visname'], new_visio)
     print('\n     Created Visio Diagram',new_visio)
     #open_v = input('Open Visio file (Y/N): ') 
     #if open_v.upper() == 'Y':
@@ -231,17 +238,19 @@ if __name__ == '__main__':
     testing = True
     if testing:
         settings={
-            'simname' : 'functions10.out',
-            'visname' : 'Sample021.vsdx',
-            'simtime' : 50.0,
+            'simname' : 'NV-6p0-Base02.out',
+            'visname' : 'NV-Base02.vsdx',
+            'simtime' : 2000.0,
             'version' : 'S',
         }
         data=[] #Blank data variable
     else:
+        settings=[] #Updatew when input function is updated
         [simname, simtime, visname, version, outtype]= get_input () #Call to get input file names
-        data = parse_file(simname, version)#Creates a panda with the airflow out at all time steps
+        data = parse_file(settings['simname'], version['simname'])#Creates a panda with the airflow out at all time steps
     if True: #Create Visio Diagram
         #new_visio = simname[:-4] + "-" + str(int(simtime)) + ".vsdx"
+        data = parse_file(settings['simname'], settings['version'])#Creates a panda with the airflow out at all time steps
         time_4_name = int(settings['simtime'])
         new_visio = settings['simname'][:-4] +"-" + str(time_4_name)+ ".vsdx"
         settings['new_visio'] = new_visio
