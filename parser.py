@@ -140,12 +140,15 @@ def get_visXML(visname):
     vxmlname = 'page1.xml' #FF Eventually read all pages in this directory
     return vxml, vxmlname
 
+#TODO Write function to update text of elements in Visio XML file
+
 #code to modify XML file for emergency simualtions
 def emod_visXML(vxml, data, simname="Not Available", simtime = 0.00): 
     P1root=ET.fromstring(vxml) #create XML element from the string
     ET.register_namespace('','http://schemas.microsoft.com/office/visio/2012/main') #Need to register name space to reproduce file.
     ET.register_namespace('r','http://schemas.openxmlformats.org/officeDocument/2006/relationships')
     ns = {'Visio': 'http://schemas.microsoft.com/office/visio/2012/main'} #Namespace dictionary to ease file navigation
+    #Airflow arrow shape update
     #Find all shape with sub-child NV01_SegID. The "../.." at the end of the string moves the selection up two tiers to Shape
     for Shape in P1root.findall(".//Visio:Row[@N='NV01_SegID']../.." , ns): 
         SegID=int(Shape.find(".//Visio:Row[@N='NV01_SegID']/Visio:Cell",ns).get('V')) #Get the value for the Segment ID from XML and save as SegID
@@ -172,23 +175,25 @@ def emod_visXML(vxml, data, simname="Not Available", simtime = 0.00):
             ShapeChild.set('V',str(Flip))
         else:
             ET.SubElement(Shape,"Cell",V=str(Flip),N='FlipX')
-    #Find all shape with sub-child NV01_SegID. The "../.." at the end of the string moves the selection up two tiers to Shape
-    for Shape in P1root.findall(".//Visio:Shape[@Name='NV01_SimNam']",ns):
-        ShapeChild=Shape.find(".//Visio:Text",ns) #Finds all NV01_Airflow Shapes with text elements originally in file
-        if ET.iselement(ShapeChild): #If an original text element exists, replace with proper value.
-            ShapeChild.text = simname #previously str(Airflow)
-        else:
-            ET.SubElement(Shape,"Text").text=simname #previously str(Airflow)
-    #Simulation Time 
-    for Shape in P1root.findall(".//Visio:Shape[@Name='NV01_SimTime']",ns):
-        ShapeChild=Shape.find(".//Visio:Text",ns)#Finds all NV01_Airflow Shapes with text elements originally in file
-        time = int(simtime)
-        if ET.iselement(ShapeChild): #If an original text element exists, replace with proper value.
-            ShapeChild.text = str(time) #previously str(Airflow)
-        else:
-            ET.SubElement(Shape,"Text").text = str(time) #previously str(Airflow)
+    #Update all shapes with simple text
+    text_shapes = [ #Define all simple shates with simple text
+        [".//Visio:Shape[@Name='NV01_SimNam']",simname],
+        [".//Visio:Shape[@Name='NV01_SimTime']",str(int(simtime))]
+        ]
+    for ts in text_shapes: #Iterate through all samples with simple text
+        P1root = text_update(ts[0],ts[1],P1root,ns)
 
     ET.ElementTree(P1root).write("page1.xml",encoding='utf-8',xml_declaration=True) #TODO eliminate writing to disk in this procedure
+
+def text_update(find_string, text_value, root, ns):
+    for Shape in root.findall(find_string,ns):
+        ShapeChild=Shape.find(".//Visio:Text",ns)
+        if ET.iselement(ShapeChild):
+            ShapeChild.text = text_value
+        else:
+            ET.SubElement(Shape,"Text").text= text_value #previously str(Airflow)#TODO eliminate writing to disk in this procedure
+    return root
+
 
 def write_visio(visname, new_visio):
     #Sample Zip source code from https://stackoverflow.com/questions/513788/delete-file-from-zipfile-with-the-zipfile-module
@@ -210,9 +215,9 @@ if __name__ == '__main__':
     repeat = True #Run the program the first time
     testing = True
     if testing:
-        simname = 'siinfern.out'
-        visname = "Sample023.vsdx"
-        simtime = 200.0
+        simname = 'functions.out'
+        visname = "Sample021.vsdx"
+        simtime = 50.0
         version = 'S'
         data=[] #Data variable
     else:
