@@ -9,6 +9,9 @@ except:
     compression = zipfile.ZIP_STORED
 import xml.etree.ElementTree as ET
 import os
+import pyinputplus as pyip
+from pathlib import Path
+
 logging.basicConfig(level=logging.DEBUG, format=' %(asctime)s - %(levelname)s - %(message)s')
 
 
@@ -44,52 +47,6 @@ def select_dic(version):
             #test parser using https://www.debuggex.com/
             }
     return rx_dict
-
-def get_input(simname= None, simtime= None, visname= None, version= None, outtype=None):
-    #TODO update input with "Input Validation" from 'Automate Everything' book'
-    no_error = False
-    option_check=['S','I','Q','R'] #Valid values of version check
-    while not no_error:
-        print('Next Vis 06 Options:')
-        print('       S for SI Version (SES 6.0 with output of *.out)')
-        print('       I for IP Version (SES 4.1 with output of *.prn)')
-        print('       R to repeat last creation')
-        print('       Q or blank to quit program')
-        option = input('Select Options (S, I, R, Q): ')
-        option = option.upper()
-        if option == None:
-            option = 'Q'  
-        if (option in option_check):
-            no_error = True
-        else:
-            print('Error! You did not select options (S, I, R, Q)')
-    if option =='R':
-        return simname, simtime, visname, version, outtype
-    elif option =='Q':
-        version = option
-        return simname, simtime, visname, version, outtype
-    else:
-        version = option
-        outtype = input('Enter E for Excel, V for Visio, or B for both: ')
-        outtype = outtype.upper()
-        simname = input('Name of SES Output File for Emergency Simulation (without suffix, .out or .prn): ')
-        if version == 'I':
-            simname=simname + ".prn"
-        else:
-            simname=simname + ".out"
-        if outtype != "E":    
-            visname = input('Name visio temlpate (without suffix, .vsdx): ')
-            visname = visname + '.vsdx'
-            simtime = input('Emergency Simulation Time or E for End (Number or E): ')
-            #TODO Check that simtime is number
-            simtime = float(simtime)
-            if simtime == 'e':
-                simtime = 'E'
-        else:
-            simtime = -1
-            visname = "NA"
-        ##FF - Future Feature - Check validity of input 
-        return simname, simtime, visname, version, outtype
    
 def parse_file(filepath, version):
     data_segment = []  # create an empty list to collect the data
@@ -215,7 +172,7 @@ def write_visio(vxmls, visname, new_visio):
             zout.comment= b'Mfwfs_Hsbz'
     with zipfile.ZipFile (new_visio, 'a') as zappend:
         for name, vxml in vxmls.items():
-            #TODO speedup file writing by using memory instead of harddrive
+            #TODO speedup file writing after updating to Python 8. Otherwise, cannot write xml_declaration easily
             ET.ElementTree(vxml).write("temp.xml",encoding='utf-8',xml_declaration=True)
             zappend.write('temp.xml',name,compress_type = compression)
             os.remove('temp.xml')
@@ -233,9 +190,59 @@ def update_visio(settings,data):
     #if open_v.upper() == 'Y':
     #    os.startfile(new_visio)
 
+def get_input(settings = None):
+    q_repeat = 'Repeat last processing Y/N: '
+    q_simname = 'Enter output file name with suffix (*.OUT for SES v6) or blank to quit: '
+    ext_simname = ['.out', '.prn']
+    e = 'Cannot find file, please try again or enter blank to quit. \n'
+    q_visname = 'Enter name of visio temlpate wihtsuffix (*.vsdx): '
+    ext_visname = ['.vsdx']
+    q_simtime = 'Emergency Simulation Time or -1 for last time: '
+    repeat = 'no'
+    if settings['Control'] != "First":
+        repeat = pyip.inputYesNo(q_repeat, yesVal='yes', noVal='no')
+    else:
+        settings['Control'] != "Again"
+    if repeat == 'no':
+        #TODO determine version type from simname
+        settings['simname'] = validate_file(q_simname, e, ext_simname)
+        if settings['simname'] != "":
+            settings['visname'] = validate_file(q_visname, e, ext_visname)
+            if settings['visname'] != "":
+                settings['simtime'] = pyip.inputNum(q_simtime, min=-1)
+            else:
+                settings['Control'] != "Stop"
+        else:
+            settings['Control'] != "Stop"
+    if settings['simname'].endswith('.prn'):
+        #TODO Add version switch for 4.1 and 4.2
+        settings['version']='i'
+    else:
+        settings['version']='s'
+    return settings
+
+def validate_file(q, e, ext):
+    invalid = True
+    while invalid: #Output File name
+        answer = pyip.inputFilename(prompt = q,blank = True, limit=5)
+        path_answer = Path() / answer#Creates a path object
+        if path_answer.is_file():
+            if path_answer.suffix in ext:
+                invalid = False
+            else:
+                print("Invalid file extension")
+        elif answer == '':
+            invalid = False
+        else:
+            print(e,end='')
+    return answer
+
 if __name__ == '__main__':
+    #TODO Adjust how simtime works when processing visio files
     repeat = True #Run the program the first time
-    testing = True
+    testing = False
+    settings = {}
+    settings['Control'] = "First"
     if testing:
         settings={
             'simname' : 'NV-6p0-Base02.out',
@@ -245,10 +252,11 @@ if __name__ == '__main__':
         }
         data=[] #Blank data variable
     else:
-        settings=[] #Updatew when input function is updated
-        [simname, simtime, visname, version, outtype]= get_input () #Call to get input file names
-        data = parse_file(settings['simname'], version['simname'])#Creates a panda with the airflow out at all time steps
-    if True: #Create Visio Diagram
+        settings = get_input(settings)
+        if settings['Control'] != "Stop":
+            quit()
+        data = parse_file(settings['simname'], settings['version'])#Creates a panda with the airflow out at all time steps
+    if False: #Create Visio Diagram
         #new_visio = simname[:-4] + "-" + str(int(simtime)) + ".vsdx"
         data = parse_file(settings['simname'], settings['version'])#Creates a panda with the airflow out at all time steps
         time_4_name = int(settings['simtime'])
