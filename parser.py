@@ -238,17 +238,17 @@ def update_visio(settings,data):
 
 def get_input(settings = None):
     q_repeat = 'Repeat last processing Y/N: '
-    q_simname = 'Enter output file name with suffix (*.OUT for SES v6) or blank to quit: '
-    ext_simname = ['.out', '.prn']
+    q_simname = 'Enter output file name with suffix (.OUT for SES v6), blank to quit, or ALL: '
+    ext_simname = ['.OUT', '.PRN']
     e = 'Cannot find file, please try again or enter blank to quit. \n'
     q_visname = 'Enter name of visio temlpate wiht suffix (*.vsdx): '
-    ext_visname = ['.vsdx']
+    ext_visname = ['.VSDX']
     q_simtime = 'Emergency Simulation Time or -1 for last time: '
     repeat = 'no'
     if settings['Control'] != 'First':
         repeat = pyip.inputYesNo(q_repeat, yesVal='yes', noVal='no')
     else:
-        settings['Control'] = 'Again'
+        settings['Control'] = 'Single'
     if repeat == 'no':
         #TODO determine version type from simname
         settings['simname'] = validate_file(q_simname, e, ext_simname)
@@ -258,39 +258,62 @@ def get_input(settings = None):
                 settings['simtime'] = pyip.inputNum(q_simtime, min=-1)
             else:
                 settings['Control'] = "Stop"
+                settings['simname'] != "Stop" #Needed to prevent the ALL function
         else:
             settings['Control'] = "Stop"
-    if settings['simname'].endswith('.prn'):
+    if settings['simname'].endswith('.prn'): #Could eliminate because it is automated now
         #TODO Add version switch for 4.1 and 4.2
         settings['version']='i'
     else:
         settings['version']='s'
+    if settings['simname'].upper() == "ALL":
+        settings['Control']="ALL"
     return settings
 
 def validate_file(q, e, ext):
     invalid = True
     while invalid: #Output File name
         answer = pyip.inputFilename(prompt = q,blank = True, limit=5)
-        path_answer = Path() / answer#Creates a path object
-        if path_answer.is_file():
-            if path_answer.suffix in ext:
+        if answer.upper() != "ALL":
+            path_answer = Path() / answer#Creates a path object
+            if path_answer.is_file():
+                if path_answer.suffix.upper() in ext:
+                    invalid = False
+                else:
+                    print("Invalid file extension")
+            elif answer == '':
                 invalid = False
             else:
-                print("Invalid file extension")
-        elif answer == '':
-            invalid = False
+                print(e,end='')
         else:
-            print(e,end='')
+            invalid = False
     return answer
+
+def find_all_files():
+    all_files = []
+    Extensions = [".OUT", ".PRN"]
+    with os.scandir() as it: #Return an iterator of os.DirEntr, see https://docs.python.org/3/library/os.html
+        for entry in it: #For each item in iterator
+            if entry.name[-4:].upper() in Extensions and entry.is_file(): 
+                all_files.append(entry.name)
+    return all_files  
+
+def single_visio(settings):
+    data = parse_file(settings['simname'])#Creates a panda with the airflow out at all time steps
+    settings['simtime'] = valid_simtime(settings['simtime'],data)
+    time_4_name = int(settings['simtime'])
+    settings['new_visio']  = settings['simname'][:-4] +"-" + str(time_4_name)+ ".vsdx"
+    update_visio(settings,data)
+
 
 if __name__ == '__main__':
     #initialize a few variables
-    testing = True
+    Testing = False
     settings = {}
-    #Arguments for command line   Follow further instructions at https://docs.python.org/3/howto/argparse.html
-    parser = argparse.ArgumentParser()
-    parser.parse_args()    
-    if testing:
+    #TODO Create arguments for command line   Follow further instructions at https://docs.python.org/3/howto/argparse.html
+    #parser = argparse.ArgumentParser()
+    #parser.parse_args()    
+    if Testing:
         settings={
             'simname' : 'inferno.prn',
             'visname' : 'Template20210209.vsdx',
@@ -303,11 +326,13 @@ if __name__ == '__main__':
     while settings['Control'] != 'Stop':
         if settings['Control'] != 'Testing':
             settings = get_input(settings)
-        if settings['Control'] != 'Stop':
-            data = parse_file(settings['simname'])#Creates a panda with the airflow out at all time steps
-            settings['simtime'] = valid_simtime(settings['simtime'],data)
-            time_4_name = int(settings['simtime'])
-            settings['new_visio']  = settings['simname'][:-4] +"-" + str(time_4_name)+ ".vsdx"
-            update_visio(settings,data)
-            if testing:
+        if settings['Control'] == 'Single':
+            single_visio(settings)
+            if Testing:
                 settings['Control'] = 'Stop'
+        elif settings['Control'] == 'ALL':
+            all_files = find_all_files()
+            for file in all_files:
+                settings['simname'] = file
+                single_visio(settings)
+
