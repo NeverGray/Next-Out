@@ -1,6 +1,7 @@
 import re
 import pandas as pd
 import logging
+logging.basicConfig(level=logging.DEBUG, format=' %(asctime)s - %(levelname)s - %(message)s')
 import zipfile
 try:
     import zlib
@@ -11,15 +12,41 @@ import xml.etree.ElementTree as ET
 import os
 import pyinputplus as pyip
 from pathlib import Path
+import argparse
 
-logging.basicConfig(level=logging.DEBUG, format=' %(asctime)s - %(levelname)s - %(message)s')
+def select_version(str):
+    v41 = "SES VER 4.10"
+    if v41 in str:
+        version = 'i' 
+    else:
+        version = 's'
+    return version
 
 
 # Select the appropriate dictionary
 def select_dic(version): 
-    if version =='i': #Parser key for SES v4.1 Emergency simualtions 
+    if version =='i': #Parser key for SES v4.1 Emergency simualtions. Currently identical to v6.0 
         rx_dict = { 
-        #TODO add parser for start of where data is located
+            'time': re.compile(r'TIME.\s+(?P<Time>\d+.\d{2}).+SECONDS.+TRAIN'), #Find the first time Simulation
+            'detail_segment_1': re.compile(r'''(
+                \d+\s-                        #Section
+                (?P<Segment>\s{0,2}\d+)+\s-\s+    #Segment
+                (?P<Sub>\s{0,2}\d+)\s{1,12}       #Sub-segment
+				(?:(?P<Sensible>-?\d+\.\d+)\s+       #Sensible for tunnels
+                (?P<Latent>-?\d+\.\d+)\s+|\s{28,})       #Latent for tunnels
+				(?P<AirTemp>-?\d+\.\d+)\s+        #Air Temperature
+                (?P<Humidity>-?\d+\.\d+)\s+       #Humidity
+                (?:(?P<Airflow>-?\d+\.\d+)\s+     #Airflow for first line
+                (?P<AirVel>-?\d+\.\d+)\s?|\s?)  #AirVel for first line 
+                )''', re.VERBOSE),
+            'abb_segment_1': re.compile(r'''(
+                \s+\d+\s-\s{0,2}                 #Section
+                (?P<Segment>\d+)\s{1,11}         #Segment
+                (?P<Airflow>-?\d+\.\d+)\s{1,6}   #Sub-segment
+				(?P<AirVel>-?\d+\.\d+)\s{1,8}    #Air Velocity
+				(?P<AirTemp>-?\d+\.\d+)\s{1,8}   #Air Temperature
+                \s?
+                )''', re.VERBOSE),
         }
     else: #Parser key for SES v6.0 Emergency simualtions 
         rx_dict = { 
@@ -48,14 +75,16 @@ def select_dic(version):
             }
     return rx_dict
    
-def parse_file(filepath, version):
+def parse_file(filepath):
     data_segment = []  # create an empty list to collect the data
     # open the file and read through it line by line
     with open(filepath, 'r') as file_object:
-        rx_dict = select_dic(version) #Select appropriate parser key
         lines = file_object.readlines() #Gets list of string values from the file, one string for each line of text
+        #TODO determine version
+        version = select_version(lines[0])
+        rx_dict = select_dic(version) #Select appropriate parser key
         #Find line where simulation time starts
-        #TODO update code to work with lines in a list
+    
     i = 0 #Start at first line
     m = None #Sets the value equal to none to start while loop
     while m is None and i < len(lines):
@@ -94,7 +123,25 @@ def parse_file(filepath, version):
     df_segment = pd.DataFrame(data_segment)
     # set the Time and Segment as the index
     df_segment.set_index(['Time', 'Segment','Sub'], inplace=True)
+    if version == "i":
+        df_segment['Airflow'] = df_segment['Airflow']/1000
+    print("Post processed ",filepath)
     return df_segment
+
+def valid_simtime(simtime, data):
+    timeseries_index = data.index.unique(0) #Creates a series of unique times
+    timeseries_list = timeseries_index.tolist()
+    time = float(simtime)
+    if time == -1 or time > timeseries_list[-1]:
+        time = timeseries_list[-1]
+        print('Using last simulation time ', time)
+    elif not time in timeseries_list:
+        for x in timeseries_list:
+            if (x - time >0):
+                time = x
+                break
+        print('Could not find requested simulation time. Using ',time)
+    return time
 
 def get_visXML(visname):
     VZip = zipfile.ZipFile(visname)
@@ -176,6 +223,7 @@ def write_visio(vxmls, visname, new_visio):
             ET.ElementTree(vxml).write("temp.xml",encoding='utf-8',xml_declaration=True)
             zappend.write('temp.xml',name,compress_type = compression)
             os.remove('temp.xml')
+    print("Created Visio Diagram ",new_visio)
 
 def update_visio(settings,data):
     vxmls = get_visXML(settings['visname']) #gets the pages in the VISIO XML.
@@ -183,9 +231,7 @@ def update_visio(settings,data):
     #For each file, in bype form replace with a the XML root type
     for name, vxml in vxmls.items():
         vxmls[name] = emod_visXML(vxmls[name],data, settings['simname'][:-4], settings['simtime'])
-    
-    write_visio(vxmls, settings['visname'], new_visio)
-    print('\n     Created Visio Diagram',new_visio)
+    write_visio(vxmls, settings['visname'], settings['new_visio'])
     #open_v = input('Open Visio file (Y/N): ') 
     #if open_v.upper() == 'Y':
     #    os.startfile(new_visio)
@@ -195,14 +241,14 @@ def get_input(settings = None):
     q_simname = 'Enter output file name with suffix (*.OUT for SES v6) or blank to quit: '
     ext_simname = ['.out', '.prn']
     e = 'Cannot find file, please try again or enter blank to quit. \n'
-    q_visname = 'Enter name of visio temlpate wihtsuffix (*.vsdx): '
+    q_visname = 'Enter name of visio temlpate wiht suffix (*.vsdx): '
     ext_visname = ['.vsdx']
     q_simtime = 'Emergency Simulation Time or -1 for last time: '
     repeat = 'no'
-    if settings['Control'] != "First":
+    if settings['Control'] != 'First':
         repeat = pyip.inputYesNo(q_repeat, yesVal='yes', noVal='no')
     else:
-        settings['Control'] != "Again"
+        settings['Control'] = 'Again'
     if repeat == 'no':
         #TODO determine version type from simname
         settings['simname'] = validate_file(q_simname, e, ext_simname)
@@ -211,9 +257,9 @@ def get_input(settings = None):
             if settings['visname'] != "":
                 settings['simtime'] = pyip.inputNum(q_simtime, min=-1)
             else:
-                settings['Control'] != "Stop"
+                settings['Control'] = "Stop"
         else:
-            settings['Control'] != "Stop"
+            settings['Control'] = "Stop"
     if settings['simname'].endswith('.prn'):
         #TODO Add version switch for 4.1 and 4.2
         settings['version']='i'
@@ -238,28 +284,30 @@ def validate_file(q, e, ext):
     return answer
 
 if __name__ == '__main__':
-    #TODO Adjust how simtime works when processing visio files
-    repeat = True #Run the program the first time
-    testing = False
+    #initialize a few variables
+    testing = True
     settings = {}
-    settings['Control'] = "First"
+    #Arguments for command line   Follow further instructions at https://docs.python.org/3/howto/argparse.html
+    parser = argparse.ArgumentParser()
+    parser.parse_args()    
     if testing:
         settings={
-            'simname' : 'NV-6p0-Base02.out',
-            'visname' : 'NV-Base02.vsdx',
+            'simname' : 'inferno.prn',
+            'visname' : 'Template20210209.vsdx',
             'simtime' : 2000.0,
-            'version' : 'S',
+            'version' : 'tbd',
+            'Control' : 'Testing'
         }
-        data=[] #Blank data variable
     else:
-        settings = get_input(settings)
-        if settings['Control'] != "Stop":
-            quit()
-        data = parse_file(settings['simname'], settings['version'])#Creates a panda with the airflow out at all time steps
-    if False: #Create Visio Diagram
-        #new_visio = simname[:-4] + "-" + str(int(simtime)) + ".vsdx"
-        data = parse_file(settings['simname'], settings['version'])#Creates a panda with the airflow out at all time steps
-        time_4_name = int(settings['simtime'])
-        new_visio = settings['simname'][:-4] +"-" + str(time_4_name)+ ".vsdx"
-        settings['new_visio'] = new_visio
-        update_visio(settings,data)
+        settings['Control'] = 'First'
+    while settings['Control'] != 'Stop':
+        if settings['Control'] != 'Testing':
+            settings = get_input(settings)
+        if settings['Control'] != 'Stop':
+            data = parse_file(settings['simname'])#Creates a panda with the airflow out at all time steps
+            settings['simtime'] = valid_simtime(settings['simtime'],data)
+            time_4_name = int(settings['simtime'])
+            settings['new_visio']  = settings['simname'][:-4] +"-" + str(time_4_name)+ ".vsdx"
+            update_visio(settings,data)
+            if testing:
+                settings['Control'] = 'Stop'
