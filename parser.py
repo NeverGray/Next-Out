@@ -1,5 +1,7 @@
 import re
+import os
 import pandas as pd
+import numpy as np 
 import logging
 logging.basicConfig(level=logging.DEBUG, format=' %(asctime)s - %(levelname)s - %(message)s')
 import zipfile
@@ -9,10 +11,11 @@ try:
 except:
     compression = zipfile.ZIP_STORED
 import xml.etree.ElementTree as ET
-import os
 import pyinputplus as pyip
 from pathlib import Path
-import argparse
+import multiprocessing #When trying to make a multiprocessing
+import sys
+#import argparse
 
 def select_version(str):
     v41 = "SES VER 4.10"
@@ -37,16 +40,24 @@ def select_dic(version):
 				(?P<AirTemp>-?\d+\.\d+)\s+        #Air Temperature
                 (?P<Humidity>-?\d+\.\d+)\s+       #Humidity
                 (?:(?P<Airflow>-?\d+\.\d+)\s+     #Airflow for first line
-                (?P<AirVel>-?\d+\.\d+)\s?|\s?)  #AirVel for first line 
+                (?P<AirVel>-?\d+\.\d+)\s?|\s?)  #AirVel for first line #TODO add $ to speed code?
                 )''', re.VERBOSE),
             'abb_segment_1': re.compile(r'''(
                 \s+\d+\s-\s{0,2}                 #Section
                 (?P<Segment>\d+)\s{1,11}         #Segment
                 (?P<Airflow>-?\d+\.\d+)\s{1,6}   #Sub-segment
 				(?P<AirVel>-?\d+\.\d+)\s{1,8}    #Air Velocity
-				(?P<AirTemp>-?\d+\.\d+)\s{1,8}   #Air Temperature
+				(?P<AirTemp>-?\d+\.\d+)\s{1,8}   #Air Temperature #TODO add $ to speed code?
                 \s?
                 )''', re.VERBOSE),
+            'wall': re.compile(r'''(
+                \d+\s-                        #Section
+                (?P<Segment>\s{0,2}\d+)+\s-\s+    #Segment
+                (?P<Sub>\s{0,2}\d+)\s{1,13}       #Sub-segment
+                (?P<WallTemp>-?\d+\.\d+)\s{1,17}  #Wall Surface Temperature
+                (?P<WallConvection>-?\d+\.\d+)\s{1,17} #Wall Convection
+                (?P<WallRadiation>-?\d+\.\d+)$   #Wall Radition and End of string($) nothing else afterwards
+                )''', re.VERBOSE)
         }
     else: #Parser key for SES v6.0 Emergency simualtions 
         rx_dict = { 
@@ -75,16 +86,17 @@ def select_dic(version):
             }
     return rx_dict
    
-def parse_file(filepath):
+def parse_file(filepath): #Parser for Point in Time data
     data_segment = []  # create an empty list to collect the data
+    wall = []
     # open the file and read through it line by line
     with open(filepath, 'r') as file_object:
         lines = file_object.readlines() #Gets list of string values from the file, one string for each line of text
         #TODO determine version
         version = select_version(lines[0])
+        version = 'i' #forced to be 4p1
         rx_dict = select_dic(version) #Select appropriate parser key
         #Find line where simulation time starts
-    
     i = 0 #Start at first line
     m = None #Sets the value equal to none to start while loop
     while m is None and i < len(lines):
@@ -99,34 +111,39 @@ def parse_file(filepath):
         for key, rx in rx_dict.items(): #change dictionary as necessary
             m = rx.search(lines[i]) #using .match searched the beginning of the line
             if m is not None:
+                m_dict = m.groupdict()
+                m_dict['Time'] = time
                 if key == 'time': #sets time interval
                     time = float(m.group('Time'))
-                    break
-                else: #If key is other than time
-                    row={'Time':time} #should erase row and reset the values
-                    m_dict = m.groupdict()
-                    for name, variable in m_dict.items():
-                        if variable is not None:
-                            #temp=float(variable)
-                            row.update({name:float(variable)})    
+                elif (key == 'detail_segment_1' or key == 'abb_segment_1'): #If key is other than time    
                     if key == 'abb_segment_1':
                         #Code only includes information for segment 1 for abbreviated prints
-                        #TODO Capture data for all sub-segments
                         i +=1
-                        row.update({'Sub':float(1.0)})
+                        m_dict.update({'Sub':int(1.0)})
                         s = lines[i]
-                        s = s[1:45]
-                        row.update({'Humidity':s.strip()}) #Add humidity from one line below, only first segement
-                    data_segment.append(row)
-                break
+                        s = s[1:45].strip() #HUmidity from one line below
+                        m_dict.update({'Humidity':s}) #Add humidity from one line below, only first segement
+                    data_segment.append(m_dict) 
+                elif key == "wall":
+                    wall.append(m_dict)
         i +=1
-    df_segment = pd.DataFrame(data_segment)
-    # set the Time and Segment as the index
-    df_segment.set_index(['Time', 'Segment','Sub'], inplace=True)
+    df_segment = to_dataframe(data_segment)
+    df_wall = to_dataframe(wall)
+    df_segment = df_segment.join(df_wall, how='outer') #https://pandas.pydata.org/pandas-docs/stable/user_guide/merging.html
     if version == "i":
         df_segment['Airflow'] = df_segment['Airflow']/1000
     print("Post processed ",filepath)
     return df_segment
+
+def to_dataframe(data):
+     #convert all values to numbers, remove non-numbers. Then turn Segments and Sub into integers
+    df = pd.DataFrame(data)
+    to_integers=['Segment', 'Sub'] #Columns to become integer
+    df = df.apply(pd.to_numeric, errors='coerce')
+    for col in to_integers:
+        df[col] = pd.to_numeric(df[col], downcast='integer')
+    df.set_index(['Time', 'Segment','Sub'], inplace=True)
+    return df
 
 def valid_simtime(simtime, data):
     timeseries_index = data.index.unique(0) #Creates a series of unique times
@@ -217,12 +234,13 @@ def write_visio(vxmls, visname, new_visio):
                 if not (item.filename in vxmls): #File was not updated by this code
                     zout.writestr(item, buffer,compress_type=compression)                   
             zout.comment= b'Mfwfs_Hsbz'
+    temp = new_visio[:-4] + ".xml" #unique file names to all multiprocessing
     with zipfile.ZipFile (new_visio, 'a') as zappend:
         for name, vxml in vxmls.items():
-            #TODO speedup file writing after updating to Python 8. Otherwise, cannot write xml_declaration easily
-            ET.ElementTree(vxml).write("temp.xml",encoding='utf-8',xml_declaration=True)
-            zappend.write('temp.xml',name,compress_type = compression)
-            os.remove('temp.xml')
+            #TODO speedup file writing after updating to Python 3.8. Otherwise, cannot write xml_declaration easily
+            ET.ElementTree(vxml).write(temp, encoding='utf-8', xml_declaration=True)
+            zappend.write(temp,name,compress_type = compression)
+            os.remove(temp)
     print("Created Visio Diagram ",new_visio)
 
 def update_visio(settings,data):
@@ -237,37 +255,39 @@ def update_visio(settings,data):
     #    os.startfile(new_visio)
 
 def get_input(settings = None):
+    Welcome = "Next Vis - Proprocessing SES Output files"
+    q_start = "Select the type of output file to create: \n"
     q_repeat = 'Repeat last processing Y/N: '
-    q_simname = 'Enter output file name with suffix (.OUT for SES v6), blank to quit, or ALL: '
+    q_simname = 'SES output file name with suffix (.OUT for SES v6), blank to quit, or ALL: '
     ext_simname = ['.OUT', '.PRN']
     e = 'Cannot find file, please try again or enter blank to quit. \n'
-    q_visname = 'Enter name of visio temlpate wiht suffix (*.vsdx): '
+    q_visname = 'Visio template with suffix (*.vsdx) or blank to quit: '
     ext_visname = ['.VSDX']
     q_simtime = 'Emergency Simulation Time or -1 for last time: '
     repeat = 'no'
-    if settings['Control'] != 'First':
+    if settings['control'] != 'First':
         repeat = pyip.inputYesNo(q_repeat, yesVal='yes', noVal='no')
     else:
-        settings['Control'] = 'Single'
+        settings['control'] = 'Single'
     if repeat == 'no':
         #TODO determine version type from simname
-        settings['simname'] = validate_file(q_simname, e, ext_simname)
-        if settings['simname'] != "":
+        print(Welcome)
+        settings['output'] = pyip.inputMenu(['Visio', 'Excel', 'Both', 'Exit'],q_start,numbered=True)
+        if settings['output'] == 'Exit':
+            settings['control'] = "Stop"
+        if settings['control'] !="Stop":       
+            settings['simname'] = validate_file(q_simname, e, ext_simname)
+            if settings['simname'].upper() == "ALL":
+                settings['control']="ALL"
+            elif settings['simname'] == "":
+                settings['control'] = "Stop"
+        if settings['output'] != 'Excel' and settings['control'] != "Stop":
             settings['visname'] = validate_file(q_visname, e, ext_visname)
             if settings['visname'] != "":
                 settings['simtime'] = pyip.inputNum(q_simtime, min=-1)
             else:
-                settings['Control'] = "Stop"
-                settings['simname'] != "Stop" #Needed to prevent the ALL function
-        else:
-            settings['Control'] = "Stop"
-    if settings['simname'].endswith('.prn'): #Could eliminate because it is automated now
-        #TODO Add version switch for 4.1 and 4.2
-        settings['version']='i'
-    else:
-        settings['version']='s'
-    if settings['simname'].upper() == "ALL":
-        settings['Control']="ALL"
+                settings['control'] = "Stop"
+
     return settings
 
 def validate_file(q, e, ext):
@@ -298,41 +318,61 @@ def find_all_files():
                 all_files.append(entry.name)
     return all_files  
 
-def single_visio(settings):
+def single_sim(settings, multi_processor_name =''):
+    if multi_processor_name != '':
+        settings['simname'] = multi_processor_name
     data = parse_file(settings['simname'])#Creates a panda with the airflow out at all time steps
-    settings['simtime'] = valid_simtime(settings['simtime'],data)
-    time_4_name = int(settings['simtime'])
-    settings['new_visio']  = settings['simname'][:-4] +"-" + str(time_4_name)+ ".vsdx"
-    update_visio(settings,data)
+    base_name = settings['simname'][:-4]
+    if settings['output'] != 'Excel':
+        settings['simtime'] = valid_simtime(settings['simtime'],data)
+        time_4_name = int(settings['simtime'])
+        settings['new_visio']  = base_name +"-" + str(time_4_name)+ ".vsdx"
+        update_visio(settings, data)
+    if settings['output'] != 'Visio':
+        data.to_excel(base_name+".xlsx",merge_cells=False)
+        print("Created Excel File " + base_name +".xlsx")
 
+def f(name):
+    print ('The File Name is ',name)
 
 if __name__ == '__main__':
+    multiprocessing.freeze_support() #Required for multiprocess to work with Pyinstaller on windows computers
     #initialize a few variables
-    Testing = False
+    Testing = True
     settings = {}
     #TODO Create arguments for command line   Follow further instructions at https://docs.python.org/3/howto/argparse.html
     #parser = argparse.ArgumentParser()
     #parser.parse_args()    
     if Testing:
         settings={
-            'simname' : 'inferno.prn',
+            'simname' : 'inferno4p1.PRN',
             'visname' : 'Template20210209.vsdx',
             'simtime' : 2000.0,
             'version' : 'tbd',
-            'Control' : 'Testing'
+            'control' : 'Stop'
         }
+        data = parse_file(settings['simname'])
+        with pd.HDFStore('inferno.h5') as store:
+            store['i4p1']=data
+        print('Done')
     else:
-        settings['Control'] = 'First'
-    while settings['Control'] != 'Stop':
-        if settings['Control'] != 'Testing':
+        settings['control'] = 'First'
+    while settings['control'] != 'Stop':
+        if settings['control'] != 'Testing':
             settings = get_input(settings)
-        if settings['Control'] == 'Single':
-            single_visio(settings)
+        if settings['control'] == 'Single':
+            single_sim(settings)
             if Testing:
-                settings['Control'] = 'Stop'
-        elif settings['Control'] == 'ALL':
+                settings['control'] = 'Stop'
+        elif settings['control'] == 'ALL':
             all_files = find_all_files()
+            print("Processing " + str(len(all_files)) + " SES Output files")
+            num_of_p = max(multiprocessing.cpu_count() -1,1) #Use all processors except 1
+            pool = multiprocessing.Pool(num_of_p)
             for file in all_files:
-                settings['simname'] = file
-                single_visio(settings)
-
+                # Reference code for multiprocess https://pymotw.com/2/multiprocessing/basics.html
+                # Another code for multiprocessing https://stackoverflow.com/questions/20886565/using-multiprocessing-process-with-a-maximum-number-of-simultaneous-processes
+                pool.apply_async(single_sim, args=(settings,file))
+                #single_sim(settings,file)
+            pool.close()
+            pool.join()
