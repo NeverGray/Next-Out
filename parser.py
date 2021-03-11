@@ -32,7 +32,7 @@ def select_dic(version):
         rx_dict = { 
             'time': re.compile(r'TIME.\s+(?P<Time>\d+.\d{2}).+SECONDS.+TRAIN'), #Find the first time Simulation
             'detail_segment_1': re.compile(r'''(
-                \d+\s-                        #Section
+                \s{9,}\d+\s-                        #Section #Added \s{9.} to stop processing heat sink summaries
                 (?P<Segment>\s{0,2}\d+)+\s-\s+    #Segment
                 (?P<Sub>\s{0,2}\d+)\s{1,12}       #Sub-segment
 				(?:(?P<Sensible>-?\d+\.\d+)\s+       #Sensible for tunnels
@@ -126,6 +126,7 @@ def parse_file(filepath): #Parser for Point in Time data
                     data_segment.append(m_dict) 
                 elif key == "wall":
                     wall.append(m_dict)
+                #break #TODO Would this break save time?
         i +=1
     df_segment = to_dataframe(data_segment)
     df_wall = to_dataframe(wall)
