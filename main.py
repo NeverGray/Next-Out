@@ -9,7 +9,7 @@ from pathlib import Path
 from os import scandir
 #Import of scripts
 import NV_parser as nvp
-
+import pandas as pd
 
 def activate_license(license_key, keygen_account_id):
   machine_fingerprint = hashlib.sha256(str(get_mac()).encode('utf-8')).hexdigest()
@@ -118,6 +118,8 @@ def get_input(settings = None):
                 settings['control']="ALL"
             elif settings['simname'] == "":
                 settings['control'] = "Stop"
+            else:
+                settings['control']="Single"
         if settings['output'] != 'Excel' and settings['control'] != "Stop":
             settings['visname'] = validate_file(q_visname, e, ext_visname)
             if settings['visname'] != "":
@@ -157,7 +159,9 @@ def single_sim(settings, multi_processor_name =''):
         settings['new_visio']  = base_name +"-" + str(time_4_name)+ ".vsdx"
         update_visio(settings, data)'''
     if settings['output'] != 'Visio':
-        data.to_excel(base_name+".xlsx",merge_cells=False)
+        with pd.ExcelWriter(base_name+".xlsx") as writer:
+            for item in data:
+                item.to_excel(writer, sheet_name = item.name, merge_cells=False)
         print("Created Excel File " + base_name +".xlsx \n")
 
 def find_all_files():
@@ -169,7 +173,7 @@ def find_all_files():
                 all_files.append(entry.name)
     return all_files  
 
-def main():
+def main(testing=False):
     #initialize variable
     multiprocessing.freeze_support() #Required for multiprocess to work with Pyinstaller on windows computers
     settings = {} #Container for settings
@@ -182,13 +186,23 @@ def main():
     print(legit, msg)
     if not legit:
         return
-    if settings['control'] == 'Testing':
+    if testing:
         print('In testing mode')
+        settings={
+            'simname' : 'sinorm.out',
+            'visname' : 'Template20210209.vsdx',
+            'simtime' : 2000.0,
+            'version' : 'tbd',
+            'control' : 'Stop',
+            'output'  : 'Excel'
+        }
+        single_sim(settings)
     else:
         while settings['control'] != 'Stop':
             if settings['control'] != 'Testing':
                 settings = get_input(settings)
             if settings['control'] == 'Single':
+                #TODO add Try statement to incase there are errors
                 single_sim(settings)
             elif settings['control'] == 'ALL':
                 all_files = find_all_files()
@@ -213,4 +227,4 @@ def main():
                     return
     
 if __name__ == '__main__':
-    main()
+    main(testing=False)
