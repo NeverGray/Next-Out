@@ -195,6 +195,7 @@ data_te = []
 data_hsc = []
 data_hsu = []
 
+#TODO Eliminate NumExpr detected 16 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 8.
 def parse_file(filepath): #Parser
     # open the file and read through it line by line
     with open(filepath, 'r') as file_object:

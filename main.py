@@ -7,9 +7,10 @@ import pyinputplus as pyip
 import multiprocessing #When trying to make a multiprocessing
 from pathlib import Path
 from os import scandir
+import pandas as pd
 #Import of scripts
 import NV_parser as nvp
-import pandas as pd
+import NV_visio as nvv
 
 def activate_license(license_key, keygen_account_id):
   machine_fingerprint = hashlib.sha256(str(get_mac()).encode('utf-8')).hexdigest()
@@ -150,14 +151,17 @@ def validate_file(q, e, ext):
 def single_sim(settings, multi_processor_name =''):
     if multi_processor_name != '':
         settings['simname'] = multi_processor_name
-    data = nvp.parse_file(settings['simname']) #Creates a Point in Time Data for each timestep
+    data = nvp.parse_file(settings['simname'])
     base_name = settings['simname'][:-4]
-    ''' TODO Update code to support visioo files
     if settings['output'] != 'Excel':
-        settings['simtime'] = valid_simtime(settings['simtime'],data)
+        for item in data: #TODO - Need to get PIT from Data list
+          if item.name == 'PIT':
+            df_PIT = item #Pass dataframe 
+            break
+        settings['simtime'] = nvv.valid_simtime(settings['simtime'], df_PIT)
         time_4_name = int(settings['simtime'])
         settings['new_visio']  = base_name +"-" + str(time_4_name)+ ".vsdx"
-        update_visio(settings, data)'''
+        nvv.update_visio(settings, df_PIT)
     if settings['output'] != 'Visio':
         with pd.ExcelWriter(base_name+".xlsx") as writer:
             for item in data:
@@ -189,12 +193,12 @@ def main(testing=False):
     if testing:
         print('In testing mode')
         settings={
-            'simname' : 'sinorm.out',
-            'visname' : 'Template20210209.vsdx',
-            'simtime' : 2000.0,
+            'simname' : 'inferno.prn',
+            'visname' : 'inferno.vsdx',
+            'simtime' : 9999.0,
             'version' : 'tbd',
             'control' : 'Stop',
-            'output'  : 'Excel'
+            'output'  : 'Both'
         }
         single_sim(settings)
     else:
@@ -227,4 +231,4 @@ def main(testing=False):
                     return
     
 if __name__ == '__main__':
-    main(testing=False)
+    main(testing=True)
