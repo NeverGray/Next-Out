@@ -6,13 +6,26 @@ import hashlib
 import pyinputplus as pyip
 import multiprocessing #When trying to make a multiprocessing
 from pathlib import Path
-from os import scandir
+import os
 import pandas as pd
 #Import of scripts
 import NV_parser as nvp
 import NV_visio as nvv
 
-def activate_license(license_key, keygen_account_id):
+def read_lic():
+  filepath = 'Next_Vis_Beta.lic'
+  with open(filepath, 'r') as file_object:
+    lines = file_object.readlines()
+  for line in lines:
+    if line.startswith('license_key ='):
+      license_key = line[14:].strip()
+    elif line.startswith('keygen_account_id ='):
+      keygen_account_id = line[19:].strip()
+    elif line.startswith('keygen_activation_token'):
+      keygen_activation_token = line[25:].strip()
+  return license_key, keygen_account_id, keygen_activation_token
+
+def activate_license(license_key, keygen_account_id, kegen_activation_token):
   machine_fingerprint = hashlib.sha256(str(get_mac()).encode('utf-8')).hexdigest()
   validation = requests.post(
     "https://api.keygen.sh/v1/accounts/{}/licenses/actions/validate-key".format(keygen_account_id),
@@ -55,7 +68,6 @@ def activate_license(license_key, keygen_account_id):
 
   # If we've gotten this far, then our license has not been activated yet,
   # so we should go ahead and activate the current machine.
-  kegen_activation_token = input('Provide Activation Token to license the program: ') #Added to allow kegen activation
   activation = requests.post(
     "https://api.keygen.sh/v1/accounts/{}/machines".format(keygen_account_id),
     headers={
@@ -171,22 +183,22 @@ def single_sim(settings, multi_processor_name =''):
 def find_all_files():
     all_files = []
     Extensions = [".OUT", ".PRN"]
-    with scandir() as it: #Return an iterator of os.DirEntr, see https://docs.python.org/3/library/os.html
+    with os.scandir() as it: #Return an iterator of os.DirEntr, see https://docs.python.org/3/library/os.html
         for entry in it: #For each item in iterator
             if entry.name[-4:].upper() in Extensions and entry.is_file(): 
                 all_files.append(entry.name)
     return all_files  
 
 def main(testing=False):
+    #TODO Update security to allow entering license key only once?
+    [license_key, keygen_account_id, keygen_activation_token] = read_lic()
+    legit, msg = activate_license(license_key, keygen_account_id, keygen_activation_token)
+    #Confirm license is activated
+
     #initialize variable
     multiprocessing.freeze_support() #Required for multiprocess to work with Pyinstaller on windows computers
     settings = {} #Container for settings
     settings['control'] = 'First' #Change to 'testing' when necessary
-    #Confirm license is activated
-    keygen_account_id = '11635372-552d-48aa-aa1b-8b927fcaccd2' 
-    #TODO Update security to allow entering license key only once?
-    key = 'key/RVlDVy05N0pLLVZYTjMtVFdDMy1UN1hZLVhQNEMtV0xQUC05TkFB.gWse8XGjklxZ0z6DV-6SEelPefBxOLggVWAwEr99DbpFI6KKwunIHxRY0xlQHWNx3L4coWIlT--DtfenfmPIYPUNFIqjzH2tk3PnzfQh2tE1-QZfVAQvUhe9oePd1biKuGAtr6pwQ82vU-nUyjIiOAEwWU2_e4jKnp3so8a3BGpV8gPRQ70tz2Avh2gcsRydJb3meOOwuSGVTLaQRTNb9ypzTcHEcbN8CCPScq3gyFyRNHJtY2Tgm1J44NpAiAuI28JCJlI4gDing7nDn_0nAzEKYM8m3txq8ZDPR5IwjQF9WOKe9lHqDE-noWAJ_49oSUkQGek_7MfhVlrEmLr_ww=='
-    legit, msg = activate_license(key, keygen_account_id)
     print(legit, msg)
     if not legit:
         return
@@ -231,4 +243,4 @@ def main(testing=False):
                     return
     
 if __name__ == '__main__':
-    main(testing=True)
+    main(testing=False)
