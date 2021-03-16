@@ -50,7 +50,7 @@ def emod_visXML(vxml, data, simname="Not Available", simtime = 0.00):
         try: #Pull airflow from the dataframe, if it does not exist, use an airflow 999.9
             ses_airflow = data.loc[(simtime,SegID,SubID),"Airflow"]
         except:
-            ses_airflow = -999.9
+            ses_airflow = 999.9
         airflow=str(round(abs(ses_airflow),1)) #The absolute airflow as a string
         ShapeChild=Shape.find(".//Visio:Shape[@Name='NV01_AirFlow']",ns) #Selects the NV01_Airflow Object
         #ET.SubElement(ShapeChild,"Text").text=airflow 

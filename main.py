@@ -205,8 +205,8 @@ def main(testing=False):
     if testing:
         print('In testing mode')
         settings={
-            'simname' : 'inferno.prn',
-            'visname' : 'inferno.vsdx',
+            'simname' : 'siinfern.out',
+            'visname' : 'Template.vsdx',
             'simtime' : 9999.0,
             'version' : 'tbd',
             'control' : 'Stop',
@@ -243,4 +243,4 @@ def main(testing=False):
                     return
     
 if __name__ == '__main__':
-    main(testing=False)
+    main(testing=True)
