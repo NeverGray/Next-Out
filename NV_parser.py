@@ -1,6 +1,5 @@
 import re
 import pandas as pd
-import numpy as np 
 import logging
 logging.basicConfig(level=logging.DEBUG, format=' %(asctime)s - %(levelname)s - %(message)s')
 
@@ -297,6 +296,8 @@ def to_dataframe2(data, to_integers = ['Segment', 'Sub'], to_index = ['Time','Se
         df.set_index(to_index, inplace=True)
         if len(groupby) > 0:
             df = df.groupby(groupby).sum()
+        if not df.index.is_lexsorted():
+            df = df.sort_index() #Speeds up future referencing and prevents errors with finding data
     else:
         print('No data in ', data)
         df = pd.DataFrame([{'No Data': 'No Data'}])

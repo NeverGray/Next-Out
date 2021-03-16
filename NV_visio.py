@@ -48,7 +48,7 @@ def emod_visXML(vxml, data, simname="Not Available", simtime = 0.00):
         SegID=int(Shape.find(".//Visio:Row[@N='NV01_SegID']/Visio:Cell",ns).get('V')) #Get the value for the Segment ID from XML and save as SegID
         SubID=1
         try: #Pull airflow from the dataframe, if it does not exist, use an airflow 999.9
-            ses_airflow = data.loc[(simtime,SegID,SubID),"Airflow"]
+            ses_airflow = data.at[(simtime,SegID,SubID),"Airflow"] #.loc created errors
         except:
             ses_airflow = 999.9
         airflow=str(round(abs(ses_airflow),1)) #The absolute airflow as a string
@@ -92,12 +92,15 @@ def text_update(find_string, text_value, root, ns):
 def write_visio(vxmls, visname, new_visio):
     #Sample Zip source code from https://stackoverflow.com/questions/513788/delete-file-from-zipfile-with-the-zipfile-module
     with zipfile.ZipFile(visname, 'r') as zin:
-        with zipfile.ZipFile(new_visio, 'w') as zout:
-            for item in zin.infolist(): 
-                buffer = zin.read(item.filename)
-                if not (item.filename in vxmls): #File was not updated by this code
-                    zout.writestr(item, buffer,compress_type=compression)                   
-            zout.comment= b'Mfwfs_Hsbz'
+        try:
+            with zipfile.ZipFile(new_visio, 'w') as zout:
+                for item in zin.infolist(): 
+                    buffer = zin.read(item.filename)
+                    if not (item.filename in vxmls): #File was not updated by this code
+                        zout.writestr(item, buffer,compress_type=compression)                   
+                zout.comment= b'Mfwfs_Hsbz'
+        except:
+            print('Error writing ' + new_visio + '. Try closing the file and process again.')
     temp = new_visio[:-4] + ".xml" #unique file names to all multiprocessing
     with zipfile.ZipFile (new_visio, 'a') as zappend:
         for name, vxml in vxmls.items():

@@ -8,12 +8,25 @@ import multiprocessing #When trying to make a multiprocessing
 from pathlib import Path
 import os
 import pandas as pd
+import logging
 #Import of scripts
 import NV_parser as nvp
 import NV_visio as nvv
 
+
 def read_lic():
+  #TODO Error checking if file doesn't exist
   filepath = 'Next_Vis_Beta.lic'
+  path = Path() / filepath #Creates a path object
+  if not path.is_file():
+    print('Cannot find ' + filepath + '. Put file in same folder as EXE file and try again.')
+    repeat = pyip.inputYesNo("Ready to try reading license again? Y/N ", yesVal='yes', noVal='no')
+    if repeat == 'no':
+      print('Please acquire proper license from Justin@NeverGray.biz')
+      quit()
+    elif not path.is_file():
+      print('Still cannot license file' + filepath + '. Please acquire proper license from Justin@NeverGray.biz')
+      quit()
   with open(filepath, 'r') as file_object:
     lines = file_object.readlines()
   for line in lines:
@@ -26,6 +39,7 @@ def read_lic():
   return license_key, keygen_account_id, keygen_activation_token
 
 def activate_license(license_key, keygen_account_id, kegen_activation_token):
+  logging.getLogger("urllib3").setLevel(logging.WARNING) #Remove debugging screen from request, see https://stackoverflow.com/questions/11029717/how-do-i-disable-log-messages-from-the-requests-library
   machine_fingerprint = hashlib.sha256(str(get_mac()).encode('utf-8')).hexdigest()
   validation = requests.post(
     "https://api.keygen.sh/v1/accounts/{}/licenses/actions/validate-key".format(keygen_account_id),
@@ -141,12 +155,12 @@ def get_input(settings = None):
                 settings['control'] = "Stop"
     return settings
 
-def validate_file(q, e, ext):
+def validate_file(q, e, ext): #Q is for prompt, e is for error, ext is for extension
     invalid = True
     while invalid: #Output File name
         answer = pyip.inputFilename(prompt = q,blank = True, limit=5)
         if answer.upper() != "ALL":
-            path_answer = Path() / answer#Creates a path object
+            path_answer = Path() / answer #Creates a path object
             if path_answer.is_file():
                 if path_answer.suffix.upper() in ext:
                     invalid = False
@@ -166,7 +180,7 @@ def single_sim(settings, multi_processor_name =''):
     data = nvp.parse_file(settings['simname'])
     base_name = settings['simname'][:-4]
     if settings['output'] != 'Excel':
-        for item in data: #TODO - Need to get PIT from Data list
+        for item in data: 
           if item.name == 'PIT':
             df_PIT = item #Pass dataframe 
             break
@@ -175,18 +189,25 @@ def single_sim(settings, multi_processor_name =''):
         settings['new_visio']  = base_name +"-" + str(time_4_name)+ ".vsdx"
         nvv.update_visio(settings, df_PIT)
     if settings['output'] != 'Visio':
-        with pd.ExcelWriter(base_name+".xlsx") as writer:
-            for item in data:
-                item.to_excel(writer, sheet_name = item.name, merge_cells=False)
-        print("Created Excel File " + base_name +".xlsx \n")
+        #TODO Add error checker if excel file is ope2n
+        try:
+          with pd.ExcelWriter(base_name+".xlsx") as writer:
+              for item in data:
+                  item.to_excel(writer, sheet_name = item.name, merge_cells=False)
+          print("Created Excel File " + base_name +".xlsx")
+        except:
+          print("Error creating Excel file " + base_name + ".xlsx.  Try closing this file in excel and process again")
 
 def find_all_files():
     all_files = []
     Extensions = [".OUT", ".PRN"]
-    with os.scandir() as it: #Return an iterator of os.DirEntr, see https://docs.python.org/3/library/os.html
-        for entry in it: #For each item in iterator
-            if entry.name[-4:].upper() in Extensions and entry.is_file(): 
-                all_files.append(entry.name)
+    try:
+      with os.scandir() as it: #Return an iterator of os.DirEntr, see https://docs.python.org/3/library/os.html
+          for entry in it: #For each item in iterator
+              if entry.name[-4:].upper() in Extensions and entry.is_file(): 
+                  all_files.append(entry.name)
+    except:
+      print('Error finding all files to process')
     return all_files  
 
 def main(testing=False):
@@ -205,7 +226,8 @@ def main(testing=False):
     if testing:
         print('In testing mode')
         settings={
-            'simname' : 'siinfern.out',
+            #'simname' : 'siinfern-detailed.out',
+            'simname' : 'sinorm-detailed.out',
             'visname' : 'Template.vsdx',
             'simtime' : 9999.0,
             'version' : 'tbd',
@@ -243,4 +265,4 @@ def main(testing=False):
                     return
     
 if __name__ == '__main__':
-    main(testing=True)
+    main(testing=False)
