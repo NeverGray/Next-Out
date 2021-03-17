@@ -56,23 +56,23 @@ SUM = {  #TODO replace sum_time value with PIT value of PIT['sum_time']?
             AIR\sFLOW\sRATE.+
             (?:\d+)+\s-\s*            #Section number (not used)
             (?P<Segment>\d+)\s{5,}    #Segment number
-            (?P<A_Max>\d+\.\d*)\s+    #Airflow rate maximum
+            (?P<A_Max>-?\d+\.\d*)\s+    #Airflow rate maximum
             (?P<A_Max_T>\d+\.\d*)\s+  #Time of airflow rate maximum
-            (?P<A_Min>\d+\.\d*)\s+    #Airflow rate minimum
+            (?P<A_Min>-?\d+\.\d*)\s+    #Airflow rate minimum
             (?P<A_Min_T>\d+\.\d*)\s+  #Time of airflow rate minimum
             (?P<A_P>\d+\.\d*)\s+      #Percentage of time airflow is positive
-            (?P<A_N>\d+\.\d*)$         #Percentage of time airflow is negative
+            (?P<A_N>-?\d+\.\d*)$         #Percentage of time airflow is negative
             )''', re.VERBOSE),
         'velocity': re.compile(r'''(
             AIR\sVELOCITY\s.+
             (?:\d+)+\s-\s*  
             (?P<Segment>\d+)\s{5,}
-            (?P<V_Max>\d+\.\d*)\s+    #Velocity maximum
-            (?P<V_Max_T>\d+\.\d*)\s+  #time of velocity maximum
-            (?P<V_Min>\d+\.\d*)\s+    #velocity minimum
-            (?P<V_Min_T>\d+\.\d*)\s+  #time of velocity minimjum
-            (?P<V_P>\d+\.\d*)\s+      #average value positive
-            (?P<V_N>\d+\.\d*)$         #average value negative
+            (?P<V_Max>-?\d+\.\d*)\s+    #Velocity maximum
+            (?P<V_Max_T>-?\d+\.\d*)\s+  #time of velocity maximum
+            (?P<V_Min>-?\d+\.\d*)\s+    #velocity minimum
+            (?P<V_Min_T>-?\d+\.\d*)\s+  #time of velocity minimjum
+            (?P<V_P>-?\d+\.\d*)\s+      #average value positive
+            (?P<V_N>-?\d+\.\d*)$         #average value negative
             )''', re.VERBOSE),
         'airflow_direction': re.compile(r'''(
             AIR\sFLOW\sDIRECTION.+
@@ -143,8 +143,8 @@ PERCENTAGE = {
         )''', re.VERBOSE),
     }
 
-TE = {    
-    'es':re.compile(r'\s+ENERGY SECTOR\s*(?P<ES>\d+)$'),
+TES = {    
+    'es':re.compile(r'\s+ENERGY SECTOR\s*(?P<ES>-?\d+)$'),
     'et': re.compile(r'\s+PROPULSION ENERGY FROM THIRD RAIL\s+(?P<ET>-?\d*\.\d*)\s+'),
     'ef': re.compile(r'\s+EQUIVALENT THIRD RAIL PROPULSION ENERGY FROM FLYWHEEL\s+(?P<EF>-?\d*\.\d*)\s+'),
     'ea': re.compile(r'\s+AUXILIARY ENERGY\s+(?P<EA>-?\d*\.\d*)\s+'),
@@ -276,13 +276,13 @@ def parse_file(filepath): #Parser
         df_percentage = to_dataframe2(data_percentage)
         df_percentage.name = 'PER'
         df_te = to_dataframe2(data_te, to_integers=['ES'], to_index=['Time', 'ES'])
-        df_te.name = 'ES'       
-        df_hsc = to_dataframe2(data_hsc) #TODO Index by Zone?
-        df_hsc.name = 'HSC'
-        df_hsu = to_dataframe2(data_hsu)
-        df_hsu.name = 'HSU'
+        df_te.name = 'TES'       
+        df_hsa = to_dataframe2(data_hsu, to_integers = ['Segment', 'Sub','ZN'], to_index=['Time','ZN','Segment','Sub'])
+        df_hsa.name = 'HSA'
+        df_ecs = to_dataframe2(data_hsc, to_integers = ['Segment', 'Sub','ZN'], to_index=['Time','ZN','Segment','Sub'])
+        df_ecs.name = 'ECS'
         print("Post processed ",filepath)
-        return [df_pit, df_segment, df_sub, df_percentage, df_te, df_hsc, df_hsu]
+        return [df_pit, df_segment, df_sub, df_percentage, df_te, df_hsa, df_ecs]
     else: 
         return [df_pit]
 
@@ -310,7 +310,7 @@ def select_version(str):
         version = 'si'
     return version
 
-def sum_parser(lines, time):
+def sum_parser(lines, time): #Parser for summary portion of output, between times
     i = 0 #start at line zero
     while i < len(lines):
         # at each line check for a match with a regex
@@ -355,11 +355,11 @@ def sum_parser(lines, time):
                     elif key == 'heat_sink':
                         start_line = i
                         end_line = len(lines)
-                        [hsc, hsu] = he_parser(lines[start_line:end_line],time)
-                        for item in hsc:
-                            data_hsc.append(item)
+                        [hsu, hsc] = he_parser(lines[start_line:end_line],time)
                         for item in hsu:
                             data_hsu.append(item)
+                        for item in hsc:
+                            data_hsc.append(item)
                         i = end_line
                     elif not 'Segment' in m_dict:
                         m_dict['Segment'] = last_segment 
@@ -388,7 +388,7 @@ def percentage_parser(p_lines,time):
     return percent_list
 
 def te_parser(p_lines,time):
-    TE = {    
+    TES = {    
     'es':re.compile(r'\s+ENERGY SECTOR\s*(?P<ES>\d+)$'),
     'et': re.compile(r'\s+PROPULSION ENERGY FROM THIRD RAIL\s+(?P<ET>-?\d*\.\d*)\s+'),
     'ef': re.compile(r'\s+EQUIVALENT THIRD RAIL PROPULSION ENERGY FROM FLYWHEEL\s+(?P<EF>-?\d*\.\d*)\s+'),
@@ -400,22 +400,22 @@ def te_parser(p_lines,time):
     te_list = []
     te_dict = {}
     while i < len(p_lines):
-        m = TE['es'].search(p_lines[i])
+        m = TES['es'].search(p_lines[i])
         if m:
             te_dict = {} #reset values in te_dict
             te_dict['Time'] = time 
             te_dict.update(m.groupdict())
             i += 3
-            m = TE['et'].search(p_lines[i])
+            m = TES['et'].search(p_lines[i])
             te_dict.update(m.groupdict())
             i +=2
-            m = TE['ef'].search(p_lines[i])
+            m = TES['ef'].search(p_lines[i])
             te_dict.update(m.groupdict())
             i +=2
-            m = TE['ea'].search(p_lines[i])
+            m = TES['ea'].search(p_lines[i])
             te_dict.update(m.groupdict())
             i +=2
-            m = TE['er'].search(p_lines[i])
+            m = TES['er'].search(p_lines[i])
             te_dict.update(m.groupdict())
             te_list.append(te_dict)
         i +=1
@@ -425,7 +425,7 @@ def he_parser(p_lines,time):
     i = 6
     he_dict = {}
     hec_list = [] #List for controlled
-    heu_list = [] #list for uncontrolled
+    heu_list = [] #list heat sink analysis
     while i < len(p_lines):
         for key, rx in HE.items(): #change dictionary as necessary
             m = rx.search(p_lines[i]) #using .match searched the beginning of the line
@@ -444,4 +444,4 @@ def he_parser(p_lines,time):
                     hec_list.append(he_dict)
                 break
         i+=1
-    return hec_list, heu_list
+    return heu_list, hec_list

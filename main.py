@@ -196,7 +196,7 @@ def single_sim(settings, multi_processor_name =''):
                   item.to_excel(writer, sheet_name = item.name, merge_cells=False)
           print("Created Excel File " + base_name +".xlsx")
         except:
-          print("Error creating Excel file " + base_name + ".xlsx.  Try closing this file in excel and process again")
+          print("ERROR creating Excel file " + base_name + ".xlsx.  Try closing this file in excel and process again")
 
 def find_all_files():
     all_files = []
@@ -222,6 +222,8 @@ def main(testing=False):
     settings['control'] = 'First' #Change to 'testing' when necessary
     print(legit, msg)
     if not legit:
+        print("Your license is not valid. Please contact Justin@NeverGray.biz to continue using the program.")
+        input('Program will exit when you hit enter')
         return
     if testing:
         print('In testing mode')
@@ -235,8 +237,8 @@ def main(testing=False):
             'output'  : 'Both'
         }
         single_sim(settings)
-    else:
-        while settings['control'] != 'Stop':
+    elif legit:
+        while settings['control'] != 'Stop' and legit:
             if settings['control'] != 'Testing':
                 settings = get_input(settings)
             if settings['control'] == 'Single':
@@ -256,13 +258,17 @@ def main(testing=False):
                 pool.join()
             else: #Something has gone wrong!
                 print("Error in inputing data to control variable")
-                c = pyip.inputYesNo(prompt='Do you want to try post-processing again? Yes to try, No to quit: ')
+                c = pyip.inputYesNo(prompt='Do you want to quit the program? Yes or No: ')
                 settings = {} #Clear container for settings
-                if c == 'yes':
+                if c == 'no':
                     settings['control'] = 'First'
                 else:
                     settings['control'] = 'Stop'
                     return
+    else:
+      print('Something has gone horribly wrong! Your licese may no longer be valid or something weird happened. Try restrating')
+      input('Program will exit when you hit enter')
+      return
     
 if __name__ == '__main__':
     main(testing=False)

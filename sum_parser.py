@@ -2,7 +2,7 @@ import parser
 import re
 import pandas as pd
 
-def sum_parser(filepath): #Parser for Point in Time data
+def sum_parser(filepath): #Parser for summary prints
     version = "i"
     data_segment = []  # create an empty list to collect the data
     data_sub =[] #create an empty list to collect data for subsegments
@@ -14,7 +14,7 @@ def sum_parser(filepath): #Parser for Point in Time data
         lines = file_object.readlines() #Gets list of string values from the file, one string for each line of text
     i = 0 #Start at first line
     m = None #Sets the value equal to none to start while loop
-    rx_dict = { 
+    SUM = { 
         'sum_time': re.compile(r'SUMMARY OF SIMULATION FROM\s+\d+\.\d+\sTO\s+(?P<Time>\d+.\d{2})\sSECONDS'), #Find the first time Simulation
         'airflow': re.compile(r'''(
             AIR\sFLOW\sRATE.+
@@ -83,7 +83,7 @@ def sum_parser(filepath): #Parser for Point in Time data
         #test parser using https://www.debuggex.com/
         }
     while m is None and i < len(lines):
-            rx = rx_dict['sum_time']
+            rx = SUM['sum_time']
             m = rx.search(lines[i])
             i +=1
     assert (i < (len(lines) - 1)), 'Cannot find first time! Line variable number is ' + str(i) 
@@ -93,14 +93,14 @@ def sum_parser(filepath): #Parser for Point in Time data
         # at each line check for a match with a regex
         m = False
         if lines[i] != '\n':
-            for key, rx in rx_dict.items(): #change dictionary as necessary
+            for key, rx in SUM.items(): #change dictionary as necessary
                 m = rx.search(lines[i]) #using .match searched the beginning of the line
                 if m is not None:
                     m_dict = m.groupdict()
                     m_dict['Time'] = time
                     if key == 'sum_time': #sets time interval
                         time = float(m.group('Time'))
-                    elif key == 'percentage': #Found precentage of time tmperature is above data
+                    elif key == 'percentage': #Found precentage of time temperature is above data
                         start_line = i + 2
                         end_line = start_line +3
                         while lines[end_line] != '\n': #Find the lines containing the percentage of time data
@@ -117,7 +117,7 @@ def sum_parser(filepath): #Parser for Point in Time data
                         end_found = False
                         while not end_found: #Find the lines containing the percentage of time data
                             if '\f' in lines[end_line]:
-                                m = rx_dict['train_energy'].search(lines[end_line + 1])
+                                m = SUM['train_energy'].search(lines[end_line + 1])
                                 if m is None: #Train Energy does not continue
                                     end_found = True
                                     i = end_line
@@ -210,7 +210,7 @@ def sum_parser(filepath): #Parser for Point in Time data
 
 
 def percentage_parser(p_lines,time):
-    rx_dict2 = {    
+    PERCENTAGE = {    
     'percent_temperature': re.compile(r'''(
         \s{50,}
         (?P<TA_1>-?\d+\.\d*)\s{5,} #Above Temperature 1 through 6
@@ -233,12 +233,12 @@ def percentage_parser(p_lines,time):
         (?P<TAP_6>-?\d+\.\d*)$
         )''', re.VERBOSE),
     }
-    m = rx_dict2['percent_temperature'].search(p_lines[0])
+    m = PERCENTAGE['percent_temperature'].search(p_lines[0])
     ta = m.groupdict()
     i = 3
     percent_list = []
     while i < len(p_lines):
-        m = rx_dict2['percent_time'].search(p_lines[i])
+        m = PERCENTAGE['percent_time'].search(p_lines[i])
         line_dict = {}
         line_dict['Time'] = time
         line_dict.update(m.groupdict())
@@ -248,7 +248,7 @@ def percentage_parser(p_lines,time):
     return percent_list
 
 def te_parser(p_lines,time):
-    rx_dict3 = {    
+    TE = {    
     'es':re.compile(r'\s+ENERGY SECTOR\s*(?P<ES>\d+)$'),
     'et': re.compile(r'\s+PROPULSION ENERGY FROM THIRD RAIL\s+(?P<ET>-?\d*\.\d*)\s+'),
     'ef': re.compile(r'\s+EQUIVALENT THIRD RAIL PROPULSION ENERGY FROM FLYWHEEL\s+(?P<EF>-?\d*\.\d*)\s+'),
@@ -260,29 +260,29 @@ def te_parser(p_lines,time):
     te_list = []
     te_dict = {}
     while i < len(p_lines):
-        m = rx_dict3['es'].search(p_lines[i])
+        m = TE['es'].search(p_lines[i])
         if m:
             te_dict = {} #reset values in te_dict
             te_dict['Time'] = time 
             te_dict.update(m.groupdict())
             i += 3
-            m = rx_dict3['et'].search(p_lines[i])
+            m = TE['et'].search(p_lines[i])
             te_dict.update(m.groupdict())
             i +=2
-            m = rx_dict3['ef'].search(p_lines[i])
+            m = TE['ef'].search(p_lines[i])
             te_dict.update(m.groupdict())
             i +=2
-            m = rx_dict3['ea'].search(p_lines[i])
+            m = TE['ea'].search(p_lines[i])
             te_dict.update(m.groupdict())
             i +=2
-            m = rx_dict3['er'].search(p_lines[i])
+            m = TE['er'].search(p_lines[i])
             te_dict.update(m.groupdict())
             te_list.append(te_dict)
         i +=1
     return te_list
 
 def he_parser(p_lines,time):
-    rx_dict4 = {    
+    HE = {    
         'ZN':re.compile(r'ZONE NUMBER\s*(?P<ZN>\d+)($|\s\s-)'),
         'uncontrolled': re.compile(r'''(
                 \d+\s-                        #Section
@@ -319,7 +319,7 @@ def he_parser(p_lines,time):
     hec_list = [] #List for controlled
     heu_list = [] #list for uncontrolled
     while i < len(p_lines):
-        for key, rx in rx_dict4.items(): #change dictionary as necessary
+        for key, rx in HE.items(): #change dictionary as necessary
             m = rx.search(p_lines[i]) #using .match searched the beginning of the line
             if m is not None:
                 he_dict = {} #reset dictionary

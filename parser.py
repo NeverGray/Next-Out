@@ -131,9 +131,10 @@ def parse_file(filepath): #Parser for Point in Time data
     df_segment = to_dataframe(data_segment)
     df_wall = to_dataframe(wall)
     df_segment = df_segment.join(df_wall, how='outer') #https://pandas.pydata.org/pandas-docs/stable/user_guide/merging.html
-    if version == "i":
-        df_segment['Airflow'] = df_segment['Airflow']/1000
+    #if version == "i":
+    #    df_segment['Airflow'] = df_segment['Airflow']/1000
     print("Post processed ",filepath)
+    
     return df_segment
 
 def to_dataframe(data):
