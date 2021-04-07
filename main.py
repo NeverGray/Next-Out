@@ -189,11 +189,22 @@ def single_sim(settings, multi_processor_name =''):
         settings['new_visio']  = base_name +"-" + str(time_4_name)+ ".vsdx"
         nvv.update_visio(settings, df_PIT)
     if settings['output'] != 'Visio':
-        #TODO Add error checker if excel file is ope2n
+        #TODO Add error checker if excel file is open
         try:
           with pd.ExcelWriter(base_name+".xlsx") as writer:
               for item in data:
                   item.to_excel(writer, sheet_name = item.name, merge_cells=False)
+                  worksheet = writer.sheets[item.name]
+                  worksheet.auto_filter.ref = worksheet.dimensions
+              #Add code to create filters
+              #https://stackoverflow.com/questions/51566349/openpyxl-how-to-add-filters-to-all-columns
+              '''
+              print('Ready to start debugging')
+              wb = writer.book
+              sheets = wb.sheetnames
+              for sheet in sheets:
+                ws = wb[sheet]
+                ws.auto_filter.ref = ws.dimensions'''
           print("Created Excel File " + base_name +".xlsx")
         except:
           print("ERROR creating Excel file " + base_name + ".xlsx.  Try closing this file in excel and process again")
@@ -230,11 +241,11 @@ def main(testing=False):
         settings={
             #'simname' : 'siinfern-detailed.out',
             'simname' : 'sinorm-detailed.out',
-            'visname' : 'Template.vsdx',
+            'visname' : 'Test020.vsdx',
             'simtime' : 9999.0,
             'version' : 'tbd',
             'control' : 'Stop',
-            'output'  : 'Both'
+            'output'  : 'Excel'
         }
         single_sim(settings)
     elif legit:
@@ -250,14 +261,14 @@ def main(testing=False):
                 num_of_p = max(multiprocessing.cpu_count() -1,1) #Use all processors except 1
                 pool = multiprocessing.Pool(num_of_p)
                 for file in all_files:
-                    # Reference code for multiprocess https://pymotw.com/2/multiprocessing/basics.html
+                    # Reference2 code for multiprocess https://pymotw.com/2/multiprocessing/basics.html
                     # Another code for multiprocessing https://stackoverflow.com/questions/20886565/using-multiprocessing-process-with-a-maximum-number-of-simultaneous-processes
                     pool.apply_async(single_sim, args=(settings,file))
                     #single_sim(settings,file)
                 pool.close()
                 pool.join()
             else: #Something has gone wrong!
-                print("Error in inputing data to control variable")
+                #print("Error in inputing data to control variable")
                 c = pyip.inputYesNo(prompt='Do you want to quit the program? Yes or No: ')
                 settings = {} #Clear container for settings
                 if c == 'no':

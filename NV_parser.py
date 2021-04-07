@@ -251,7 +251,7 @@ def parse_file(filepath): #Parser
                     end_line = start_line
                     end_found = False
                     while not end_found: #Find the lines containing the percentage of time data
-                        assert (end_line < (len(lines))), 'Error with Train Energeny Summary, Line ' + str(i) 
+                        assert (end_line < (len(lines))), 'Error with Train Energy Summary, Line ' + str(i) 
                         m_sum = PIT['time'].search(lines[end_line + 1])
                         if ((m_sum is not None) or (end_line > len(lines)-3)): #Train Energy does not continue
                             end_found = True

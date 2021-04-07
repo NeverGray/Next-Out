@@ -34,60 +34,119 @@ def get_visXML(visname):
             vxmls[name] = VZip.read(name) #Create dictionary of name paths and files
     return vxmls
 
-#TODO Write function to update text of elements in Visio XML file
-
-#code to modify XML file for emergency simualtions
+#code to modify XML file for emergency (or PIT) simualtions
 def emod_visXML(vxml, data, simname="Not Available", simtime = 0.00): 
     P1root=ET.fromstring(vxml) #create XML element from the string
     ET.register_namespace('','http://schemas.microsoft.com/office/visio/2012/main') #Need to register name space to reproduce file.
     ET.register_namespace('r','http://schemas.openxmlformats.org/officeDocument/2006/relationships')
     ns = {'Visio': 'http://schemas.microsoft.com/office/visio/2012/main'} #Namespace dictionary to ease file navigation
-    #Airflow arrow shape update
-    #Find all shape with sub-child NV01_SegID. The "../.." at the end of the string moves the selection up two tiers to Shape
-    for Shape in P1root.findall(".//Visio:Row[@N='NV01_SegID']../.." , ns): 
+
+    #Update SimInfo-NV01 text fields
+    for Shape in P1root.findall(".//Visio:Shape[@Name='SimInfo_NV01']" , ns):
+        shape_dict = { 
+            ".//Visio:Shape[@Name='NV01_SimNam']" : simname,
+            ".//Visio:Shape[@Name='NV01_SimTime']": str(simtime)}
+        for find_string, value in shape_dict.items():
+            Shape = NV01_text(Shape, find_string, ns, value)
+    
+    #Update Sub-NV01
+    for Shape in P1root.findall(".//Visio:Shape[@Name='Sub-NV01']" , ns):
+        #Get SegID and Sub-segment
         SegID=int(Shape.find(".//Visio:Row[@N='NV01_SegID']/Visio:Cell",ns).get('V')) #Get the value for the Segment ID from XML and save as SegID
-        SubID=1
-        try: #Pull airflow from the dataframe, if it does not exist, use an airflow 999.9
-            ses_airflow = data.at[(simtime,SegID,SubID),"Airflow"] #.loc created errors
+        try: #Sub-segment of 1 may only be located in the master
+            SubID=int(Shape.find(".//Visio:Row[@N='NV01_Sub']/Visio:Cell",ns).get('V')) #Get the value for the Segment ID from XML and save as SegID
+        except:
+            SubID = 1
+        #Pull from data from dataframe
+        try: #Pull airflow from the dataframe. Use 999.9 if it doesn't exist.
+            ses_airflow = data.at[(simtime,SegID,1),"Airflow"] #.loc created errors
         except:
             ses_airflow = 999.9
-        airflow=str(round(abs(ses_airflow),1)) #The absolute airflow as a string
-        ShapeChild=Shape.find(".//Visio:Shape[@Name='NV01_AirFlow']",ns) #Selects the NV01_Airflow Object
-        #ET.SubElement(ShapeChild,"Text").text=airflow 
-        ShapeBabe=ShapeChild.find(".//Visio:Text",ns) #Select the child's babe with text value
-        if ET.iselement(ShapeBabe): #If element already exists, change the value
-            ShapeBabe.text=airflow
-        else:     
-            ET.SubElement(ShapeChild,"Text").text=airflow #Adds text element and value if elemnt doesn't exist
-        #Determine arrow direction
-        if (ses_airflow >= 0):
-            Flip=0
+        airflow=str(round(abs(ses_airflow),1))
+        if (ses_airflow >= 0): #Determines if airflow needs to be flipped for negative airflow
+            flip=0
         else:
-            Flip=1    
-        ShapeChild=Shape.find(".//Visio:Cell[@N='FlipX']",ns) #Find all Flipx propertiesin the file       
-        if ET.iselement(ShapeChild):
-            ShapeChild.set('V',str(Flip))
+            flip=1
+        try: #Pull airtemperature from dataframe. Use 999.9 if it doesn't exist.
+            ses_AirTemp = data.at[(simtime,SegID,SubID),"AirTemp"]
+        except:
+            ses_AirTemp = 999.9
+        airtemp = str(round(ses_AirTemp, 1))+ '°'
+        try:
+            ses_WallTemp = data.at[(simtime,SegID,SubID),"WallTemp"]
+        except:
+            ses_WallTemp = 999.9
+        walltemp = str(round(ses_WallTemp, 1)) + '°'
+        #Update shape with information {find_string: value}
+        shape_dict = { 
+            ".//Visio:Shape[@Name='NV01_AirFlow']" : airflow,
+            ".//Visio:Shape[@Name='NV01_AirTemp']" : airtemp,
+            ".//Visio:Shape[@Name='NV01_WallTemp']" : walltemp}
+        for find_string, value in shape_dict.items():
+            Shape = NV01_text(Shape, find_string, ns, value)
+        find_string = ".//Visio:Cell[@N='FlipX']"
+        Shape = NV01_arrow(Shape, find_string, ns, flip) #Flip arrow as needed
+
+    #Update Airflow-NV01
+    for Shape in P1root.findall(".//Visio:Shape[@Name='Airflow-NV01']" , ns):
+        SegID=int(Shape.find(".//Visio:Row[@N='NV01_SegID']/Visio:Cell",ns).get('V')) #Get the value for the Segment ID from XML and save as SegID
+        #Pull from data from dataframe
+        try: #Pull airflow from the dataframe, if it does not exist, use an airflow 999.9
+            ses_airflow = data.at[(simtime,SegID,1),"Airflow"] #.loc created errors
+        except:
+            ses_airflow = 999.9
+        if (ses_airflow >= 0): #Determines if airflow needs to be flipped for negative airflow
+            flip=0
         else:
-            ET.SubElement(Shape,"Cell",V=str(Flip),N='FlipX')
-    #Update all shapes with simple text
-    text_shapes = [ #Define all simple shates with simple text
-        [".//Visio:Shape[@Name='NV01_SimNam']",simname],
-        [".//Visio:Shape[@Name='NV01_SimTime']",str(int(simtime))]
-        ]
-    for ts in text_shapes: #Iterate through all samples with simple text
-        P1root = text_update(ts[0],ts[1],P1root,ns)
-    #ET.ElementTree(P1root).write("page1.xml",encoding='utf-8',xml_declaration=True) #TODO eliminate writing to disk in this procedure
+            flip=1
+        airflow=str(round(abs(ses_airflow),1))
+        find_string = ".//Visio:Shape[@Name='NV01_AirFlow']"
+        value = airflow
+        Shape = NV01_text(Shape, find_string, ns, value)
+        find_string = ".//Visio:Cell[@N='FlipX']"
+        Shape = NV01_arrow(Shape, find_string, ns, flip) #Flip arrow as needed   
     return P1root
 
-def text_update(find_string, text_value, root, ns):
-    for Shape in root.findall(find_string,ns):
-        ShapeChild=Shape.find(".//Visio:Text",ns)
-        if ET.iselement(ShapeChild):
-            ShapeChild.text = text_value
-        else:
-            ET.SubElement(Shape,"Text").text= text_value #previously str(Airflow)#TODO eliminate writing to disk in this procedure
-    return root
+def NV01_arrow(Shape, find_string, ns, flip):
+    ShapeTemp = Shape
+    try:
+        ShapeChild = Shape.find(find_string, ns)
+        if ET.iselement(ShapeChild): #If element already exists, change the value
+            ShapeChild.set('V',str(flip))
+        else:     
+            ET.SubElement(Shape,"Cell",V=str(flip),N='FlipX')
+        return Shape
+    except:
+        print("Error with NV01_arrow")
+        return ShapeTemp
 
+def NV01_text(Shape, find_string, ns, value):
+    ShapeTemp = Shape
+    try:
+        ShapeChild = Shape.find(find_string, ns)
+        ShapeBabe = ShapeChild.find(".//Visio:Text",ns)
+        if ET.iselement(ShapeBabe): #If element already exists, change the value
+            ShapeBabe.text = value #Selects the NV01_Airflow ObjectShapeBabe=ShapeChild.find(".//Visio:Text",ns)
+        else:     
+            ET.SubElement(ShapeChild,"Text").text = value #Adds text element and value if elemnt doesn't exist
+        return Shape
+    except:
+        print("Error with NV01_text")
+        return ShapeTemp
+
+def SimInfo_NV01(Shape, find_string, ns, value):
+    ShapeTemp = Shape
+    try:
+        ShapeChild = Shape.find(find_string, ns)
+        ShapeBabe = ShapeChild.find(".//Visio:Text",ns)
+        if ET.iselement(ShapeBabe): #If element already exists, change the value
+            ShapeBabe.text = value #Selects the NV01_Airflow ObjectShapeBabe=ShapeChild.find(".//Visio:Text",ns)
+        else:     
+            ET.SubElement(ShapeChild,"Text").text = value #Adds text element and value if elemnt doesn't exist
+        return Shape
+    except:
+        print("Error with SimInfo_NV01")
+        return ShapeTemp
 
 def write_visio(vxmls, visname, new_visio):
     #Sample Zip source code from https://stackoverflow.com/questions/513788/delete-file-from-zipfile-with-the-zipfile-module
@@ -102,13 +161,16 @@ def write_visio(vxmls, visname, new_visio):
         except:
             print('Error writing ' + new_visio + '. Try closing the file and process again.')
     temp = new_visio[:-4] + ".xml" #unique file names to all multiprocessing
-    with zipfile.ZipFile (new_visio, 'a') as zappend:
-        for name, vxml in vxmls.items():
-            #TODO speedup file writing after updating to Python 3.8. Otherwise, cannot write xml_declaration easily
-            ET.ElementTree(vxml).write(temp, encoding='utf-8', xml_declaration=True)
-            zappend.write(temp,name,compress_type = compression)
-            os.remove(temp)
-    print("Created Visio Diagram ",new_visio)
+    try:
+        with zipfile.ZipFile (new_visio, 'a') as zappend:
+            for name, vxml in vxmls.items():
+                #TODO speedup file writing after updating to Python 3.8. Otherwise, cannot write xml_declaration easily
+                ET.ElementTree(vxml).write(temp, encoding='utf-8', xml_declaration=True)
+                zappend.write(temp,name,compress_type = compression)
+                os.remove(temp)
+        print("Created Visio Diagram ",new_visio)
+    except:
+        print('Error writing ' + new_visio + '. Try closing the file and process again.')
 
 def update_visio(settings,data):
     vxmls = get_visXML(settings['visname']) #gets the pages in the VISIO XML.
