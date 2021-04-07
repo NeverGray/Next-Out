@@ -194,17 +194,11 @@ def single_sim(settings, multi_processor_name =''):
           with pd.ExcelWriter(base_name+".xlsx") as writer:
               for item in data:
                   item.to_excel(writer, sheet_name = item.name, merge_cells=False)
+                  #Add code to create filters
+                  #https://stackoverflow.com/questions/51566349/openpyxl-how-to-add-filters-to-all-columns
+                  #https://stackoverflow.com/questions/17326973/is-there-a-way-to-auto-adjust-excel-column-widths-with-pandas-excelwriter/17811984
                   worksheet = writer.sheets[item.name]
                   worksheet.auto_filter.ref = worksheet.dimensions
-              #Add code to create filters
-              #https://stackoverflow.com/questions/51566349/openpyxl-how-to-add-filters-to-all-columns
-              '''
-              print('Ready to start debugging')
-              wb = writer.book
-              sheets = wb.sheetnames
-              for sheet in sheets:
-                ws = wb[sheet]
-                ws.auto_filter.ref = ws.dimensions'''
           print("Created Excel File " + base_name +".xlsx")
         except:
           print("ERROR creating Excel file " + base_name + ".xlsx.  Try closing this file in excel and process again")

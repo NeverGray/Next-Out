@@ -33,7 +33,27 @@ PIT = {
         (?P<WallConvection>-?\d+\.\d+)\s{1,17} #Wall Convection
         (?P<WallRadiation>-?\d+\.\d+)$   #Wall Radition and End of string($) nothing else afterwards
         )''', re.VERBOSE),
+     'train': re.compile(r'''(
+        \s(?P<Number>\d+)\s+    #Number
+		(?P<RTE>\d+)\s?         #RTE
+		(?P<TYP>\d+)\s+         #TYP
+		(?P<Location>\d+\.\d*)\s+  #Location
+		(?P<Speed>-?\d+\.\d*)\s+     #Speed
+		(?P<Accel>-?\d+\.\d*)\s+     #Accel
+		(?P<Draf_KN>-?\d+\.\d*)\s+
+		(?P<Draf_COEFF>-?\d+\.\d*)\s+
+		(?P<Tractive>-?\d+\.\d*)\s+
+		(?P<M_Current>-?\d+\.\d*)\s+
+		(?P<L_Current>-?\d+\.\d*)\s+
+		(?P<FLY>-?\d+\.\d*)\s+
+		(?P<M_Eff>-?\d+\.\d*)\s+
+		(?P<G_Accel>-?\d+\.\d*)\s+
+		(?P<G_Decel>-?\d+\.\d*)\s+	
+		(?P<H_Gen>-?\d+\.\d*)\s+
+		(?P<H_Reject>-?\d+\.\d*)
+        )''', re.VERBOSE),
      'sum_time': re.compile(r'SUMMARY OF SIMULATION FROM\s+\d+\.\d+\sTO\s+(?P<Time>\d+.\d{2})\sSECONDS'), #Find the first time Simulation
+     
 }
 
 #Input Praser
@@ -185,6 +205,7 @@ HE = {
 
 #Global variables for all functions
 data_pit = []  # create an empty list to collect the data
+data_train = []
 wall_pit = []
 #Summary variables
 data_segment = []  # create an empty list to collect the data
@@ -259,6 +280,8 @@ def parse_file(filepath): #Parser
                             end_line -=1
                         end_line +=1   
                     sum_parser(lines[start_line:end_line],time)
+                elif key == 'train': #Create worksheet for train information
+                    data_train.append(m_dict) 
         i +=1
     df_pit = to_dataframe2(data_pit)
     if len(wall_pit)>0:
@@ -267,6 +290,8 @@ def parse_file(filepath): #Parser
     if version == "ip":
         df_pit['Airflow'] = df_pit['Airflow']/1000
     df_pit.name = 'PIT'
+    df_train = to_dataframe2(data_train,['Number','RTE','TYP'],['Time','Number'])
+    df_train.name = 'TRA'
     #TODO Ccreate post process all dataframes
     if summary:
         df_segment = to_dataframe2(data_segment, to_integers = ['Segment'], to_index = ['Time', 'Segment'], groupby=['Time','Segment'])
@@ -282,8 +307,10 @@ def parse_file(filepath): #Parser
         df_ecs = to_dataframe2(data_hsc, to_integers = ['Segment', 'Sub','ZN'], to_index=['Time','ZN','Segment','Sub'])
         df_ecs.name = 'ECS'
         print("Post processed ",filepath)
-        return [df_pit, df_segment, df_sub, df_percentage, df_te, df_hsa, df_ecs]
-    else: 
+        return [df_pit, df_train, df_segment, df_sub, df_percentage, df_te, df_hsa, df_ecs]
+    elif len(data_train) > 0:
+        return [df_pit, df_train]
+    else:
         return [df_pit]
 
 def to_dataframe2(data, to_integers = ['Segment', 'Sub'], to_index = ['Time','Segment','Sub'], groupby = []):
