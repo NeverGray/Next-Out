@@ -46,7 +46,7 @@ PIT = {
 		(?P<M_Current>-?\d+\.\d*)\s+
 		(?P<L_Current>-?\d+\.\d*)\s+
 		(?P<FLY>-?\d+\.\d*)\s+
-		(?P<M_Eff>-?\d+\.\d*)\s+
+		((?P<M_Eff>-?\d+\.\d*)\s+|\s+) #Motor efficiency or NOTHING in IP
 		(?P<G_Accel>-?\d+\.\d*)\s+
 		(?P<G_Decel>-?\d+\.\d*)\s+	
 		(?P<H_Gen>-?\d+\.\d*)\s+
@@ -242,9 +242,12 @@ def parse_file(filepath): #Parser
             if int(m2.group('sum')) >1:
                 summary = True
         i +=1
-        assert (i < (len(lines) - 1)), 'Cannot find first time! Line variable ' + str(i)
+        if i > (len(lines) - 1):
+            print("Error in reading output file " + filepath + ". Simulation never started.")
+            return []
+        assert (i < (len(lines))), 'Cannot find first time! Line variable ' + str(i)
     if abbreviated: #First time an abbreviated print is read  
-        print("Warning - Output file has abbreviated prints. Eliminate abbreviated prints if more thermal data is needed.")
+        print("Warning - " + filepath +" has abbreviated prints. Eliminate abbreviated prints if more thermal data is needed.")
     time = float(m.group('Time'))
     while i < len(lines):
         # at each line check for a match with a regex
@@ -326,7 +329,6 @@ def to_dataframe2(data, to_integers = ['Segment', 'Sub'], to_index = ['Time','Se
         if not df.index.is_lexsorted():
             df = df.sort_index() #Speeds up future referencing and prevents errors with finding data
     else:
-        print('No data in ', data)
         df = pd.DataFrame([{'No Data': 'No Data'}])
     return df
 

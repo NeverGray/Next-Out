@@ -120,14 +120,14 @@ def activate_license(license_key, keygen_account_id, kegen_activation_token):
 
 def get_input(settings = None):
     Welcome = "Next Vis - Proprocessing SES Output files"
-    q_start = "Select the type of output file to create: \n"
+    q_start = "Select the type of post-processing to perform or exit program: \n"
     q_repeat = 'Repeat last processing Y/N: '
     q_simname = 'SES output file name with suffix (.OUT for SES v6), blank to quit, or ALL: '
     ext_simname = ['.OUT', '.PRN']
     e = 'Cannot find file, please try again or enter blank to quit. \n'
     q_visname = 'Visio template with suffix (*.vsdx) or blank to quit: '
     ext_visname = ['.VSDX']
-    q_simtime = 'Emergency Simulation Time or -1 for last time: '
+    q_simtime = 'Enter simulation time for Visio template or -1 for last time: '
     repeat = 'no'
     if settings['control'] != 'First':
         repeat = pyip.inputYesNo(q_repeat, yesVal='yes', noVal='no')
@@ -179,6 +179,8 @@ def single_sim(settings, multi_processor_name =''):
         settings['simname'] = multi_processor_name
     data = nvp.parse_file(settings['simname'])
     base_name = settings['simname'][:-4]
+    if len(data) == 0:
+      return
     if settings['output'] != 'Excel':
         for item in data: 
           if item.name == 'PIT':
@@ -251,16 +253,25 @@ def main(testing=False):
                 single_sim(settings)
             elif settings['control'] == 'ALL':
                 all_files = find_all_files()
-                print("Processing " + str(len(all_files)) + " SES Output files")
-                num_of_p = max(multiprocessing.cpu_count() -1,1) #Use all processors except 1
-                pool = multiprocessing.Pool(num_of_p)
-                for file in all_files:
+                num_files = len(all_files)
+                if num_files == 0:
+                  print("No output files found")
+                elif num_files == 1:
+                  settings['simname'] = all_files[0]
+                  single_sim(settings)
+                else:  
+                  num_of_p = max(multiprocessing.cpu_count() -1,1) #Use all processors except 1
+                  num_of_p = min(num_of_p, len(all_files))
+                  print("Processing " + str(len(all_files)) + " SES Output files using "+str(num_of_p)+" processes" )
+                  
+                  pool = multiprocessing.Pool(num_of_p, maxtasksperchild=1)
+                  for file in all_files:
                     # Reference2 code for multiprocess https://pymotw.com/2/multiprocessing/basics.html
                     # Another code for multiprocessing https://stackoverflow.com/questions/20886565/using-multiprocessing-process-with-a-maximum-number-of-simultaneous-processes
                     pool.apply_async(single_sim, args=(settings,file))
                     #single_sim(settings,file)
-                pool.close()
-                pool.join()
+                  pool.close()
+                  pool.join()
             else: #Something has gone wrong!
                 #print("Error in inputing data to control variable")
                 c = pyip.inputYesNo(prompt='Do you want to quit the program? Yes or No: ')
