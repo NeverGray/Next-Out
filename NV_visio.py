@@ -49,8 +49,8 @@ def emod_visXML(vxml, data, simname="Not Available", simtime = 0.00):
         for find_string, value in shape_dict.items():
             Shape = NV01_text(Shape, find_string, ns, value)
     
-    #Update Sub-NV01
-    for Shape in P1root.findall(".//Visio:Shape[@Name='Sub-NV01']" , ns):
+    #Update Sub-NV01The "../.." at the end of the string moves the selection up two tiers (Section, then shape)
+    for Shape in P1root.findall(".//Visio:Row[@N='NV01_SegID']../.." , ns):
         #Get SegID and Sub-segment
         SegID=int(Shape.find(".//Visio:Row[@N='NV01_SegID']/Visio:Cell",ns).get('V')) #Get the value for the Segment ID from XML and save as SegID
         try: #Sub-segment of 1 may only be located in the master
@@ -83,28 +83,13 @@ def emod_visXML(vxml, data, simname="Not Available", simtime = 0.00):
             ".//Visio:Shape[@Name='NV01_AirTemp']" : airtemp,
             ".//Visio:Shape[@Name='NV01_WallTemp']" : walltemp}
         for find_string, value in shape_dict.items():
-            Shape = NV01_text(Shape, find_string, ns, value)
+            ShapeChild = Shape.find(find_string, ns)
+            if ShapeChild:
+                ShapeChild = NV01_text(ShapeChild, find_string, ns, value)
         find_string = ".//Visio:Cell[@N='FlipX']"
         Shape = NV01_arrow(Shape, find_string, ns, flip) #Flip arrow as needed
 
     #Update Airflow-NV01
-    for Shape in P1root.findall(".//Visio:Shape[@Name='Airflow-NV01']" , ns):
-        SegID=int(Shape.find(".//Visio:Row[@N='NV01_SegID']/Visio:Cell",ns).get('V')) #Get the value for the Segment ID from XML and save as SegID
-        #Pull from data from dataframe
-        try: #Pull airflow from the dataframe, if it does not exist, use an airflow 999.9
-            ses_airflow = data.at[(simtime,SegID,1),"Airflow"] #.loc created errors
-        except:
-            ses_airflow = 999.9
-        if (ses_airflow >= 0): #Determines if airflow needs to be flipped for negative airflow
-            flip=0
-        else:
-            flip=1
-        airflow=str(round(abs(ses_airflow),1))
-        find_string = ".//Visio:Shape[@Name='NV01_AirFlow']"
-        value = airflow
-        Shape = NV01_text(Shape, find_string, ns, value)
-        find_string = ".//Visio:Cell[@N='FlipX']"
-        Shape = NV01_arrow(Shape, find_string, ns, flip) #Flip arrow as needed   
     return P1root
 
 def NV01_arrow(Shape, find_string, ns, flip):
@@ -120,16 +105,15 @@ def NV01_arrow(Shape, find_string, ns, flip):
         print("Error with NV01_arrow")
         return ShapeTemp
 
-def NV01_text(Shape, find_string, ns, value):
-    ShapeTemp = Shape
+def NV01_text(ShapeChild, find_string, ns, value):
+    ShapeTemp = ShapeChild
     try:
-        ShapeChild = Shape.find(find_string, ns)
         ShapeBabe = ShapeChild.find(".//Visio:Text",ns)
         if ET.iselement(ShapeBabe): #If element already exists, change the value
             ShapeBabe.text = value #Selects the NV01_Airflow ObjectShapeBabe=ShapeChild.find(".//Visio:Text",ns)
         else:     
             ET.SubElement(ShapeChild,"Text").text = value #Adds text element and value if elemnt doesn't exist
-        return Shape
+        return ShapeChild
     except:
         print("Error with NV01_text")
         return ShapeTemp

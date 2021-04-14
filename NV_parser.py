@@ -203,11 +203,7 @@ HE = {
             )''', re.VERBOSE),
 }
 
-#Global variables for all functions
-data_pit = []  # create an empty list to collect the data
-data_train = []
-wall_pit = []
-#Summary variables
+#Global variables for Summaries
 data_segment = []  # create an empty list to collect the data
 data_sub =[] #create an empty list to collect data for subsegments
 data_percentage = []
@@ -217,6 +213,17 @@ data_hsu = []
 
 #TODO Eliminate NumExpr detected 16 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 8.
 def parse_file(filepath): #Parser
+    #Global variables for all functions
+    data_pit = []  # create an empty list to collect the data
+    data_train = []
+    wall_pit = []
+    #Summary variables
+    data_segment = []  # create an empty list to collect the data
+    data_sub =[] #create an empty list to collect data for subsegments
+    data_percentage = []
+    data_te = []
+    data_hsc = []
+    data_hsu = []
     # open the file and read through it line by line
     with open(filepath, 'r') as file_object:
         lines = file_object.readlines() #Gets list of string values from the file, one string for each line of text
