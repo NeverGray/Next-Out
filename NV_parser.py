@@ -68,7 +68,9 @@ INPUT ={
         .+\d+\s+\d+\s+\d+\.\d+ #Remaining stuff
         )''', re.VERBOSE),
 }
-v41 = "SES VER 4" #Used to determine if version is IP
+#Text check to see if there is an IP Version (for cfm to kcfm conversion)
+v41 = [[1,"SES VER 4"], 
+        [49,'VERSION 4.']]
 
 SUM = {  #TODO replace sum_time value with PIT value of PIT['sum_time']?
         'sum_time': re.compile(r'SUMMARY OF SIMULATION FROM\s+\d+\.\d+\sTO\s+(?P<Time>\d+.\d{2})\sSECONDS'), #Find the first time Simulation
@@ -203,22 +205,16 @@ HE = {
             )''', re.VERBOSE),
 }
 
-#Global variables for Summaries
-data_segment = []  # create an empty list to collect the data
-data_sub =[] #create an empty list to collect data for subsegments
-data_percentage = []
-data_te = []
-data_hsc = []
-data_hsu = []
-
 #TODO Eliminate NumExpr detected 16 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 8.
 def parse_file(filepath): #Parser
-    #Global variables for all functions
+    #Variables for all functions within this function
     data_pit = []  # create an empty list to collect the data
     data_train = []
     wall_pit = []
-    #Summary variables
-    data_segment = []  # create an empty list to collect the data
+    #Global variables for Summaries used in other functions
+    global data_segment, data_sub, data_percentage, data_te, data_hsc, data_hsu 
+    # Create empty lists to collect the data (and erase previous data)
+    data_segment = [] 
     data_sub =[] #create an empty list to collect data for subsegments
     data_percentage = []
     data_te = []
@@ -228,7 +224,7 @@ def parse_file(filepath): #Parser
     with open(filepath, 'r') as file_object:
         lines = file_object.readlines() #Gets list of string values from the file, one string for each line of text
     i = 0 #Start at first line
-    version = select_version(lines[0]) #determines version of output file
+    version = select_version(lines[0:53]) #determines version of output file
     m = None #Sets the value equal to none to start while loop
     rx = INPUT['f12'] #matching input
     while m is None and i < len(lines):
@@ -302,10 +298,17 @@ def parse_file(filepath): #Parser
     df_pit.name = 'PIT'
     df_train = to_dataframe2(data_train,['Number','RTE','TYP'],['Time','Number'])
     df_train.name = 'TRA'
+    #Reduce Memory requirements
+    data_pit = []
+    wall_pit = []
     #TODO Ccreate post process all dataframes
     if summary:
         df_segment = to_dataframe2(data_segment, to_integers = ['Segment'], to_index = ['Time', 'Segment'], groupby=['Time','Segment'])
         df_segment.name = 'SEG'
+        if version == "ip":
+            to_convert = ['A_Max','A_Min','A_P','A_N']
+            for item in to_convert:
+                df_segment[item] = df_segment[item]/1000
         df_sub = to_dataframe2(data_sub, groupby = ['Time','Segment','Sub'])
         df_sub.name = 'SUB'
         df_percentage = to_dataframe2(data_percentage)
@@ -317,10 +320,20 @@ def parse_file(filepath): #Parser
         df_ecs = to_dataframe2(data_hsc, to_integers = ['Segment', 'Sub','ZN'], to_index=['Time','ZN','Segment','Sub'])
         df_ecs.name = 'ECS'
         print("Post processed ",filepath)
+        # Reduce memory requirements when multiple files are being processed.
+        data_segment = [] 
+        data_sub =[]
+        data_percentage = []
+        data_te = []
+        data_hsc = []
+        data_hsu = []
         return [df_pit, df_train, df_segment, df_sub, df_percentage, df_te, df_hsa, df_ecs]
     elif len(data_train) > 0:
+        print("Post processed ",filepath)
+        data_train = []
         return [df_pit, df_train]
     else:
+        print("Post processed ",filepath)
         return [df_pit]
 
 def to_dataframe2(data, to_integers = ['Segment', 'Sub'], to_index = ['Time','Segment','Sub'], groupby = []):
@@ -339,11 +352,13 @@ def to_dataframe2(data, to_integers = ['Segment', 'Sub'], to_index = ['Time','Se
         df = pd.DataFrame([{'No Data': 'No Data'}])
     return df
 
-def select_version(str):
-    if v41 in str:
-        version = 'ip' 
-    else:
-        version = 'si'
+def select_version(lines):
+    version = 'si'
+    for item in v41:
+        line_number = item[0]
+        array_number = line_number - 1
+        if item[1] in lines[array_number]:
+            version = 'ip'
     return version
 
 def sum_parser(lines, time): #Parser for summary portion of output, between times
@@ -359,6 +374,7 @@ def sum_parser(lines, time): #Parser for summary portion of output, between time
                     m_dict['Time'] = time
                     if key == 'sum_time': #sets time interval
                         time = float(m.group('Time'))
+                        m_dict['Time'] = time
                     elif key == 'percentage': #Found precentage of time temperature is above data
                         start_line = i + 2
                         end_line = start_line +3

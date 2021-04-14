@@ -42,12 +42,17 @@ def emod_visXML(vxml, data, simname="Not Available", simtime = 0.00):
     ns = {'Visio': 'http://schemas.microsoft.com/office/visio/2012/main'} #Namespace dictionary to ease file navigation
 
     #Update SimInfo-NV01 text fields
-    for Shape in P1root.findall(".//Visio:Shape[@Name='SimInfo_NV01']" , ns):
-        shape_dict = { 
-            ".//Visio:Shape[@Name='NV01_SimNam']" : simname,
-            ".//Visio:Shape[@Name='NV01_SimTime']": str(simtime)}
-        for find_string, value in shape_dict.items():
-            Shape = NV01_text(Shape, find_string, ns, value)
+    #for Shape in P1root.findall(".//Visio:Shape[@Name='SimInfo_NV01']" , ns):
+    shape_dict = { 
+        ".//Visio:Shape[@Name='NV01_SimNam']" : simname,
+        ".//Visio:Shape[@Name='NV01_SimTime']": str(simtime)}
+    #for find_string, value in shape_dict.items():
+    #    Shape = NV01_text(Shape, find_string, ns, value)
+    for find_string, value in shape_dict.items():
+            ShapeChilds = P1root.findall(find_string, ns)
+            if ShapeChilds:
+                for ShapeChild in ShapeChilds:
+                    ShapeChild = NV01_text(ShapeChild, find_string, ns, value)
     
     #Update Sub-NV01The "../.." at the end of the string moves the selection up two tiers (Section, then shape)
     for Shape in P1root.findall(".//Visio:Row[@N='NV01_SegID']../.." , ns):
@@ -152,7 +157,7 @@ def write_visio(vxmls, visname, new_visio):
                 ET.ElementTree(vxml).write(temp, encoding='utf-8', xml_declaration=True)
                 zappend.write(temp,name,compress_type = compression)
                 os.remove(temp)
-        print("Created Visio Diagram ",new_visio)
+        print("Created Visio Diagram " + new_visio)
     except:
         print('Error writing ' + new_visio + '. Try closing the file and process again.')
 
