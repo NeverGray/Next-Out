@@ -53,8 +53,14 @@ PIT = {
 		(?P<H_Reject>-?\d+\.\d*)
         )''', re.VERBOSE),
      'sum_time': re.compile(r'SUMMARY OF SIMULATION FROM\s+\d+\.\d+\sTO\s+(?P<Time>\d+.\d{2})\sSECONDS'), #Find the first time Simulation
-     
-}
+     'fluid': re.compile(r'''(
+        \s{15,}\d+\s-\s{0,2}        #Section #Added \s{9.} to stop processing heat sink summaries
+        (?P<Segment>\d+)+\s-\s+     #Segment
+        (?P<Sub>\s{0,2}\d+)\s{5,15} #Sub-segment
+        (?P<FluidTemp>-?\d+\.\d+)\s{5,22}  #Fluid_Temp
+        (?P<FluidHeat>-?\d+\.\d+)   #Fluid_Temp
+        )''',re.VERBOSE)
+    }
 
 #Input Praser
 INPUT ={
@@ -211,6 +217,7 @@ def parse_file(filepath): #Parser
     data_pit = []  # create an empty list to collect the data
     data_train = []
     wall_pit = []
+    fluid_pit = []
     #Global variables for Summaries used in other functions
     global data_segment, data_sub, data_percentage, data_te, data_hsc, data_hsu 
     # Create empty lists to collect the data (and erase previous data)
@@ -287,12 +294,17 @@ def parse_file(filepath): #Parser
                         end_line +=1   
                     sum_parser(lines[start_line:end_line],time)
                 elif key == 'train': #Create worksheet for train information
-                    data_train.append(m_dict) 
+                    data_train.append(m_dict)
+                elif key == 'fluid':
+                    fluid_pit.append(m_dict) 
         i +=1
     df_pit = to_dataframe2(data_pit)
-    if len(wall_pit)>0:
+    if len(wall_pit) > 0:
         df_wall_pit = to_dataframe2(wall_pit)
         df_pit = df_pit.join(df_wall_pit, how='outer') #https://pandas.pydata.org/pandas-docs/stable/user_guide/merging.html
+    if len(fluid_pit) > 0:
+        df_fluid_pit = to_dataframe2(fluid_pit)
+        df_pit = df_pit.join(df_fluid_pit, how='outer')
     if version == "ip":
         df_pit['Airflow'] = df_pit['Airflow']/1000
     df_pit.name = 'PIT'
@@ -301,6 +313,7 @@ def parse_file(filepath): #Parser
     #Reduce Memory requirements
     data_pit = []
     wall_pit = []
+
     #TODO Ccreate post process all dataframes
     if summary:
         df_segment = to_dataframe2(data_segment, to_integers = ['Segment'], to_index = ['Time', 'Segment'], groupby=['Time','Segment'])
