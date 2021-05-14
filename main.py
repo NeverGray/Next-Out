@@ -217,7 +217,7 @@ def main(testing=False):
     if testing:
         print('In testing mode')
         settings={
-            'simname' : 'coolpipe.out',
+            'simname' : 'sample\\NG-NA001.out',
             'visname' : 'Test020.vsdx',
             'simtime' : 9999.0,
             'version' : 'tbd',
@@ -279,6 +279,5 @@ def main(testing=False):
       print('Something has gone horribly wrong! Your licese may no longer be valid or something weird happened. Try restrating')
       input('Program will exit when you hit enter')
       return
-    4
 if __name__ == '__main__':
-    main(testing=False)
+    main(testing=True)

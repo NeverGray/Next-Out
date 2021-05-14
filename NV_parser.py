@@ -219,14 +219,14 @@ def parse_file(filepath): #Parser
     wall_pit = []
     fluid_pit = []
     #Global variables for Summaries used in other functions
-    global data_segment, data_sub, data_percentage, data_te, data_hsc, data_hsu 
+    global data_segment, data_sub, data_percentage, data_te, data_esc, data_hsa 
     # Create empty lists to collect the data (and erase previous data)
     data_segment = [] 
     data_sub =[] #create an empty list to collect data for subsegments
     data_percentage = []
     data_te = []
-    data_hsc = []
-    data_hsu = []
+    data_esc = []
+    data_hsa = []
     # open the file and read through it line by line
     with open(filepath, 'r') as file_object:
         lines = file_object.readlines() #Gets list of string values from the file, one string for each line of text
@@ -328,9 +328,9 @@ def parse_file(filepath): #Parser
         df_percentage.name = 'PER'
         df_te = to_dataframe2(data_te, to_integers=['ES'], to_index=['Time', 'ES'])
         df_te.name = 'TES'       
-        df_hsa = to_dataframe2(data_hsu, to_integers = ['Segment', 'Sub','ZN'], to_index=['Time','ZN','Segment','Sub'])
+        df_hsa = to_dataframe2(data_hsa, to_integers = ['Segment', 'Sub','ZN'], to_index=['Time','ZN','Segment','Sub'])
         df_hsa.name = 'HSA'
-        df_ecs = to_dataframe2(data_hsc, to_integers = ['Segment', 'Sub','ZN'], to_index=['Time','ZN','Segment','Sub'])
+        df_ecs = to_dataframe2(data_esc, to_integers = ['Segment', 'Sub','ZN'], to_index=['Time','ZN','Segment','Sub'])
         df_ecs.name = 'ECS'
         print("Post processed ",filepath)
         # Reduce memory requirements when multiple files are being processed.
@@ -338,8 +338,8 @@ def parse_file(filepath): #Parser
         data_sub =[]
         data_percentage = []
         data_te = []
-        data_hsc = []
-        data_hsu = []
+        data_esc = []
+        data_hsa = []
         return [df_pit, df_train, df_segment, df_sub, df_percentage, df_te, df_hsa, df_ecs]
     elif len(data_train) > 0:
         print("Post processed ",filepath)
@@ -420,11 +420,11 @@ def sum_parser(lines, time): #Parser for summary portion of output, between time
                     elif key == 'heat_sink':
                         start_line = i
                         end_line = len(lines)
-                        [hsu, hsc] = he_parser(lines[start_line:end_line],time)
+                        [hsu, esc] = he_parser(lines[start_line:end_line],time)
                         for item in hsu:
-                            data_hsu.append(item)
-                        for item in hsc:
-                            data_hsc.append(item)
+                            data_hsa.append(item)
+                        for item in esc:
+                            data_esc.append(item)
                         i = end_line
                     elif not 'Segment' in m_dict:
                         m_dict['Segment'] = last_segment 
