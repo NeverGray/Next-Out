@@ -18,7 +18,7 @@ PIT = {
         (?P<AirVel>-?\d+\.\d+)\s?|\s?)  #AirVel for first line #TODO add $ to speed code?
         )''', re.VERBOSE),
     'abb_segment_1': re.compile(r'''(
-        \s+\d+\s-\s{0,2}                 #Section
+        ^\s{2,4}\d{1,3}\s-\s{0,2}        #Section (Adjusted for Option 5 outputs)
         (?P<Segment>\d+)\s{1,11}         #Segment
         (?P<Airflow>-?\d+\.\d+)\s{1,6}   #Sub-segment
         (?P<AirVel>-?\d+\.\d+)\s{1,8}    #Air Velocity
@@ -218,6 +218,7 @@ def parse_file(filepath): #Parser
     data_train = []
     wall_pit = []
     fluid_pit = []
+    duplicate_pit = False
     #Global variables for Summaries used in other functions
     global data_segment, data_sub, data_percentage, data_te, data_esc, data_hsa 
     # Create empty lists to collect the data (and erase previous data)
@@ -268,6 +269,8 @@ def parse_file(filepath): #Parser
                 m_dict = m.groupdict()
                 m_dict['Time'] = time
                 if key == 'time': #sets time interval
+                    if float(m.group('Time')) == time: #Needed to delete duplicates created by Summary output option 4
+                        duplicate_pit = True
                     time = float(m.group('Time'))
                 elif (key == 'detail_segment_1' or key == 'abb_segment_1'): #If key is other than time    
                     if key == 'abb_segment_1':
@@ -313,6 +316,8 @@ def parse_file(filepath): #Parser
     #Reduce Memory requirements
     data_pit = []
     wall_pit = []
+    if duplicate_pit:
+        [df_pit,df_train] = delete_duplicate_pit(df_pit,df_train)
 
     #TODO Ccreate post process all dataframes
     if summary:
@@ -510,3 +515,11 @@ def he_parser(p_lines,time):
                 break
         i+=1
     return heu_list, hec_list
+
+def delete_duplicate_pit(df_pit,df_train):
+    # One set of answers https://stackoverflow.com/questions/13035764/remove-pandas-rows-with-duplicate-indices
+    new_df_pit = df_pit[~df_pit.index.duplicated(keep='last')]
+    new_df_pit.name = df_pit.name
+    new_df_train = df_train[~df_train.index.duplicated(keep='last')]
+    new_df_train.name = df_train.name
+    return [new_df_pit,new_df_train]

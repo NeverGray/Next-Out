@@ -17,9 +17,9 @@ from sys import exit as system_exit
 
 def read_lic():
   #TODO Error checking if file doesn't exist
-  license_files = nfm.find_all_files(extensions = [".LIC"])
+  license_files = nfm.find_all_files(extensions = [".LIC"], character ='@')
   if len(license_files) > 1:
-    print("License ERROR! Too many license files (*.lic) in the directory. Only include one valid license and try again.")
+    print("License ERROR! Too many license files with @ symbol and .lic suffix) in the directory. Only include one valid license and try again.")
     system_exit("License ERROR! Too many license files (*.lic) in the directory. Only include one valid license and try again.")
   elif len(license_files) == 0:
     print("License Error! Cannot find license file (*.lic). Add valid license in directory or request license from Justin@NeverGray.biz and try again.")
@@ -217,7 +217,7 @@ def main(testing=False):
     if testing:
         print('In testing mode')
         settings={
-            'simname' : 'sample\\NG-NA001.out',
+            'simname' : 'sinorm-supplemental.out',
             'visname' : 'Test020.vsdx',
             'simtime' : 9999.0,
             'version' : 'tbd',
@@ -280,4 +280,4 @@ def main(testing=False):
       input('Program will exit when you hit enter')
       return
 if __name__ == '__main__':
-    main(testing=True)
+    main(testing=False)
