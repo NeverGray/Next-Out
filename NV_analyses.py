@@ -99,6 +99,8 @@ def compare_outputs():
                     n +=1
                     startcol_num = (data_col*n + n) + 1
                     ws.cell(row=data_row, column= startcol_num, value = base_file)
+                    writer.book.properties.creator = "Next Vis Beta"
+                    writer.book.properties.title = file_name
                 writer.save()
                 with open(file_name + ".xlsx", "wb") as outfile: #From https://techoverflow.net/2019/07/24/how-to-write-bytesio-content-to-file-in-python/
                     # Copy the BytesIO stream to the output file
