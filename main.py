@@ -13,8 +13,10 @@ import NV_parser as nvp
 import NV_visio as nvv
 import NV_file_manager as nfm
 import NV_analyses as nva
+import NV_gui as nvg
 from sys import exit as system_exit
 from os import startfile
+from tkinter import *
 
 def read_lic():
   #TODO Error checking if file doesn't exist
@@ -226,6 +228,12 @@ def main(testing=False):
         print("Your license is not valid. Please contact Justin@NeverGray.biz to continue using the program.")
         input('Program will exit when you hit enter')
         return
+    elif legit:
+      root = Tk()
+      nvg.start_screen(root)
+      root.mainloop()
+    
+    ''' Previous Code for input manager
     if testing:
         print('In testing mode')
         settings={
@@ -291,5 +299,6 @@ def main(testing=False):
       print('Something has gone horribly wrong! Your licese may no longer be valid or something weird happened. Try restrating')
       input('Program will exit when you hit enter')
       return
+    '''
 if __name__ == '__main__':
     main(testing=False)
