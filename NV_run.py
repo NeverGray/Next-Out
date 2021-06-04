@@ -1,22 +1,12 @@
-
-from uuid import getnode as get_mac
-import requests
-import json
-import hashlib
-import pyinputplus as pyip
 import multiprocessing #When trying to make a multiprocessing
-from pathlib import Path
 import pandas as pd
-import logging
 #Import of scripts
 import NV_parser as nvp
 import NV_visio as nvv
 import NV_file_manager as nfm
-import NV_analyses as nva
-from sys import exit as system_exit
-from os import startfile
 
 def single_sim(settings, multi_processor_name =''):
+    #Adjustement if multiple files are being processed, simultaneously
     if multi_processor_name != '':
         settings['simname'] = multi_processor_name
     data = nvp.parse_file(settings['simname'])
@@ -57,6 +47,42 @@ def single_sim(settings, multi_processor_name =''):
             nvv.update_visio(settings, df_PIT)
         except:
             print("ERROR creating Visio file in NV_run.")
+
+def multiple_sim(settings):
+    p = settings['simname']
+    all_names = nfm.find_all_files(pathway = p)
+    '''
+    if settings['simname'].upper()=='ALL':
+        #all_files = nfm.find_all_files(pathway = settings['simname'])
+        all_files = nfm.find_all_files()
+        p = "this is in the active directory"
+    else:
+        p = settings['simname'][:-4] #pathway
+        all_files = nfm.find_all_files(pathway = p)'''
+    num_files = len(all_names)
+    if num_files == 0:
+        print("No output files found")
+    elif num_files == 1: #Catch if there is onle file
+        print('Started multiple files processing with only one simulation')
+        settings['simname'] = p + '/' + all_names[0]
+        single_sim(settings)
+    else:  
+        num_of_p = max(multiprocessing.cpu_count() -1,1) #Use all processors except 1
+        num_of_p = min(num_of_p, num_files)
+        print("Processing " + str(num_files) + " SES Output files using " + str(num_of_p)+" threads" )
+        pool = multiprocessing.Pool(num_of_p, maxtasksperchild=1)
+        for name in all_names:
+            # Reference2 code for multiprocess https://pymotw.com/2/multiprocessing/basics.html
+            # Another code for multiprocessing https://stackoverflow.com/questions/20886565/using-multiprocessing-process-with-a-maximum-number-of-simultaneous-processes
+            if p != '': #Directory is specified
+                filepath = p + '/' + name
+            else:
+                filepath = name
+            pool.apply_async(single_sim, args=(settings, filepath))
+        pool.close()
+        pool.join()
+
+
 
 if __name__ == '__main__':
     settings={

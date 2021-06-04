@@ -4,19 +4,17 @@ import requests
 import json
 import hashlib
 import pyinputplus as pyip
-import multiprocessing #When trying to make a multiprocessing
-from pathlib import Path
 import pandas as pd
 import logging
 #Import of scripts
 import NV_parser as nvp
 import NV_visio as nvv
 import NV_file_manager as nfm
-import NV_analyses as nva
 import NV_gui as nvg
 from sys import exit as system_exit
 from os import startfile
 from tkinter import *
+import multiprocessing
 
 def read_lic():
   #TODO Error checking if file doesn't exist
@@ -119,7 +117,7 @@ def activate_license(license_key, keygen_account_id, kegen_activation_token):
 # Run from the command line:
 #   python main.py some_license_key
 #status, msg = activate_license(sys.argv[1])
-
+'''Old line input manager'''
 def get_input(settings = None):
     Welcome = "Next Vis - Proprocessing SES Output files"
     q_start = "Select the type of post-processing to perform or exit program: \n"
@@ -165,64 +163,17 @@ def get_input(settings = None):
           settings['control'] = "Stop"
     return settings
 
-def single_sim(settings, multi_processor_name =''):
-    if multi_processor_name != '':
-        settings['simname'] = multi_processor_name
-    data = nvp.parse_file(settings['simname'])
-    base_name = settings['simname'][:-4]
-    if len(data) == 0:
-      return  
-    if settings['output'] != 'Visio': #Create Excel File
-        #TODO Add error checker if excel file is open
-        try:
-          with pd.ExcelWriter(base_name +".xlsx", engine = 'openpyxl') as writer:
-              for item in data:
-                  item.to_excel(writer, sheet_name = item.name, merge_cells=False)
-                  #Add code to create filters
-                  #https://stackoverflow.com/questions/51566349/openpyxl-how-to-add-filters-to-all-columns
-                  worksheet = writer.sheets[item.name]
-                  worksheet.auto_filter.ref = worksheet.dimensions
-                  #Freeze cells from https://stackoverflow.com/questions/25588918/how-to-freeze-entire-header-row-in-openpyxl
-                  testing = len(item.index.names)
-                  freeze_column = len(item.index.names)
-                  freeze_cell = worksheet.cell(row=2, column = freeze_column + 1)
-                  worksheet.freeze_panes = freeze_cell
-              #Add properties to Excel File.  Following https://stackoverflow.com/questions/52120125/how-to-edit-core-properties-of-xlsx-file-with-python
-              writer.book.properties.creator = "Next Vis Beta"
-              writer.book.properties.title = base_name
-          print("Created Excel File " + base_name +".xlsx")
-        except:
-          print("ERROR creating Excel file " + base_name + ".xlsx.  Try closing this file in excel and process again")
-    if settings['output'] != 'Excel':
-      for item in data: 
-        if item.name == 'PIT':
-          df_PIT = item #Pass dataframe 
-          break
-      settings['simtime'] = nvv.valid_simtime(settings['simtime'], df_PIT)
-      time_4_name = int(settings['simtime'])
-      settings['new_visio']  = base_name +"-" + str(time_4_name)+ ".vsdx"
-      nvv.update_visio(settings, df_PIT)
-      if  multi_processor_name == '':
-        open_visio = pyip.inputYesNo("Open Visio File? (Y/N)", yesVal='yes', noVal='no')
-        if open_visio == 'yes':
-          print("Attempting to open Visio file " + settings['new_visio'])
-          try:
-            startfile(settings['new_visio'])
-          except:
-            print("Error opening " + settings['new_visio'])
-
 def main(testing=False):
     #TODO Update security to allow entering license key only once?
     try:
       [license_key, keygen_account_id, keygen_activation_token] = read_lic()
     except:
-      quit()
+        print("Your license is not valid. Please contact Justin@NeverGray.biz to continue using the program.")
+        input('Program will exit when you hit enter')
+        return
     legit, msg = activate_license(license_key, keygen_account_id, keygen_activation_token)
     #Confirm license is activated
     #initialize variable
-    multiprocessing.freeze_support() #Required for multiprocess to work with Pyinstaller on windows computers
-    settings = {} #Container for settings
-    settings['control'] = 'First' #Change to 'testing' when necessary
     print(legit, msg)
     if not legit:
         print("Your license is not valid. Please contact Justin@NeverGray.biz to continue using the program.")
@@ -233,72 +184,6 @@ def main(testing=False):
       nvg.start_screen(root)
       root.mainloop()
     
-    ''' Previous Code for input manager
-    if testing:
-        print('In testing mode')
-        settings={
-            'simname' : 'siinfern-detailed.out',
-            'visname' : 'Sample012.vsdx',
-            'simtime' : 9999.0,
-            'version' : 'tbd',
-            'control' : 'First',
-            'output'  : 'Visio'
-        }
-        #single_sim(settings)
-        single_sim(settings)
-    elif legit:
-        while settings['control'] != 'Stop' and legit:
-            if settings['control'] != 'Testing':
-                settings = get_input(settings)
-            if settings['control'] == 'Single':
-                #TODO add Try statement to incase there are errors
-                single_sim(settings)
-            elif settings['control'] == 'ALL':
-                if settings['simname'].upper()=='ALL':
-                  #all_files = nfm.find_all_files(pathway = settings['simname'])
-                  all_files = nfm.find_all_files()
-                  p = "this is in the active directory"
-                else:
-                  p = settings['simname'][:-4] #pathway
-                  all_files = nfm.find_all_files(pathway = p)
-                num_files = len(all_files)
-                if num_files == 0:
-                  print("No output files found")
-                elif num_files == 1:
-                  settings['simname'] = all_files[0]
-                  single_sim(settings)
-                else:  
-                  num_of_p = max(multiprocessing.cpu_count() -1,1) #Use all processors except 1
-                  num_of_p = min(num_of_p, len(all_files))
-                  print("Processing " + str(len(all_files)) + " SES Output files using " + str(num_of_p)+" threads" )
-                  pool = multiprocessing.Pool(num_of_p, maxtasksperchild=1)
-                  finished_files = 0
-                  for file in all_files:
-                    # Reference2 code for multiprocess https://pymotw.com/2/multiprocessing/basics.html
-                    # Another code for multiprocessing https://stackoverflow.com/questions/20886565/using-multiprocessing-process-with-a-maximum-number-of-simultaneous-processes
-                    if p != "this is in the active directory":
-                      filepath = p + '\\' + file
-                    else:
-                      filepath = file
-                    pool.apply_async(single_sim, args=(settings,filepath))
-                    #single_sim(settings,file)
-                  pool.close()
-                  pool.join()
-            elif settings['control'] == 'Analyses':
-              nva.analyses_menu(settings)
-            else: #Something has gone wrong!
-                #print("Error in inputing data to control variable")
-                c = pyip.inputYesNo(prompt='Do you want to quit the program? Yes or No: ')
-                settings = {} #Clear container for settings
-                if c == 'no':
-                    settings['control'] = 'First'
-                else:
-                    settings['control'] = 'Stop'
-                    return
-    else:
-      print('Something has gone horribly wrong! Your licese may no longer be valid or something weird happened. Try restrating')
-      input('Program will exit when you hit enter')
-      return
-    '''
 if __name__ == '__main__':
+    multiprocessing.freeze_support()
     main(testing=False)

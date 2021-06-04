@@ -3,6 +3,12 @@
 *.prn
 *.inp
 *.ses
+*.OUT
+*.PRN
+*.INP
+*.SES
+*.xlsx
+*.lic
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
