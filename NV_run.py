@@ -5,11 +5,11 @@ import NV_parser as nvp
 import NV_visio as nvv
 import NV_file_manager as nfm
 
-def single_sim(settings, multi_processor_name =''):
+def single_sim(settings, multi_processor_name ='', gui=''):
     #Adjustement if multiple files are being processed, simultaneously
     if multi_processor_name != '':
         settings['simname'] = multi_processor_name
-    data = nvp.parse_file(settings['simname'])
+    data = nvp.parse_file(settings['simname'], gui)
     base_name = settings['simname'][:-4]
     if len(data) == 0:
       return  
@@ -17,24 +17,24 @@ def single_sim(settings, multi_processor_name =''):
         #TODO Add error checker if excel file is open
         #TODO Write to memor first, then to file to speed up process (especially for multiple simulations)
         try:
-          with pd.ExcelWriter(base_name +".xlsx", engine = 'openpyxl') as writer:
-              for item in data:
-                  item.to_excel(writer, sheet_name = item.name, merge_cells=False)
-                  #Add code to create filters
-                  #https://stackoverflow.com/questions/51566349/openpyxl-how-to-add-filters-to-all-columns
-                  worksheet = writer.sheets[item.name]
-                  worksheet.auto_filter.ref = worksheet.dimensions
-                  #Freeze cells from https://stackoverflow.com/questions/25588918/how-to-freeze-entire-header-row-in-openpyxl
-                  testing = len(item.index.names)
-                  freeze_column = len(item.index.names)
-                  freeze_cell = worksheet.cell(row=2, column = freeze_column + 1)
-                  worksheet.freeze_panes = freeze_cell
-              #Add properties to Excel File.  Following https://stackoverflow.com/questions/52120125/how-to-edit-core-properties-of-xlsx-file-with-python
-              writer.book.properties.creator = "Next Vis Beta"
-              writer.book.properties.title = base_name
-          print("Created Excel File " + base_name +".xlsx")
+            with pd.ExcelWriter(base_name +".xlsx", engine = 'openpyxl') as writer:
+                for item in data:
+                    item.to_excel(writer, sheet_name = item.name, merge_cells=False)
+                    #Add code to create filters
+                    #https://stackoverflow.com/questions/51566349/openpyxl-how-to-add-filters-to-all-columns
+                    worksheet = writer.sheets[item.name]
+                    worksheet.auto_filter.ref = worksheet.dimensions
+                    #Freeze cells from https://stackoverflow.com/questions/25588918/how-to-freeze-entire-header-row-in-openpyxl
+                    testing = len(item.index.names)
+                    freeze_column = len(item.index.names)
+                    freeze_cell = worksheet.cell(row=2, column = freeze_column + 1)
+                    worksheet.freeze_panes = freeze_cell
+                #Add properties to Excel File.  Following https://stackoverflow.com/questions/52120125/how-to-edit-core-properties-of-xlsx-file-with-python
+                writer.book.properties.creator = "Next Vis Beta"
+                writer.book.properties.title = base_name
+            run_msg(gui, "Created Excel File " + base_name +".xlsx")
         except:
-          print("ERROR creating Excel file " + base_name + ".xlsx.  Try closing this file in excel and process again")
+            run_msg("ERROR creating Excel file " + base_name + ".xlsx.  Try closing this file in excel and process again")
     if 'Visio' in settings['output']:
         try:
             for item in data: 
@@ -46,9 +46,9 @@ def single_sim(settings, multi_processor_name =''):
             settings['new_visio']  = base_name +"-" + str(time_4_name)+ ".vsdx"
             nvv.update_visio(settings, df_PIT)
         except:
-            print("ERROR creating Visio file in NV_run.")
+            run_msg(gui, "ERROR creating Visio file in NV_run.")
 
-def multiple_sim(settings):
+def multiple_sim(settings, gui=''):
     p = settings['simname']
     all_names = nfm.find_all_files(pathway = p)
     '''
@@ -61,15 +61,15 @@ def multiple_sim(settings):
         all_files = nfm.find_all_files(pathway = p)'''
     num_files = len(all_names)
     if num_files == 0:
-        print("No output files found")
+        run_msg(gui, "No output files found")
     elif num_files == 1: #Catch if there is onle file
-        print('Started multiple files processing with only one simulation')
+        run_msg(gui, 'Started multiple files processing with only one simulation')
         settings['simname'] = p + '/' + all_names[0]
         single_sim(settings)
     else:  
         num_of_p = max(multiprocessing.cpu_count() -1,1) #Use all processors except 1
         num_of_p = min(num_of_p, num_files)
-        print("Processing " + str(num_files) + " SES Output files using " + str(num_of_p)+" threads" )
+        run_msg(gui, "Processing " + str(num_files) + " SES Output files using " + str(num_of_p)+" threads" )
         pool = multiprocessing.Pool(num_of_p, maxtasksperchild=1)
         for name in all_names:
             # Reference2 code for multiprocess https://pymotw.com/2/multiprocessing/basics.html
@@ -78,10 +78,16 @@ def multiple_sim(settings):
                 filepath = p + '/' + name
             else:
                 filepath = name
-            pool.apply_async(single_sim, args=(settings, filepath))
+            pool.apply_async(single_sim, args=(settings, filepath,gui,))
+            #run_msg(gui,'Processing ' + filepath)
         pool.close()
         pool.join()
 
+def run_msg(gui, text):
+    if gui != '':
+        gui.gui_text(text)
+    else:
+        print('Run msg: ' + text)
 
 
 if __name__ == '__main__':

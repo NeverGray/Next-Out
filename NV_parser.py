@@ -212,7 +212,7 @@ HE = {
 }
 
 #TODO Eliminate NumExpr detected 16 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 8.
-def parse_file(filepath): #Parser
+def parse_file(filepath, gui = ''): #Parser
     #Variables for all functions within this function
     data_pit = []  # create an empty list to collect the data
     data_train = []
@@ -254,11 +254,11 @@ def parse_file(filepath): #Parser
                 summary = True
         i +=1
         if i > (len(lines) - 1):
-            print("Error in reading output file " + filepath + ". Simulation never started.")
+            parser_msg(gui, "Error in reading output file " + filepath + ". Simulation never started.")
             return []
         assert (i < (len(lines))), 'Cannot find first time! Line variable ' + str(i)
     if abbreviated: #First time an abbreviated print is read  
-        print("Warning - " + filepath +" has abbreviated prints. Eliminate abbreviated prints if more thermal data is needed.")
+        parser_msg(gui, "Warning - " + filepath +" has abbreviated prints. Eliminate abbreviated prints if more thermal data is needed.")
     time = float(m.group('Time'))
     while i < len(lines):
         # at each line check for a match with a regex
@@ -337,7 +337,7 @@ def parse_file(filepath): #Parser
         df_hsa.name = 'HSA'
         df_ecs = to_dataframe2(data_esc, to_integers = ['Segment', 'Sub','ZN'], to_index=['Time','ZN','Segment','Sub'])
         df_ecs.name = 'ECS'
-        print("Post processed ",filepath)
+        parser_msg(gui, "Post processed " + filepath)
         # Reduce memory requirements when multiple files are being processed.
         data_segment = [] 
         data_sub =[]
@@ -347,11 +347,11 @@ def parse_file(filepath): #Parser
         data_hsa = []
         return [df_pit, df_train, df_segment, df_sub, df_percentage, df_te, df_hsa, df_ecs]
     elif len(data_train) > 0:
-        print("Post processed ",filepath)
+        parser_msg(gui, "Post processed " + filepath)
         data_train = []
         return [df_pit, df_train]
     else:
-        print("Post processed ",filepath)
+        parser_msg(gui, "Post processed " + filepath)
         return [df_pit]
 
 def to_dataframe2(data, to_integers = ['Segment', 'Sub'], to_index = ['Time','Segment','Sub'], groupby = []):
@@ -523,3 +523,9 @@ def delete_duplicate_pit(df_pit,df_train):
     new_df_train = df_train[~df_train.index.duplicated(keep='last')]
     new_df_train.name = df_train.name
     return [new_df_pit,new_df_train]
+
+def parser_msg(gui, text):
+    if gui != '':
+        gui.gui_text(text)
+    else:
+        print('Parser msg: '+ text)

@@ -181,7 +181,7 @@ def main(testing=False):
         return
     elif legit:
       root = Tk()
-      nvg.start_screen(root)
+      gui = nvg.start_screen(root)
       root.mainloop()
     
 if __name__ == '__main__':

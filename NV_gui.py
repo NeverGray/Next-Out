@@ -95,25 +95,25 @@ class start_screen:
         frm_run = ttk.Frame(self.ss, padding = p, borderwidth=5)
         self.btn_run = ttk.Button(frm_run, text='Run', command = self.run)
         self.btn_run.pack(expand=True, fill=BOTH)
-        '''#STATUS SCREEN to be added
-        frm_status = ttk.LabelFrame(ss, borderwidth=5, text = 'Status', padding = p)
-        self.txt_status = Text(frm_status, width=30, height=5,state=DISABLED)
-        self.txt_status.pack(expand=True, fill=BOTH)'''
+        #STATUS SCREEN to be added
+        frm_status = ttk.LabelFrame(self.ss, borderwidth=5, text = 'Status', padding = p)
+        self.txt_status = Text(frm_status, width=30, height=5,state=DISABLED,wrap="none",)
+        self.txt_status.pack(expand=True, fill=BOTH)
         #START SCREEN grid
         root.columnconfigure(0, weight=1)
+        root.rowconfigure(0,weight=1)
         #root.rowconfigure(0, weight=1)
         self.ss.grid(column = 0, row = 0, sticky=(E,W,N,S))
         self.ss.columnconfigure(1, weight=1)
-        #ss.rowconfigure(5, weight =1)
+        self.ss.rowconfigure(4, weight =1)
         frm_pp.grid(column=0, row = 0, rowspan = 4, sticky=[N,S],pady = py, padx = px)
         frm_ofl.grid(column = 1, row = 2, sticky = [W,E],pady = py, padx = px)
         frm_visio.grid(column = 1, row = 1, sticky = [W,E],pady = py, padx = px)
         frm_ses.grid(column =1, row = 0, sticky = [N,S,E,W],pady = py, padx = px)
         frm_run.grid(column = 1, row = 3, sticky = [W,E],pady = py, padx = px)
-        #frm_status.grid(column=0, row = 4, columnspan = 2, sticky=[W,E,S],pady = py, padx = px)
+        frm_status.grid(column=0, row = 4, columnspan = 2, sticky=[W,E,S,N],pady = py, padx = px)
         root.minsize(550,385) #Measured using paint.net
         #root.maxsize(1080,385) worried about scaling on other monitors
-
 
     def visio_file(self,*args):
         try:
@@ -187,14 +187,14 @@ class start_screen:
             if self.validation(self.settings):
                 try:
                     if self.ses.get() == 'file':
-                        nvr.single_sim(self.settings)
+                        nvr.single_sim(self.settings, gui = self)
                     elif self.ses.get() == 'folder':
-                        nvr.multiple_sim(self.settings)
+                        nvr.multiple_sim(self.settings, gui = self)
                 except:
-                    print('Error after validation, before single_sim or multiple_sim')
+                    self.gui_text('Error after validation, before single_sim or multiple_sim')
             self.btn_run['state'] = NORMAL
             self.btn_run['text'] = 'Run'
-            print('Post processing completed')
+            self.gui_text('Post processing completed')
             
     def validation(self, settings):
         valid = True
@@ -216,6 +216,13 @@ class start_screen:
         if not valid:
             messagebox.showinfo(message=msg)
         return valid
+    
+    def gui_text(self, status):
+        self.txt_status['state'] = NORMAL
+        self.txt_status.insert('end', status + '\n')
+        self.txt_status.see(END)
+        self.txt_status['state'] = DISABLED
+        self.ss.update()
 
 if __name__ == '__main__':
     main.main(False)
