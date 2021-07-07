@@ -8,6 +8,7 @@ except:
 import xml.etree.ElementTree as ET
 import re
 import os
+from pathlib import Path
 
 def valid_simtime(simtime, data):
     timeseries_index = data.index.unique(0) #Creates a series of unique times
@@ -43,8 +44,10 @@ def emod_visXML(vxml, data, simname="Not Available", simtime = 0.00):
 
     #Update SimInfo-NV01 text fields
     #for Shape in P1root.findall(".//Visio:Shape[@Name='SimInfo_NV01']" , ns):
+    file_path = Path(simname)
+    sim_base_name = file_path.name
     shape_dict = { 
-        ".//Visio:Shape[@Name='NV01_SimNam']" : simname,
+        ".//Visio:Shape[@Name='NV01_SimNam']" : sim_base_name,
         ".//Visio:Shape[@Name='NV01_SimTime']": str(simtime)}
     #for find_string, value in shape_dict.items():
     #    Shape = NV01_text(Shape, find_string, ns, value)

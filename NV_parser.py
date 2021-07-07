@@ -1,6 +1,7 @@
 import re
 import pandas as pd
 import logging
+from pathlib import Path
 logging.basicConfig(level=logging.DEBUG, format=' %(asctime)s - %(levelname)s - %(message)s')
 
 #Point in Time Parser
@@ -212,7 +213,7 @@ HE = {
 }
 
 #TODO Eliminate NumExpr detected 16 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 8.
-def parse_file(filepath, gui = ''): #Parser
+def parse_file(path_string, gui = ''): #Parser
     #Variables for all functions within this function
     data_pit = []  # create an empty list to collect the data
     data_train = []
@@ -228,8 +229,10 @@ def parse_file(filepath, gui = ''): #Parser
     data_te = []
     data_esc = []
     data_hsa = []
+    file_path = Path(path_string)
+    file_name = file_path.name
     # open the file and read through it line by line
-    with open(filepath, 'r') as file_object:
+    with open(path_string, 'r') as file_object:
         lines = file_object.readlines() #Gets list of string values from the file, one string for each line of text
     i = 0 #Start at first line
     version = select_version(lines[0:53]) #determines version of output file
@@ -254,11 +257,11 @@ def parse_file(filepath, gui = ''): #Parser
                 summary = True
         i +=1
         if i > (len(lines) - 1):
-            parser_msg(gui, "Error in reading output file " + filepath + ". Simulation never started.")
+            parser_msg(gui, "Error in reading output file " + file_name + ". Simulation never started.")
             return []
         assert (i < (len(lines))), 'Cannot find first time! Line variable ' + str(i)
     if abbreviated: #First time an abbreviated print is read  
-        parser_msg(gui, "Warning - " + filepath +" has abbreviated prints. Eliminate abbreviated prints if more thermal data is needed.")
+        parser_msg(gui, "Warning - " + file_name +" has abbreviated prints. Use detailed prints for more thermal data.")
     time = float(m.group('Time'))
     while i < len(lines):
         # at each line check for a match with a regex
@@ -337,7 +340,7 @@ def parse_file(filepath, gui = ''): #Parser
         df_hsa.name = 'HSA'
         df_ecs = to_dataframe2(data_esc, to_integers = ['Segment', 'Sub','ZN'], to_index=['Time','ZN','Segment','Sub'])
         df_ecs.name = 'ECS'
-        parser_msg(gui, "Post processed " + filepath)
+        parser_msg(gui, "Read data form " + file_name)
         # Reduce memory requirements when multiple files are being processed.
         data_segment = [] 
         data_sub =[]
@@ -347,11 +350,11 @@ def parse_file(filepath, gui = ''): #Parser
         data_hsa = []
         return [df_pit, df_train, df_segment, df_sub, df_percentage, df_te, df_hsa, df_ecs]
     elif len(data_train) > 0:
-        parser_msg(gui, "Post processed " + filepath)
         data_train = []
+        parser_msg(gui, "Read data from " + file_name)
         return [df_pit, df_train]
     else:
-        parser_msg(gui, "Post processed " + filepath)
+        parser_msg(gui, "Read data from " + file_name)
         return [df_pit]
 
 def to_dataframe2(data, to_integers = ['Segment', 'Sub'], to_index = ['Time','Segment','Sub'], groupby = []):

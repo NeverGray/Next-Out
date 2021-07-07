@@ -14,7 +14,7 @@ class start_screen:
         p = '5' #padding
         py = '5' #vertical padding
         px = '5'
-        root.title("Next-Vis Beta 020")
+        root.title("Next-Vis Beta 021")
         #root.iconbitmap('icon4.ico')
         #Eliminate icon
         #TODO Replace Icon in title bar with NV icon (icon4.ico)
@@ -95,10 +95,13 @@ class start_screen:
         frm_run = ttk.Frame(self.ss, padding = p, borderwidth=5)
         self.btn_run = ttk.Button(frm_run, text='Run', command = self.run)
         self.btn_run.pack(expand=True, fill=BOTH)
-        #STATUS SCREEN to be added
+        #STATUS SCREEN
         frm_status = ttk.LabelFrame(self.ss, borderwidth=5, text = 'Status', padding = p)
         self.txt_status = Text(frm_status, width=30, height=5,state=DISABLED,wrap="none",)
-        self.txt_status.pack(expand=True, fill=BOTH)
+        self.ys_status = ttk.Scrollbar(frm_status, orient = 'vertical', command = self.txt_status.yview)
+        self.txt_status['yscrollcommand'] = self.ys_status.set
+        self.txt_status.pack(side = LEFT, expand=TRUE, fill=BOTH)
+        self.ys_status.pack(side = RIGHT, fill = Y)
         #START SCREEN grid
         root.columnconfigure(0, weight=1)
         root.rowconfigure(0,weight=1)
@@ -189,7 +192,8 @@ class start_screen:
                     if self.ses.get() == 'file':
                         nvr.single_sim(self.settings, gui = self)
                     elif self.ses.get() == 'folder':
-                        nvr.multiple_sim(self.settings, gui = self)
+                        self.gui_text('Error after validation, before single_sim or multiple_sim')
+                        nvr.multiple_sim(self.settings, gui=self)
                 except:
                     self.gui_text('Error after validation, before single_sim or multiple_sim')
             self.btn_run['state'] = NORMAL
