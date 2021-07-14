@@ -47,20 +47,28 @@ def single_sim(settings, multi_processor_name="", gui=""):
                 + ".xlsx.  Try closing this file in excel and process again",
             )
     if "Visio" in settings["output"]:
+        df_dict = {}  # Store data frames in dictionary
+        for df in data:
+            df_dict.update({df.name: df})
         try:
-            for item in data:
-                if item.name == "PIT":
-                    df_PIT = item  # Pass dataframe
-                    break
-            settings["simtime"] = nvv.valid_simtime(settings["simtime"], df_PIT)
+            settings["simtime"] = nvv.valid_simtime(settings["simtime"], df_dict["SSA"])
             time_4_name = int(settings["simtime"])
             settings["new_visio"] = base_name + "-" + str(time_4_name) + ".vsdx"
-            nvv.update_visio(settings, df_PIT)
+            nvv.update_visio(settings, df_dict)
+            run_msg(
+                gui,
+                "Created Visio File " + file_name + "-" + str(time_4_name) + ".vsdx",
+            )
         except:
             run_msg(gui, "ERROR creating Visio file in NV_run.")
 
 
 def multiple_sim(settings, gui=""):
+    """ #TODO update code to limit number of cores used by NumExpr. 
+    Current error messages:
+    2021-07-14 08:30:41,680 - INFO - Note: NumExpr detected 16 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 8.
+    2021-07-14 08:30:41,681 - INFO - NumExpr defaulting to 8 threads.
+    """
     p = settings["simname"]
     all_names = nfm.find_all_files(pathway=p)
     """
@@ -118,7 +126,7 @@ def run_msg(gui, text):
 
 if __name__ == "__main__":
     settings = {
-        "simname": "sinorm-detailed.out",
+        "simname": "siinfern.out",
         "visname": "Sample012.vsdx",
         "simtime": 9999.0,
         "version": "tbd",

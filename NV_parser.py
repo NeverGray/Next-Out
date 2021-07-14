@@ -8,7 +8,7 @@ logging.basicConfig(
     level=logging.DEBUG, format=" %(asctime)s - %(levelname)s - %(message)s"
 )
 
-# Point in Time Parser
+# Second by Second parser definitions
 PIT = {
     "time": re.compile(
         r"TIME.\s+(?P<Time>\d+.\d{2}).+SECONDS.+TRAIN"
@@ -288,13 +288,13 @@ HE = {
 
 # TODO Eliminate NumExpr detected 16 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 8.
 def parse_file(path_string, gui=""):  # Parser
-    # Variables for all functions within this function
-    data_pit = []  # create an empty list to collect the data
+    # Variables for all referenced functions
+    data_pit = []  # All Point in Time data
     data_train = []
     wall_pit = []
     fluid_pit = []
     duplicate_pit = False
-    # Global variables for Summaries used in other functions
+    # Global variables for all referenced functions
     global data_segment, data_sub, data_percentage, data_te, data_esc, data_hsa
     # Create empty lists to collect the data (and erase previous data)
     data_segment = []
@@ -305,15 +305,14 @@ def parse_file(path_string, gui=""):  # Parser
     data_hsa = []
     file_path = Path(path_string)
     file_name = file_path.name
-    # open the file and read through it line by line
+    # Read output file into variable
     with open(path_string, "r") as file_object:
-        lines = (
-            file_object.readlines()
-        )  # Gets list of string values from the file, one string for each line of text
+        lines = file_object.readlines()
     i = 0  # Start at first line
-    version = select_version(lines[0:53])  # determines version of output file
+    version = select_version(lines[0:53])  # Version information from output
     m = None  # Sets the value equal to none to start while loop
-    rx = INPUT["f12"]  # matching input
+    # TODO get title information for Form 3 and 5
+    rx = INPUT["f12"]  # Matching string for Form 12 Output
     while m is None and i < len(lines):
         m = rx.search(lines[i])
         i += 1
@@ -358,14 +357,12 @@ def parse_file(path_string, gui=""):  # Parser
                 m_dict = m.groupdict()
                 m_dict["Time"] = time
                 if key == "time":  # sets time interval
-                    if (
-                        float(m.group("Time")) == time
-                    ):  # Needed to delete duplicates created by Summary output option 4
+                    # Needed to delete duplicates created by Summary output option 4
+                    if float(m.group("Time")) == time:
                         duplicate_pit = True
                     time = float(m.group("Time"))
-                elif (
-                    key == "detail_segment_1" or key == "abb_segment_1"
-                ):  # If key is other than time
+                # If key is other than time
+                elif key == "detail_segment_1" or key == "abb_segment_1":
                     if key == "abb_segment_1":
                         # Code only includes information for segment 1 for abbreviated prints
                         i += 1
@@ -404,27 +401,11 @@ def parse_file(path_string, gui=""):  # Parser
                 elif key == "fluid":
                     fluid_pit.append(m_dict)
         i += 1
-    df_pit = to_dataframe2(data_pit)
-    if len(wall_pit) > 0:
-        df_wall_pit = to_dataframe2(wall_pit)
-        df_pit = df_pit.join(
-            df_wall_pit, how="outer"
-        )  # https://pandas.pydata.org/pandas-docs/stable/user_guide/merging.html
-    if len(fluid_pit) > 0:
-        df_fluid_pit = to_dataframe2(fluid_pit)
-        df_pit = df_pit.join(df_fluid_pit, how="outer")
-    if version == "ip":
-        df_pit["Airflow"] = df_pit["Airflow"] / 1000
-    df_pit.name = "PIT"
-    df_train = to_dataframe2(data_train, ["Number", "RTE", "TYP"], ["Time", "Number"])
-    df_train.name = "TRA"
-    # Reduce Memory requirements
-    data_pit = []
-    wall_pit = []
-    if duplicate_pit:
-        [df_pit, df_train] = delete_duplicate_pit(df_pit, df_train)
+    df_ssa, df_sst, df_train = create_ss_dfs(
+        data_pit, data_train, wall_pit, fluid_pit, duplicate_pit, version
+    )
 
-    # TODO Ccreate post process all dataframes
+    # TODO Create post process all dataframes
     if summary:
         df_segment = to_dataframe2(
             data_segment,
@@ -464,7 +445,8 @@ def parse_file(path_string, gui=""):  # Parser
         data_esc = []
         data_hsa = []
         return [
-            df_pit,
+            df_ssa,
+            df_sst,
             df_train,
             df_segment,
             df_sub,
@@ -476,10 +458,72 @@ def parse_file(path_string, gui=""):  # Parser
     elif len(data_train) > 0:
         data_train = []
         parser_msg(gui, "Read data from " + file_name)
-        return [df_pit, df_train]
+        return [df_ssa, df_sst, df_train]
     else:
         parser_msg(gui, "Read data from " + file_name)
-        return [df_pit]
+        return [df_ssa, df_sst]
+
+
+def create_ss_dfs(data_pit, data_train, wall_pit, fluid_pit, duplicate_pit, version):
+    df_pit = to_dataframe2(data_pit)
+    # Merge additional data based on https://pandas.pydata.org/pandas-docs/stable/user_guide/merging.html
+    if len(wall_pit) > 0:  # If wall tempature exists
+        df_wall_pit = to_dataframe2(wall_pit)
+        df_pit = df_pit.join(df_wall_pit, how="outer")
+    if len(fluid_pit) > 0:  # If fluid tempature exists
+        df_fluid_pit = to_dataframe2(fluid_pit)
+        df_pit = df_pit.join(df_fluid_pit, how="outer")
+    if version == "ip":
+        df_pit["Airflow"] = df_pit["Airflow"] / 1000
+    df_pit.name = "PIT"
+    df_train = to_dataframe2(data_train, ["Number", "RTE", "TYP"], ["Time", "Number"])
+    df_train.name = "TRA"
+    # Reduce Memory requirements
+    data_pit = []
+    wall_pit = []
+    if duplicate_pit:
+        [df_pit, df_train] = delete_duplicate_pit(df_pit, df_train)
+    # Create df_ssa
+    df_ssa = df_pit.query("Sub == 1")
+    df_ssa = df_ssa.loc[:, {"Airflow", "AirVel"}]
+    df_ssa.reset_index(level=2, inplace=True)
+    # Create Unique ID with code from https://stackoverflow.com/questions/19377969/combine-two-columns-of-text-in-pandas-dataframe
+    df_ssa["ID"] = (
+        df_ssa.index.get_level_values(0).astype(str)
+        + "_"
+        + df_ssa.index.get_level_values(1).astype(str)
+    )
+    df_ssa = df_ssa[["ID", "Airflow", "AirVel"]]  # Reorders and Drops Sub column
+    df_ssa.name = "SSA"
+    # Create df_sst
+    df_sst = df_pit.drop(["Airflow", "AirVel"], axis=1)
+    df_sst["ID"] = (
+        df_sst.index.get_level_values(0).astype(str)
+        + "_"
+        + df_sst.index.get_level_values(1).astype(str)
+        + "_"
+        + df_sst.index.get_level_values(2).astype(str)
+    )
+    column_names = df_sst.columns.values.tolist()
+    if len(column_names) > 5:
+        df_sst = df_sst[
+            [
+                "ID",
+                "AirTemp",
+                "Humidity",
+                "Sensible",
+                "Latent",
+                "WallTemp",
+                "WallConvection",
+                "WallRadiation",
+            ]
+        ]
+    else:
+        df_sst = df_sst[["ID", "AirTemp", "Humidity", "Sensible", "Latent",]]
+
+    df_sst.name = "SST"
+    # TODO Change order of columns, add ID
+    return df_ssa, df_sst, df_train
 
 
 def to_dataframe2(

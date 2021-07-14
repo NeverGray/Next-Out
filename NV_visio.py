@@ -14,8 +14,8 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 
-def valid_simtime(simtime, data):
-    timeseries_index = data.index.unique(0)  # Creates a series of unique times
+def valid_simtime(simtime, df):
+    timeseries_index = df.index.unique(0)  # Creates a series of unique times
     timeseries_list = timeseries_index.tolist()
     time = float(simtime)
     if time == -1 or time > timeseries_list[-1]:
@@ -42,7 +42,7 @@ def get_visXML(visname):
 
 
 # code to modify XML file for emergency (or PIT) simualtions
-def emod_visXML(vxml, data, simname="Not Available", simtime=0.00):
+def emod_visXML(vxml, df_dict, simname="Not Available", simtime=0.00):
     P1root = ET.fromstring(vxml)  # create XML element from the string
     ET.register_namespace(
         "", "http://schemas.microsoft.com/office/visio/2012/main"
@@ -69,7 +69,6 @@ def emod_visXML(vxml, data, simname="Not Available", simtime=0.00):
         if ShapeChilds:
             for ShapeChild in ShapeChilds:
                 ShapeChild = NV01_text(ShapeChild, find_string, ns, value)
-
     # Update Sub-NV01The "../.." at the end of the string moves the selection up two tiers (Section, then shape)
     for Shape in P1root.findall(".//Visio:Row[@N='NV01_SegID']../..", ns):
         # Get SegID and Sub-segment
@@ -84,7 +83,9 @@ def emod_visXML(vxml, data, simname="Not Available", simtime=0.00):
             SubID = 1
         # Pull from data from dataframe
         try:  # Pull airflow from the dataframe. Use 999.9 if it doesn't exist.
-            ses_airflow = data.at[(simtime, SegID, 1), "Airflow"]  # .loc created errors
+            ses_airflow = df_dict["SSA"].at[
+                (simtime, SegID, 1), "Airflow"
+            ]  # .loc created errors
         except:
             ses_airflow = 999.9
         airflow = str(round(abs(ses_airflow), 1))
@@ -95,12 +96,12 @@ def emod_visXML(vxml, data, simname="Not Available", simtime=0.00):
         else:
             flip = 1
         try:  # Pull airtemperature from dataframe. Use 999.9 if it doesn't exist.
-            ses_AirTemp = data.at[(simtime, SegID, SubID), "AirTemp"]
+            ses_AirTemp = df_dict["SST"].at[(simtime, SegID, SubID), "AirTemp"]
         except:
             ses_AirTemp = 999.9
         airtemp = str(round(ses_AirTemp, 1)) + "°"
         try:
-            ses_WallTemp = data.at[(simtime, SegID, SubID), "WallTemp"]
+            ses_WallTemp = df_dict["SST"].at[(simtime, SegID, SubID), "WallTemp"]
         except:
             ses_WallTemp = 999.9
         walltemp = str(round(ses_WallTemp, 1)) + "°"
@@ -201,11 +202,11 @@ def write_visio(vxmls, visname, new_visio):
         )
 
 
-def update_visio(settings, data):
+def update_visio(settings, df_dict):
     vxmls = get_visXML(settings["visname"])  # gets the pages in the VISIO XML.
     for name, vxml in vxmls.items():
         vxmls[name] = emod_visXML(
-            vxmls[name], data, settings["simname"][:-4], settings["simtime"]
+            vxmls[name], df_dict, settings["simname"][:-4], settings["simtime"]
         )
     write_visio(vxmls, settings["visname"], settings["new_visio"])
 
