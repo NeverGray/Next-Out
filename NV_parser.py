@@ -86,8 +86,11 @@ PIT = {
     ),
 }
 
-# Input Praser
+# Input data praser
 INPUT = {
+    "f3a": re.compile(
+        r"INPUT VERIFICATION FOR (LINE SEGMENT|VENTILATION SHAFT)\s+\d+\s\-\s*(?P<segment>\d+)\s+(?P<title>\S.+)+FORM"
+    ),
     "f12": re.compile(r"INPUT VERIFICATION OF CONTROL GROUP INFORMATION\s+FORM 12"),
     "sum_op": re.compile(
         r"""(
@@ -101,8 +104,10 @@ INPUT = {
         re.VERBOSE,
     ),
 }
-# Text check to see if there is an IP Version (for cfm to kcfm conversion)
-v41 = [[1, "SES VER 4"], [49, "VERSION 4."]]
+# Search pattern to determine if fill is in IP (instead of SI by default)
+# Format of list is [[Line Number of text output, "Search String"]]
+# Used in the function select_version
+IP_INDICATION = [[1, "SES VER 4"], [52, "VERSION 4."], [9, "4.2"], [61, "4.2"]]
 
 SUM = {  # TODO replace sum_time value with PIT value of PIT['sum_time']?
     "sum_time": re.compile(
@@ -305,11 +310,11 @@ def parse_file(path_string, gui=""):  # Parser
     data_hsa = []
     file_path = Path(path_string)
     file_name = file_path.name
-    # Read output file into variable
-    with open(path_string, "r") as file_object:
+    # Read output file into variable. Errors="replace" needed for OpenSES files
+    with open(path_string, "r", errors="replace") as file_object:
         lines = file_object.readlines()
     i = 0  # Start at first line
-    version = select_version(lines[0:53])  # Version information from output
+    version = select_version(lines)
     m = None  # Sets the value equal to none to start while loop
     # TODO get title information for Form 3 and 5
     rx = INPUT["f12"]  # Matching string for Form 12 Output
@@ -322,8 +327,9 @@ def parse_file(path_string, gui=""):  # Parser
     rx = PIT["time"]
     rx2 = INPUT["sum_op"]
     m = None
+    # Determine if there are abbreviated prints from Fom 12.
     while m is None and i < len(lines):
-        m = rx.search(lines[i])  # Find time variable
+        m = rx.search(lines[i])  # Find time variable for start of simulation output
         m2 = rx2.search(lines[i])
         if m2 is not None:
             if int(m2.group("abb")) > 0:
@@ -347,7 +353,8 @@ def parse_file(path_string, gui=""):  # Parser
             + file_name
             + " has abbreviated prints. Use detailed prints for more thermal data.",
         )
-    time = float(m.group("Time"))
+    time = float(m.group("Time"))  # Finds first line with simulation output with Time.
+    # Post process Point in Time information
     while i < len(lines):
         # at each line check for a match with a regex
         m = False
@@ -401,8 +408,17 @@ def parse_file(path_string, gui=""):  # Parser
                 elif key == "fluid":
                     fluid_pit.append(m_dict)
         i += 1
+
+    segment_titles = get_segment_titles(lines)
+
     df_ssa, df_sst, df_train = create_ss_dfs(
-        data_pit, data_train, wall_pit, fluid_pit, duplicate_pit, version
+        data_pit,
+        data_train,
+        wall_pit,
+        fluid_pit,
+        duplicate_pit,
+        segment_titles,
+        version,
     )
 
     # TODO Create post process all dataframes
@@ -464,7 +480,27 @@ def parse_file(path_string, gui=""):  # Parser
         return [df_ssa, df_sst]
 
 
-def create_ss_dfs(data_pit, data_train, wall_pit, fluid_pit, duplicate_pit, version):
+def get_segment_titles(lines):
+    title_rx = INPUT["f3a"]
+    time_rx = PIT["time"]
+    time_match = None
+    i = 0
+    segment_titles = {}
+    while time_match is None and i < len(lines):
+        title_match = title_rx.search(lines[i])
+        time_match = time_rx.search(lines[i])
+        if title_match is not None:
+            title_dict = title_match.groupdict()
+            segment_titles.update(
+                {int(title_dict["segment"]): title_dict["title"].strip()}
+            )
+        i += 1
+    return segment_titles
+
+
+def create_ss_dfs(
+    data_pit, data_train, wall_pit, fluid_pit, duplicate_pit, segment_titles, version
+):
     df_pit = to_dataframe2(data_pit)
     # Merge additional data based on https://pandas.pydata.org/pandas-docs/stable/user_guide/merging.html
     if len(wall_pit) > 0:  # If wall tempature exists
@@ -478,11 +514,10 @@ def create_ss_dfs(data_pit, data_train, wall_pit, fluid_pit, duplicate_pit, vers
     df_pit.name = "PIT"
     df_train = to_dataframe2(data_train, ["Number", "RTE", "TYP"], ["Time", "Number"])
     df_train.name = "TRA"
-    # Reduce Memory requirements
-    data_pit = []
-    wall_pit = []
     if duplicate_pit:
         [df_pit, df_train] = delete_duplicate_pit(df_pit, df_train)
+    # Add title to segments in df_pit
+    # TODO Add title name to PIT from segment_data to Segment number
     # Create df_ssa
     df_ssa = df_pit.query("Sub == 1")
     df_ssa = df_ssa.loc[:, {"Airflow", "AirVel"}]
@@ -493,7 +528,15 @@ def create_ss_dfs(data_pit, data_train, wall_pit, fluid_pit, duplicate_pit, vers
         + "_"
         + df_ssa.index.get_level_values(1).astype(str)
     )
-    df_ssa = df_ssa[["ID", "Airflow", "AirVel"]]  # Reorders and Drops Sub column
+    df_segment_titles = pd.DataFrame.from_dict(
+        segment_titles, orient="index", columns=["Title"]
+    )
+    df_segment_titles.index.name = "Segment"
+    # https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.join.html#pandas.DataFrame.join
+    df_ssa = df_ssa.join(df_segment_titles, on="Segment")
+    df_ssa = df_ssa[
+        ["ID", "Title", "Airflow", "AirVel"]
+    ]  # Reorders and Drops Sub column
     df_ssa.name = "SSA"
     # Create df_sst
     df_sst = df_pit.drop(["Airflow", "AirVel"], axis=1)
@@ -552,7 +595,7 @@ def to_dataframe2(
 
 def select_version(lines):
     version = "si"
-    for item in v41:
+    for item in IP_INDICATION:
         line_number = item[0]
         array_number = line_number - 1
         if item[1] in lines[array_number]:
@@ -734,4 +777,10 @@ def parser_msg(gui, text):
         gui.gui_text(text)
     else:
         print("Parser msg: " + text)
+
+
+if __name__ == "__main__":
+    path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/inferno4p2.OUT"
+    list = parse_file(path_string)
+    print("test finished")
 

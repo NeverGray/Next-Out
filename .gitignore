@@ -9,6 +9,9 @@
 *.SES
 *.xlsx
 *.lic
+*.vsdx
+*.pdf
+*.bmp
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
