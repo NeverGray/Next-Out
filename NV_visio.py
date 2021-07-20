@@ -13,6 +13,8 @@ import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
+ns = {"Visio": "http://schemas.microsoft.com/office/visio/2012/main"}
+
 
 def valid_simtime(simtime, df):
     timeseries_index = df.index.unique(0)  # Creates a series of unique times
@@ -55,15 +57,12 @@ def emod_visXML(vxml, df_dict, simname="Not Available", simtime=0.00):
     }  # Namespace dictionary to ease file navigation
 
     # Update SimInfo-NV01 text fields
-    # for Shape in P1root.findall(".//Visio:Shape[@Name='SimInfo_NV01']" , ns):
     file_path = Path(simname)
     sim_base_name = file_path.name
     shape_dict = {
         ".//Visio:Shape[@Name='NV01_SimNam']": sim_base_name,
         ".//Visio:Shape[@Name='NV01_SimTime']": str(simtime),
     }
-    # for find_string, value in shape_dict.items():
-    #    Shape = NV01_text(Shape, find_string, ns, value)
     for find_string, value in shape_dict.items():
         ShapeChilds = P1root.findall(find_string, ns)
         if ShapeChilds:
@@ -71,43 +70,38 @@ def emod_visXML(vxml, df_dict, simname="Not Available", simtime=0.00):
                 ShapeChild = NV01_text(ShapeChild, find_string, ns, value)
     # Update Sub-NV01The "../.." at the end of the string moves the selection up two tiers (Section, then shape)
     for Shape in P1root.findall(".//Visio:Row[@N='NV01_SegID']../..", ns):
-        # Get SegID and Sub-segment
-        SegID = int(
-            Shape.find(".//Visio:Row[@N='NV01_SegID']/Visio:Cell", ns).get("V")
-        )  # Get the value for the Segment ID from XML and save as SegID
-        try:  # Sub-segment of 1 may only be located in the master
+        # Get SegID and Sub-segment from XML
+        try:
+            SegID = int(
+                Shape.find(".//Visio:Row[@N='NV01_SegID']/Visio:Cell", ns).get("V")
+            ) 
+        except:
+            continue
+        try: 
             SubID = int(
                 Shape.find(".//Visio:Row[@N='NV01_Sub']/Visio:Cell", ns).get("V")
-            )  # Get the value for the Segment ID from XML and save as SegID
+            )
         except:
             SubID = 1
-        # Pull from data from dataframe
-        try:  # Pull airflow from the dataframe. Use 999.9 if it doesn't exist.
-            ses_airflow = df_dict["SSA"].at[
-                (simtime, SegID, 1), "Airflow"
-            ]  # .loc created errors
-        except:
-            ses_airflow = 999.9
+        # Pull from data from SSA and SST dataframe
+        ses_airflow = get_df_values(df_dict["SSA"], (simtime, SegID), "Airflow")
         airflow = str(round(abs(ses_airflow), 1))
+        ses_velocity = get_df_values(df_dict["SSA"], (simtime, SegID), "AirVel")
+        velocity = str(round(abs(ses_velocity), 1))
         if (
             ses_airflow >= 0
         ):  # Determines if airflow needs to be flipped for negative airflow
             flip = 0
         else:
             flip = 1
-        try:  # Pull airtemperature from dataframe. Use 999.9 if it doesn't exist.
-            ses_AirTemp = df_dict["SST"].at[(simtime, SegID, SubID), "AirTemp"]
-        except:
-            ses_AirTemp = 999.9
-        airtemp = str(round(ses_AirTemp, 1)) + "°"
-        try:
-            ses_WallTemp = df_dict["SST"].at[(simtime, SegID, SubID), "WallTemp"]
-        except:
-            ses_WallTemp = 999.9
+        ses_airtemp = get_df_values(df_dict["SST"], (simtime, SegID, SubID), "AirTemp")
+        airtemp = str(round(ses_airtemp, 1)) + "°"
+        ses_WallTemp = get_df_values(df_dict["SST"], (simtime, SegID, SubID), "WallTemp")
         walltemp = str(round(ses_WallTemp, 1)) + "°"
         # Update shape with information {find_string: value}
         shape_dict = {
             ".//Visio:Shape[@Name='NV01_AirFlow']": airflow,
+            ".//Visio:Shape[@Name='NV01_Velocity']": velocity,
             ".//Visio:Shape[@Name='NV01_AirTemp']": airtemp,
             ".//Visio:Shape[@Name='NV01_WallTemp']": walltemp,
         }
@@ -120,6 +114,14 @@ def emod_visXML(vxml, df_dict, simname="Not Available", simtime=0.00):
 
     # Update Airflow-NV01
     return P1root
+
+
+def get_df_values(df, df_indexes, column_name):
+    try:
+        df_value = df.at[df_indexes, column_name]
+    except:
+        df_value = 0.0
+    return df_value
 
 
 def NV01_arrow(Shape, find_string, ns, flip):
@@ -209,4 +211,3 @@ def update_visio(settings, df_dict):
             vxmls[name], df_dict, settings["simname"][:-4], settings["simtime"]
         )
     write_visio(vxmls, settings["visname"], settings["new_visio"])
-
