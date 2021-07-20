@@ -4,7 +4,6 @@ from pathlib import Path
 import pandas as pd
 
 import NV_file_manager as nfm
-
 # Import of scripts
 import NV_parser as nvp
 import NV_visio as nvv
@@ -14,7 +13,7 @@ def single_sim(settings, multi_processor_name="", gui=""):
     # Adjustement if multiple files are being processed, simultaneously
     if multi_processor_name != "":
         settings["simname"] = multi_processor_name
-    data = nvp.parse_file(settings["simname"], gui)
+    data, output_meta_data = nvp.parse_file(settings["simname"], gui)
     base_name = settings["simname"][:-4]
     file_path = Path(settings["simname"])
     file_name = file_path.name
@@ -54,7 +53,7 @@ def single_sim(settings, multi_processor_name="", gui=""):
             settings["simtime"] = nvv.valid_simtime(settings["simtime"], df_dict["SSA"])
             time_4_name = int(settings["simtime"])
             settings["new_visio"] = base_name + "-" + str(time_4_name) + ".vsdx"
-            nvv.update_visio(settings, df_dict)
+            nvv.update_visio(settings, df_dict, output_meta_data)
             run_msg(
                 gui,
                 "Created Visio File " + file_name + "-" + str(time_4_name) + ".vsdx",
@@ -127,10 +126,10 @@ def run_msg(gui, text):
 if __name__ == "__main__":
     settings = {
         "simname": "siinfern.out",
-        "visname": "Sample012.vsdx",
+        "visname": "2021-07-19 P.vsdx",
         "simtime": 9999.0,
         "version": "tbd",
         "control": "First",
-        "output": ["Excel", "Visio", "Compare"],
+        "output": ["Visio", "Compare"],
     }
     single_sim(settings)

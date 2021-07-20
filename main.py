@@ -14,7 +14,6 @@ import requests
 
 import NV_file_manager as nfm
 import NV_gui as nvg
-
 # Import of scripts
 import NV_parser as nvp
 import NV_visio as nvv

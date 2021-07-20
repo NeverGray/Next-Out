@@ -204,7 +204,8 @@ class start_screen:
     def ses_folder(self, *args):
         try:
             filename = filedialog.askdirectory(
-                title="Select file with SES output Files",
+                title = "Select file with SES output Files",
+                mustexist = True
             )
             self.path_folder.set(filename)
             self.ses.set("folder")
@@ -221,7 +222,6 @@ class start_screen:
         pp_list.append(self.cbo_visio.get())
         pp_list.append(self.cbo_compare.get())
         simtime = -1
-        # Previous code to get file name from text file: 'simname' : self.output_files.get("1.0",'end-1c'),
         if self.ses.get() == "folder":
             simname = self.path_folder.get()
         else:

@@ -3,7 +3,8 @@ import re
 from pathlib import Path
 
 import pandas as pd
-
+import os
+import datetime
 logging.basicConfig(
     level=logging.DEBUG, format=" %(asctime)s - %(levelname)s - %(message)s"
 )
@@ -298,6 +299,7 @@ def parse_file(path_string, gui=""):  # Parser
     data_train = []
     wall_pit = []
     fluid_pit = []
+    output_meta_data = {}
     duplicate_pit = False
     # Global variables for all referenced functions
     global data_segment, data_sub, data_percentage, data_te, data_esc, data_hsa
@@ -310,11 +312,16 @@ def parse_file(path_string, gui=""):  # Parser
     data_hsa = []
     file_path = Path(path_string)
     file_name = file_path.name
-    # Read output file into variable. Errors="replace" needed for OpenSES files
+    # Read output file into variable. OpenSES files require errors="replace" because of extended ASCII
     with open(path_string, "r", errors="replace") as file_object:
         lines = file_object.readlines()
+        # Get modified time of file https://thispointer.com/python-get-last-modification-date-time-of-a-file-os-stat-os-path-getmtime/
+        file_time_seconds = os.path.getmtime(file_path)
+        file_time_str = datetime.datetime.fromtimestamp(file_time_seconds).strftime('%Y-%m-%d, %H:%M:%S')
+        output_meta_data.update({"file_time": file_time_str})
     i = 0  # Start at first line
     version = select_version(lines)
+    output_meta_data.update({"ses_version": version})
     m = None  # Sets the value equal to none to start while loop
     # TODO get title information for Form 3 and 5
     rx = INPUT["f12"]  # Matching string for Form 12 Output
@@ -470,14 +477,14 @@ def parse_file(path_string, gui=""):  # Parser
             df_te,
             df_hsa,
             df_ecs,
-        ]
+        ], output_meta_data
     elif len(data_train) > 0:
         data_train = []
         parser_msg(gui, "Read data from " + file_name)
-        return [df_ssa, df_sst, df_train]
+        return [df_ssa, df_sst, df_train], output_meta_data
     else:
         parser_msg(gui, "Read data from " + file_name)
-        return [df_ssa, df_sst]
+        return [df_ssa, df_sst], output_meta_data
 
 
 def get_segment_titles(lines):
@@ -781,6 +788,6 @@ def parser_msg(gui, text):
 
 if __name__ == "__main__":
     path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/inferno4p2.OUT"
-    list = parse_file(path_string)
+    list, output_meta_data = parse_file(path_string)
     print("test finished")
 

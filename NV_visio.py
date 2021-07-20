@@ -44,7 +44,7 @@ def get_visXML(visname):
 
 
 # code to modify XML file for emergency (or PIT) simualtions
-def emod_visXML(vxml, df_dict, simname="Not Available", simtime=0.00):
+def emod_visXML(vxml, df_dict, simname="Not Available", simtime=0.00, output_meta_data={}):
     P1root = ET.fromstring(vxml)  # create XML element from the string
     ET.register_namespace(
         "", "http://schemas.microsoft.com/office/visio/2012/main"
@@ -59,8 +59,10 @@ def emod_visXML(vxml, df_dict, simname="Not Available", simtime=0.00):
     # Update SimInfo-NV01 text fields
     file_path = Path(simname)
     sim_base_name = file_path.name
+    file_time = output_meta_data.get("file_time") 
     shape_dict = {
         ".//Visio:Shape[@Name='NV01_SimNam']": sim_base_name,
+        ".//Visio:Shape[@Name='NV01_FileTime']": file_time,
         ".//Visio:Shape[@Name='NV01_SimTime']": str(simtime),
     }
     for find_string, value in shape_dict.items():
@@ -88,16 +90,15 @@ def emod_visXML(vxml, df_dict, simname="Not Available", simtime=0.00):
         airflow = str(round(abs(ses_airflow), 1))
         ses_velocity = get_df_values(df_dict["SSA"], (simtime, SegID), "AirVel")
         velocity = str(round(abs(ses_velocity), 1))
-        if (
-            ses_airflow >= 0
-        ):  # Determines if airflow needs to be flipped for negative airflow
-            flip = 0
-        else:
-            flip = 1
         ses_airtemp = get_df_values(df_dict["SST"], (simtime, SegID, SubID), "AirTemp")
         airtemp = str(round(ses_airtemp, 1)) + "°"
         ses_WallTemp = get_df_values(df_dict["SST"], (simtime, SegID, SubID), "WallTemp")
         walltemp = str(round(ses_WallTemp, 1)) + "°"
+        # Determines if airflow needs to be flipped for negative airflow
+        if (ses_airflow >= 0):  
+            flip = 0
+        else:
+            flip = 1
         # Update shape with information {find_string: value}
         shape_dict = {
             ".//Visio:Shape[@Name='NV01_AirFlow']": airflow,
@@ -136,7 +137,6 @@ def NV01_arrow(Shape, find_string, ns, flip):
     except:
         print("Error with NV01_arrow")
         return ShapeTemp
-
 
 def NV01_text(ShapeChild, find_string, ns, value):
     ShapeTemp = ShapeChild
@@ -204,10 +204,10 @@ def write_visio(vxmls, visname, new_visio):
         )
 
 
-def update_visio(settings, df_dict):
+def update_visio(settings, df_dict, output_meta_data):
     vxmls = get_visXML(settings["visname"])  # gets the pages in the VISIO XML.
     for name, vxml in vxmls.items():
         vxmls[name] = emod_visXML(
-            vxmls[name], df_dict, settings["simname"][:-4], settings["simtime"]
+            vxmls[name], df_dict, settings["simname"][:-4], settings["simtime"], output_meta_data
         )
     write_visio(vxmls, settings["visname"], settings["new_visio"])
