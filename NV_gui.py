@@ -1,6 +1,8 @@
+from sys import exit as system_exit
 from tkinter import *
 from tkinter import filedialog, messagebox, ttk
 
+import keygen
 import main as main
 import NV_run as nvr
 from NV_parser import percentage_parser
@@ -8,7 +10,7 @@ from NV_parser import percentage_parser
 
 # add requirement for program to be legit to run
 class start_screen:
-    def __init__(self, root):
+    def __init__(self, root, license_info):
         # Initialization and settings
         p = "5"  # padding
         py = "5"  # vertical padding
@@ -19,6 +21,7 @@ class start_screen:
         # TODO Replace Icon in title bar with NV icon (icon4.ico)
         # root.attributes('-toolwindow', 'True')
         self.ss = ttk.Frame(root, padding=p)  # start screen
+        self.license_info = license_info
         # POST PROCESSING widgets
         frm_pp = ttk.LabelFrame(
             self.ss, borderwidth=5, text="Post Processing", padding=p
@@ -160,7 +163,27 @@ class start_screen:
             column=0, row=4, columnspan=2, sticky=[W, E, S, N], pady=py, padx=px
         )
         root.minsize(550, 385)  # Measured using paint.net
+        self.display_validation_info()
         # root.maxsize(1080,385) worried about scaling on other monitors
+
+    def display_validation_info(self, *args):
+        validation_code, license_id, validation_info = keygen.validate_license_key_with_fingerprint(
+            self.license_info["floating_key"], self.license_info['machine_fingerprint'])
+        floats_available = validation_info['data']['attributes']['maxMachines']
+        floats_in_use = validation_info['data']['relationships']['machines']['meta']['count']
+        authorized_company = self.license_info["Authorized_Company"]
+        msg = f"Currently {floats_in_use} of {authorized_company}'s {floats_available} floating licenses are in use."
+        messagebox.showinfo(message=msg)
+
+    def check_floating_license(self, *args):
+        active_license = keygen.ping_heartbeat_for_machine(
+        self.license_info["machine_fingerprint"], self.license_info["floating_token"])
+        if active_license:
+            return True
+        else:
+            messagebox.showinfo(
+                message='No licenses is available. Program is going to shut down')
+            system_exit("The license is no longer active")
 
     def visio_file(self, *args):
         try:
@@ -217,6 +240,8 @@ class start_screen:
         self.btn_run["text"] = "In-progress"
         self.btn_run["state"] = DISABLED
         self.ss.update()
+        if not self.check_floating_license():
+            system_exit("Floating License is not Active")
         pp_list = []
         pp_list.append(self.cbo_excel.get())
         pp_list.append(self.cbo_visio.get())

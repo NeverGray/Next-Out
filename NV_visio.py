@@ -88,11 +88,11 @@ def emod_visXML(vxml, df_dict, simname="Not Available", simtime=0.00, output_met
         # Pull from data from SSA and SST dataframe
         ses_airflow = get_df_values(df_dict["SSA"], (simtime, SegID), "Airflow")
         airflow = str(round(abs(ses_airflow), 1))
-        ses_velocity = get_df_values(df_dict["SSA"], (simtime, SegID), "AirVel")
+        ses_velocity = get_df_values(df_dict["SSA"], (simtime, SegID), "Air_Velocity")
         velocity = str(round(abs(ses_velocity), 1))
-        ses_airtemp = get_df_values(df_dict["SST"], (simtime, SegID, SubID), "AirTemp")
+        ses_airtemp = get_df_values(df_dict["SST"], (simtime, SegID, SubID), "Air_Temp")
         airtemp = str(round(ses_airtemp, 1)) + "°"
-        ses_WallTemp = get_df_values(df_dict["SST"], (simtime, SegID, SubID), "WallTemp")
+        ses_WallTemp = get_df_values(df_dict["SST"], (simtime, SegID, SubID), "Wall_Temp")
         walltemp = str(round(ses_WallTemp, 1)) + "°"
         # Determines if airflow needs to be flipped for negative airflow
         if (ses_airflow >= 0):  

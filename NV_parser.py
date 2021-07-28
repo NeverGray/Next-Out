@@ -22,10 +22,10 @@ PIT = {
         (?P<Sub>\s{0,2}\d+)\s{1,12}       #Sub-segment
         (?:(?P<Sensible>-?\d+\.\d+)\s+       #Sensible for tunnels
         (?P<Latent>-?\d+\.\d+)\s+|\s{28,})       #Latent for tunnels
-        (?P<AirTemp>-?\d+\.\d+)\s+        #Air Temperature
+        (?P<Air_Temp>-?\d+\.\d+)\s+        #Air Temperature
         (?P<Humidity>-?\d+\.\d+)\s+       #Humidity
         (?:(?P<Airflow>-?\d+\.\d+)\s+     #Airflow for first line
-        (?P<AirVel>-?\d+\.\d+)\s?|\s?)  #AirVel for first line #TODO add $ to speed code?
+        (?P<Air_Velocity>-?\d+\.\d+)\s?|\s?)  #Air_Velocity for first line #TODO add $ to speed code?
         )""",
         re.VERBOSE,
     ),
@@ -34,8 +34,8 @@ PIT = {
         ^\s{2,4}\d{1,3}\s-\s{0,2}        #Section (Adjusted for Option 5 outputs)
         (?P<Segment>\d+)\s{1,11}         #Segment
         (?P<Airflow>-?\d+\.\d+)\s{1,6}   #Sub-segment
-        (?P<AirVel>-?\d+\.\d+)\s{1,8}    #Air Velocity
-        (?P<AirTemp>-?\d+\.\d+)\s{1,8}   #Air Temperature #TODO add $ to speed code?
+        (?P<Air_Velocity>-?\d+\.\d+)\s{1,8}    #Air Velocity
+        (?P<Air_Temp>-?\d+\.\d+)\s{1,8}   #Air Temperature #TODO add $ to speed code?
         \s?
         )""",
         re.VERBOSE,
@@ -45,31 +45,31 @@ PIT = {
         \d+\s-                        #Section
         (?P<Segment>\s{0,2}\d+)+\s-\s+    #Segment
         (?P<Sub>\s{0,2}\d+)\s{1,13}       #Sub-segment
-        (?P<WallTemp>-?\d+\.\d+)\s{1,17}  #Wall Surface Temperature
-        (?P<WallConvection>-?\d+\.\d+)\s{1,17} #Wall Convection
-        (?P<WallRadiation>-?\d+\.\d+)$   #Wall Radition and End of string($) nothing else afterwards
+        (?P<Wall_Temp>-?\d+\.\d+)\s{1,17}  #Wall Surface Temperature
+        (?P<Convection_to_Wall>-?\d+\.\d+)\s{1,17} #Wall Convection
+        (?P<Radiation_to_Wall>-?\d+\.\d+)$   #Wall Radition and End of string($) nothing else afterwards
         )""",
         re.VERBOSE,
     ),
     "train": re.compile(
         r"""(
-        \s(?P<Number>\d+)\s+    #Number
-		(?P<RTE>\d+)\s?         #RTE
-		(?P<TYP>\d+)\s+         #TYP
+        \s(?P<Train_Number>\d+)\s+    #Number
+		(?P<Route_Number>\d+)\s?         #RTE
+		(?P<Train_Type_Number>\d+)\s+         #Train_Type_Number
 		(?P<Location>\d+\.\d*)\s+  #Location
 		(?P<Speed>-?\d+\.\d*)\s+     #Speed
 		(?P<Accel>-?\d+\.\d*)\s+     #Accel
-		(?P<Drag_KN>-?\d+\.\d*)\s+
-		(?P<Drag_COEFF>-?\d+\.\d*)\s+
-		(?P<Tractive>-?\d+\.\d*)\s+
-		(?P<M_Current>-?\d+\.\d*)\s+
-		(?P<L_Current>-?\d+\.\d*)\s+
-		(?P<FLY>-?\d+\.\d*)\s+
+		(?P<Air_Drag>-?\d+\.\d*)\s+
+		(?P<Air_Drag_Coeff>-?\d+\.\d*)\s+
+		(?P<Tractive_Effort>-?\d+\.\d*)\s+
+		(?P<Motor_current>-?\d+\.\d*)\s+
+		(?P<Line_Current>-?\d+\.\d*)\s+
+		(?P<Fly_WHeel>-?\d+\.\d*)\s+
 		((?P<M_Eff>-?\d+\.\d*)\s+|\s+) #Motor efficiency or NOTHING in IP
-		(?P<G_Accel>-?\d+\.\d*)\s+
-		(?P<G_Decel>-?\d+\.\d*)\s+	
-		(?P<H_Gen>-?\d+\.\d*)\s+
-		(?P<H_Reject>-?\d+\.\d*)
+		(?P<Grid_Temp_Accel>-?\d+\.\d*)\s+
+		(?P<Grid_Temp_Decel>-?\d+\.\d*)\s+	
+		(?P<Heat_Gen>-?\d+\.\d*)\s+
+		(?P<Heat_Reject>-?\d+\.\d*)
         )""",
         re.VERBOSE,
     ),
@@ -81,8 +81,8 @@ PIT = {
         \s{15,}\d+\s-\s{0,2}        #Section #Added \s{9.} to stop processing heat sink summaries
         (?P<Segment>\d+)+\s-\s+     #Segment
         (?P<Sub>\s{0,2}\d+)\s{5,15} #Sub-segment
-        (?P<FluidTemp>-?\d+\.\d+)\s{5,22}  #Fluid_Temp
-        (?P<FluidHeat>-?\d+\.\d+)   #Fluid_Temp
+        (?P<Working_Fluid_Temp>-?\d+\.\d+)\s{5,22}  #Fluid_Temp
+        (?P<Heat_Absorbed_by_Pipe>-?\d+\.\d+)   #Fluid_Temp
         )""",
         re.VERBOSE,
     ),
@@ -120,12 +120,12 @@ SUM = {  # TODO replace sum_time value with PIT value of PIT['sum_time']?
             AIR\sFLOW\sRATE.+
             (?:\d+)+\s-\s*            #Section number (not used)
             (?P<Segment>\d+)\s{5,}    #Segment number
-            (?P<A_Max>-?\d+\.\d*)\s+    #Airflow rate maximum
-            (?P<A_Max_T>\d+\.\d*)\s+  #Time of airflow rate maximum
-            (?P<A_Min>-?\d+\.\d*)\s+    #Airflow rate minimum
-            (?P<A_Min_T>\d+\.\d*)\s+  #Time of airflow rate minimum
-            (?P<A_P>\d+\.\d*)\s+      #Percentage of time airflow is positive
-            (?P<A_N>-?\d+\.\d*)$         #Percentage of time airflow is negative
+            (?P<Max_Airflow>-?\d+\.\d*)\s+    #Airflow rate maximum
+            (?P<Max_Airflow_Time>\d+\.\d*)\s+  #Time of airflow rate maximum
+            (?P<Min_Airflow>-?\d+\.\d*)\s+    #Airflow rate minimum
+            (?P<Min_Airflow_Time>\d+\.\d*)\s+  #Time of airflow rate minimum
+            (?P<Average_Positive_Airflow>\d+\.\d*)\s+      #Percentage of time airflow is positive
+            (?P<Average_Negative_Airflow>-?\d+\.\d*)$         #Percentage of time airflow is negative
             )""",
         re.VERBOSE,
     ),
@@ -134,12 +134,12 @@ SUM = {  # TODO replace sum_time value with PIT value of PIT['sum_time']?
             AIR\sVELOCITY\s.+
             (?:\d+)+\s-\s*  
             (?P<Segment>\d+)\s{5,}
-            (?P<V_Max>-?\d+\.\d*)\s+    #Velocity maximum
-            (?P<V_Max_T>-?\d+\.\d*)\s+  #time of velocity maximum
-            (?P<V_Min>-?\d+\.\d*)\s+    #velocity minimum
-            (?P<V_Min_T>-?\d+\.\d*)\s+  #time of velocity minimjum
-            (?P<V_P>-?\d+\.\d*)\s+      #average value positive
-            (?P<V_N>-?\d+\.\d*)$         #average value negative
+            (?P<Max_Velocity>-?\d+\.\d*)\s+    #Velocity maximum
+            (?P<Max_Velocity_Time>-?\d+\.\d*)\s+  #time of velocity maximum
+            (?P<Min_Velocity>-?\d+\.\d*)\s+    #velocity minimum
+            (?P<Min_Velocity_Time>-?\d+\.\d*)\s+  #time of velocity minimjum
+            (?P<Average_Velocity_Positive>-?\d+\.\d*)\s+      #average value positive
+            (?P<Average_Velocity_Negative>-?\d+\.\d*)$         #average value negative
             )""",
         re.VERBOSE,
     ),
@@ -148,8 +148,8 @@ SUM = {  # TODO replace sum_time value with PIT value of PIT['sum_time']?
             AIR\sFLOW\sDIRECTION.+
             (?:\d+)+\s-\s*            #Section number (not used)
             (?P<Segment>\d+)\s{5,}    #Segment number
-            (?P<A_P_P>\d+\.\d*)\s+    #Airflow direction percentage positive
-            (?P<A_P_N>\d+\.\d*)$       #Airflow direction precentage negative
+            (?P<Airflow_Direction_Positive>\d+\.\d*)\s+    #Airflow direction percentage positive
+            (?P<Airflow_Direction_Negative>\d+\.\d*)$       #Airflow direction precentage negative
             )""",
         re.VERBOSE,
     ),
@@ -159,12 +159,12 @@ SUM = {  # TODO replace sum_time value with PIT value of PIT['sum_time']?
             (?:\d+)\s-                   #Section number (not used)
             (?P<Segment>\s*\d+)\s-       #Segment number
             (?P<Sub>\s*\d+)\s{4,}            #Segment number
-            (?P<T_Max>-?\d+\.\d*)\s+    #Velocity maximum
-            (?P<T_Max_T>-?\d+\.\d*)\s{7,}  #time of velocity maximum. {7,} to prevent precentage of time
-            (?P<T_Min>-?\d+\.\d*)\s+    #velocity minimum
-            (?P<T_Min_T>-?\d+\.\d*)\s+  #time of velocity minimjum
-            (?P<T_P>-?\d+\.\d*)\s+      #average value positive
-            (?P<T_N>-?\d+\.\d*)$         #average value negative
+            (?P<Max_Dry_Bulb>-?\d+\.\d*)\s+    #Velocity maximum
+            (?P<Max_Dry_Bulb_Time>-?\d+\.\d*)\s{7,}  #time of velocity maximum. {7,} to prevent precentage of time
+            (?P<Min_Dry_Bulb>-?\d+\.\d*)\s+    #velocity minimum
+            (?P<Min_Dry_Bulb_Time>-?\d+\.\d*)\s+  #time of velocity minimjum
+            (?P<Average_Positive_Dry_Bulb>-?\d+\.\d*)\s+      #average value positive
+            (?P<Average_Negative_Dry_Bulb>-?\d+\.\d*)$         #average value negative
             )""",
         re.VERBOSE,
     ),
@@ -174,11 +174,11 @@ SUM = {  # TODO replace sum_time value with PIT value of PIT['sum_time']?
             (?:\d+)\s-                   #Section number (not used)
             (?P<Segment>\s*\d+)\s-       #Segment number
             (?P<Sub>\s*\d+)\s{4,}        #Segment number
-            (?P<W_Max>-?\d+\.\d*)\s+     #Humidity maximum
-            (?P<W_Max_T>-?\d+\.\d*)\s+   #time of humidity maximum
-            (?P<W_Min>-?\d+\.\d*)\s+     #humidity minimum
-            (?P<W_Min_T>-?\d+\.\d*)\s+   #time of humidity minimum
-            (?P<W_A>-?\d+\.\d*)$       #average value
+            (?P<Max_Humidity>-?\d+\.\d*)\s+     #Humidity maximum
+            (?P<Max_Humidity_Time>-?\d+\.\d*)\s+   #time of humidity maximum
+            (?P<Min_Humidity>-?\d+\.\d*)\s+     #humidity minimum
+            (?P<Min_Humidity_Time>-?\d+\.\d*)\s+   #time of humidity minimum
+            (?P<Average_Humidity>-?\d+\.\d*)$       #average value
             )""",
         re.VERBOSE,
     ),
@@ -186,7 +186,7 @@ SUM = {  # TODO replace sum_time value with PIT value of PIT['sum_time']?
         r"P E R C E N T A G E  O F  T I M E  T E M P E R A T U R E  I S  A B O V E"
     ),
     "V_E": re.compile(
-        r"EXCEEDS\s+(?P<V_E>-?\d+\.\d+).+(?:\d+)\s-\s*(?P<Segment>\d+)\s{57,}(?P<V_EP>-?\d+\.\d*)$"
+        r"EXCEEDS\s+(?P<Outflow_Velocity_Exceedance>-?\d+\.\d+).+(?:\d+)\s-\s*(?P<Segment>\d+)\s{57,}(?P<Percentage_of_Velocity_Exceedance>-?\d+\.\d*)$"
     ),
     "HTPB": re.compile(
         r"TRAIN PROPULSION AND BRAKING SYSTEM HEAT\s+(?P<HTPB>-?\d+\.\d*)$"
@@ -217,12 +217,12 @@ PERCENTAGE = {
     "percent_temperature": re.compile(
         r"""(
         \s{50,}
-        (?P<TA_1>-?\d+\.\d*)\s{5,} #Above Temperature 1 through 6
-        (?P<TA_2>-?\d+\.\d*)\s{5,}
-        (?P<TA_3>-?\d+\.\d*)\s{5,}
-        (?P<TA_4>-?\d+\.\d*)\s{5,}
-        (?P<TA_5>-?\d+\.\d*)\s{5,}
-        (?P<TA_6>-?\d+\.\d*)$
+        (?P<T1>-?\d+\.\d*)\s{5,} #Above Temperature 1 through 6
+        (?P<T2>-?\d+\.\d*)\s{5,}
+        (?P<T3>-?\d+\.\d*)\s{5,}
+        (?P<T4>-?\d+\.\d*)\s{5,}
+        (?P<T5>-?\d+\.\d*)\s{5,}
+        (?P<T6>-?\d+\.\d*)$
         )""",
         re.VERBOSE,
     ),
@@ -232,26 +232,26 @@ PERCENTAGE = {
         (?:\d+)\s-                   #Section number (not used)
         (?P<Segment>\s*\d+)\s-       #Segment number
         (?P<Sub>\s*\d+)\s{3,}        #Segment number
-        (?P<TAP_1>-?\d+\.\d*)\s{5,}  #Pertentage of time above Temperature 1 through 6
-        (?P<TAP_2>-?\d+\.\d*)\s{5,}
-        (?P<TAP_3>-?\d+\.\d*)\s{5,}
-        (?P<TAP_4>-?\d+\.\d*)\s{5,}
-        (?P<TAP_5>-?\d+\.\d*)\s{5,}
-        (?P<TAP_6>-?\d+\.\d*)$
+        (?P<Percentage_Above_T1>-?\d+\.\d*)\s{5,}  #Pertentage of time above Temperature 1 through 6
+        (?P<Percentage_Above_T2>-?\d+\.\d*)\s{5,}
+        (?P<Percentage_Above_T3>-?\d+\.\d*)\s{5,}
+        (?P<Percentage_Above_T4>-?\d+\.\d*)\s{5,}
+        (?P<Percentage_Above_T5>-?\d+\.\d*)\s{5,}
+        (?P<Percentage_Above_T6>-?\d+\.\d*)$
         )""",
         re.VERBOSE,
     ),
 }
 
 TES = {
-    "es": re.compile(r"\s+ENERGY SECTOR\s*(?P<ES>-?\d+)$"),
-    "et": re.compile(r"\s+PROPULSION ENERGY FROM THIRD RAIL\s+(?P<ET>-?\d*\.\d*)\s+"),
+    "es": re.compile(r"\s+ENERGY SECTOR\s*(?P<Energy_Sector>-?\d+)$"),
+    "et": re.compile(r"\s+PROPULSION ENERGY FROM THIRD RAIL\s+(?P<From_Third_rail>-?\d*\.\d*)\s+"),
     "ef": re.compile(
-        r"\s+EQUIVALENT THIRD RAIL PROPULSION ENERGY FROM FLYWHEEL\s+(?P<EF>-?\d*\.\d*)\s+"
+        r"\s+EQUIVALENT THIRD RAIL PROPULSION ENERGY FROM FLYWHEEL\s+(?P<From_Flywheel>-?\d*\.\d*)\s+"
     ),
-    "ea": re.compile(r"\s+AUXILIARY ENERGY\s+(?P<EA>-?\d*\.\d*)\s+"),
+    "ea": re.compile(r"\s+AUXILIARY ENERGY\s+(?P<Auxiliary_Energy>-?\d*\.\d*)\s+"),
     "er": re.compile(
-        r"\s+REGENERATED ENERGY ACCEPTED BY THIRD RAIL\s+(?P<ER>-?\d*\.\d*)\s+"
+        r"\s+REGENERATED ENERGY ACCEPTED BY THIRD RAIL\s+(?P<Regenerated_Energy_to_Third_Rail>-?\d*\.\d*)\s+"
     ),
 }
 
@@ -262,12 +262,12 @@ HE = {
             \d+\s-                        #Section
             (?P<Segment>\s{0,2}\d+)+\s-\s+    #Segment
             (?P<Sub>\s{0,2}\d+)\s{1,12}       #Sub-segment
-            (?P<MWT>-?\d+\.\d+)\s+       #Morning Wall Temperature
-            (?P<EWT>-?\d+\.\d+)\s+       #Evening wall temperature
-            (?P<MAT>-?\d+\.\d+)\s+        #Morning air Temperature
-            (?P<EAT>-?\d+\.\d+)\s+       #Evening air temperature
-            (?P<MH>-?\d+\.\d+)\s+     #Morning humidity
-            (?P<EH>-?\d+\.\d+)$  #Evening humidity
+            (?P<Morning_Wall_Temp>-?\d+\.\d+)\s+       #Morning Wall Temperature
+            (?P<Evening_Wall_Temp>-?\d+\.\d+)\s+       #Evening wall temperature
+            (?P<Morning_Air_Temp>-?\d+\.\d+)\s+        #Morning air Temperature
+            (?P<Evening_Air_Temp>-?\d+\.\d+)\s+       #Evening air temperature
+            (?P<Morning_Humidity>-?\d+\.\d+)\s+     #Morning humidity
+            (?P<Evening_Humidity>-?\d+\.\d+)$  #Evening humidity
             )""",
         re.VERBOSE,
     ),
@@ -276,18 +276,18 @@ HE = {
             \d+\s-                        #Section
             (?P<Segment>\s{0,2}\d+)+\s-\s+    #Segment
             (?P<Sub>\s{0,2}\d+)\s{1,8}       #Sub-segment
-            (?P<TM_S>\s{0,2}-?\d+)\s{1,8}       #Sensible heat load from trains and misc
-            (?P<TM_L>\s{0,2}-?\d+)\s{1,8}       #Latent
-            (?P<SS_S>\s{0,2}-?\d+)\s{1,8}       #Sensible
-            (?P<SS_L>\s{0,2}-?\d+)\s{1,8}       #Latent
-            (?P<HS_S>\s{0,2}-?\d+)\s{1,8}       #Sensible
-            (?P<A_S>\s{0,2}-?\d+)\s{1,8}       #Sensible
-            (?P<A_L>\s{0,2}-?\d+)\s{1,8}       #Latent
-            (?P<EC_S>\s{0,2}-?\d+)\s{1,8}       #Sensible
-            (?P<EC_L>\s{0,2}-?\d+)\s{1,8}       #Latent
-            (?P<TR_S>\s{0,2}-?\d+)\s{1,8}       #Sensible
-            (?P<TR_L>\s{0,2}-?\d+)\s{1,8}       #Latent
-            (?P<TR_T>\s{0,2}-?\d+)\s{1,8}$       #Latent
+            (?P<Trains_and_Misc_Sensible>\s{0,2}-?\d+)\s{1,8}       #Sensible heat load from trains and misc
+            (?P<Trains_and_Misc_Latent>\s{0,2}-?\d+)\s{1,8}       #Latent
+            (?P<Steady_State_Sensible>\s{0,2}-?\d+)\s{1,8}       #Sensible
+            (?P<Steady_State_Latent>\s{0,2}-?\d+)\s{1,8}       #Latent
+            (?P<Heat_Sink_Sensible>\s{0,2}-?\d+)\s{1,8}       #Sensible
+            (?P<Airflow_Sensible>\s{0,2}-?\d+)\s{1,8}       #Sensible
+            (?P<Airflow_Latent>\s{0,2}-?\d+)\s{1,8}       #Latent
+            (?P<EC_Sensible>\s{0,2}-?\d+)\s{1,8}       #Sensible
+            (?P<EC_Latent>\s{0,2}-?\d+)\s{1,8}       #Latent
+            (?P<EC_Requirement_Sensible>\s{0,2}-?\d+)\s{1,8}       #Sensible
+            (?P<EC_Requirement_Latent>\s{0,2}-?\d+)\s{1,8}       #Latent
+            (?P<EC_Requirement_Total>\s{0,2}-?\d+)\s{1,8}$       #Latent
             )""",
         re.VERBOSE,
     ),
@@ -437,13 +437,13 @@ def parse_file(path_string, gui=""):  # Parser
             to_index=["Time", "Segment"],
             groupby=["Time", "Segment"],
         )
-        df_segment.name = "SEG"
+        df_segment.name = "SA"
         if version == "ip":
-            to_convert = ["A_Max", "A_Min", "A_P", "A_N"]
+            to_convert = ["Max_Airflow", "Min_Airflow", "Average_Positive_Airflow", "Average_Negative_Airflow"]
             for item in to_convert:
                 df_segment[item] = df_segment[item] / 1000
         df_sub = to_dataframe2(data_sub, groupby=["Time", "Segment", "Sub"])
-        df_sub.name = "SUB"
+        df_sub.name = "ST"
         df_percentage = to_dataframe2(data_percentage)
         df_percentage.name = "PER"
         df_te = to_dataframe2(data_te, to_integers=["ES"], to_index=["Time", "ES"])
@@ -520,7 +520,7 @@ def create_ss_dfs(
     if version == "ip":
         df_pit["Airflow"] = df_pit["Airflow"] / 1000
     df_pit.name = "PIT"
-    df_train = to_dataframe2(data_train, ["Number", "RTE", "TYP"], ["Time", "Number"])
+    df_train = to_dataframe2(data_train, ["Train_Number", "Route_Number", "Train_Type_Number"], ["Time","Train_Number"])
     df_train.name = "TRA"
     if duplicate_pit:
         [df_pit, df_train] = delete_duplicate_pit(df_pit, df_train)
@@ -528,7 +528,7 @@ def create_ss_dfs(
     # TODO Add title name to PIT from segment_data to Segment number
     # Create df_ssa
     df_ssa = df_pit.query("Sub == 1")
-    df_ssa = df_ssa.loc[:, {"Airflow", "AirVel"}]
+    df_ssa = df_ssa.loc[:, {"Airflow", "Air_Velocity"}]
     df_ssa.reset_index(level=2, inplace=True)
     # Create Unique ID with code from https://stackoverflow.com/questions/19377969/combine-two-columns-of-text-in-pandas-dataframe
     df_ssa["ID"] = (
@@ -543,11 +543,11 @@ def create_ss_dfs(
     # https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.join.html#pandas.DataFrame.join
     df_ssa = df_ssa.join(df_segment_titles, on="Segment")
     df_ssa = df_ssa[
-        ["ID", "Title", "Airflow", "AirVel"]
+        ["ID", "Title", "Airflow", "Air_Velocity"]
     ]  # Reorders and Drops Sub column
     df_ssa.name = "SSA"
     # Create df_sst
-    df_sst = df_pit.drop(["Airflow", "AirVel"], axis=1)
+    df_sst = df_pit.drop(["Airflow", "Air_Velocity"], axis=1)
     df_sst["ID"] = (
         df_sst.index.get_level_values(0).astype(str)
         + "_"
@@ -560,17 +560,17 @@ def create_ss_dfs(
         df_sst = df_sst[
             [
                 "ID",
-                "AirTemp",
+                "Air_Temp",
                 "Humidity",
                 "Sensible",
                 "Latent",
-                "WallTemp",
-                "WallConvection",
-                "WallRadiation",
+                "Wall_Temp",
+                "Convection_to_Wall",
+                "Radiation_to_Wall",
             ]
         ]
     else:
-        df_sst = df_sst[["ID", "AirTemp", "Humidity", "Sensible", "Latent",]]
+        df_sst = df_sst[["ID", "Air_Temp", "Humidity", "Sensible", "Latent",]]
 
     df_sst.name = "SST"
     # TODO Change order of columns, add ID
@@ -788,7 +788,7 @@ def parser_msg(gui, text):
 
 
 if __name__ == "__main__":
-    path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/inferno4p2.OUT"
+    path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/sinorm-detailed.out"
     list, output_meta_data = parse_file(path_string)
     print("test finished")
 

@@ -1,226 +1,136 @@
 # Import of standard modules
 import hashlib
-import json
-import logging
 import multiprocessing
-from os import startfile
+from pathlib import Path
 from sys import exit as system_exit
 from tkinter import *
+from tkinter import messagebox
 from uuid import getnode as get_mac
 
-import pandas as pd
-import pyinputplus as pyip
-import requests
-
-import NV_file_manager as nfm
+import keygen
 import NV_gui as nvg
-# Import of scripts
-import NV_parser as nvp
-import NV_visio as nvv
 
 
-def read_lic():
-    # TODO Error checking if file doesn't exist
-    license_files = nfm.find_all_files(extensions=[".LIC"], character="@")
-    if len(license_files) > 1:
-        print(
-            "License ERROR! Too many license files with @ symbol and .lic suffix) in the directory. Only include one valid license and try again."
-        )
-        system_exit(
-            "License ERROR! Too many license files (*.lic) in the directory. Only include one valid license and try again."
-        )
-    elif len(license_files) == 0:
-        print(
-            "License Error! Cannot find license file (*.lic). Add valid license in directory or request license from Justin@NeverGray.biz and try again."
-        )
-        system_exit(
-            "License Error! Cannot find license file (*.lic). Add valid license in directory or request license form Justin@NeverGray.biz and try again."
-        )
+def read_license_file(folder_path=''):
+    folder_path = Path(folder_path)
+    files_lic = list(folder_path.glob('*.lic'))
+    dict_data = {}
+    for file in files_lic:
+        print(file)
+        with open(file, 'r') as text_file:
+            lines = text_file.readlines()
+            if len(lines) > 0:
+                if "Next Vis" in lines[0]:  # This is a valid Next-Vis license
+                    for line in lines:
+                        if ":" in line:
+                            key, value = line.strip().split(':', 1)
+                            dict_data[key.strip()] = value.strip()
+                    break
+    if len(dict_data) > 0:
+        return dict_data
     else:
-        filepath = license_files[0]
-    with open(filepath, "r") as file_object:
-        lines = file_object.readlines()
-    for line in lines:
-        if line.startswith("license_key ="):
-            license_key = line[14:].strip()
-        elif line.startswith("keygen_account_id ="):
-            keygen_account_id = line[19:].strip()
-        elif line.startswith("keygen_activation_token"):
-            keygen_activation_token = line[25:].strip()
-    return license_key, keygen_account_id, keygen_activation_token
+        print('Error reading in license file.')
+        system_exit("Error reading license file.")
 
 
-def activate_license(license_key, keygen_account_id, kegen_activation_token):
-    logging.getLogger("urllib3").setLevel(
-        logging.WARNING
-    )  # Remove debugging screen from request, see https://stackoverflow.com/questions/11029717/how-do-i-disable-log-messages-from-the-requests-library
-    machine_fingerprint = hashlib.sha256(str(get_mac()).encode("utf-8")).hexdigest()
-    validation = requests.post(
-        "https://api.keygen.sh/v1/accounts/{}/licenses/actions/validate-key".format(
-            keygen_account_id
-        ),
-        headers={
-            "Content-Type": "application/vnd.api+json",
-            "Accept": "application/vnd.api+json",
-        },
-        data=json.dumps(
-            {
-                "meta": {
-                    "scope": {"fingerprint": machine_fingerprint},
-                    "key": license_key,
-                }
-            }
-        ),
-    ).json()
-
-    if "errors" in validation:
-        errs = validation["errors"]
-
-        return (
-            False,
-            "license validation failed: {}".format(
-                map(lambda e: "{} - {}".format(e["title"], e["detail"]).lower(), errs)
-            ),
-        )
-
-    # If the license is valid for the current machine, that means it has
-    # already been activated. We can return early.
-    if validation["meta"]["valid"]:
-        return True, "license has already been activated on this machine"
-
-    # Otherwise, we need to determine why the current license is not valid,
-    # because in our case it may be invalid because another machine has
-    # already been activated, or it may be invalid because it doesn't
-    # have any activated machines associated with it yet and in that case
-    # we'll need to activate one.
-    #
-    # NOTE: the "NO_MACHINE" status is unique to *node-locked* licenses. If
-    #       you need to implement a floating license, you may also need to
-    #       check for the "NO_MACHINES" status (note: plural) and also the
-    #       "FINGERPRINT_SCOPE_MISMATCH" status.
-    if validation["meta"]["constant"] != "NO_MACHINE":
-        return False, "license {}".format(validation["meta"]["detail"])
-
-    # If we've gotten this far, then our license has not been activated yet,
-    # so we should go ahead and activate the current machine.
-    activation = requests.post(
-        "https://api.keygen.sh/v1/accounts/{}/machines".format(keygen_account_id),
-        headers={
-            "Authorization": "Bearer {}".format(kegen_activation_token),
-            "Content-Type": "application/vnd.api+json",
-            "Accept": "application/vnd.api+json",
-        },
-        data=json.dumps(
-            {
-                "data": {
-                    "type": "machines",
-                    "attributes": {"fingerprint": machine_fingerprint},
-                    "relationships": {
-                        "license": {
-                            "data": {"type": "licenses", "id": validation["data"]["id"]}
-                        }
-                    },
-                }
-            }
-        ),
-    ).json()
-
-    # If we get back an error, our activation failed.
-    if "errors" in activation:
-        errs = activation["errors"]
-
-        return (
-            False,
-            "license activation failed: {}".format(
-                map(lambda e: "{} - {}".format(e["title"], e["detail"]).lower(), errs)
-            ),
-        )
-
-    return True, "Next-VIS Beta license activated"
-
-
-# Run from the command line:
-#   python main.py some_license_key
-# status, msg = activate_license(sys.argv[1])
-"""Old line input manager"""
-
-
-def get_input(settings=None):
-    Welcome = "Next Vis - Proprocessing SES Output files"
-    q_start = "Select the type of post-processing to perform or exit program: \n"
-    q_repeat = "Repeat last processing Y/N: "
-    q_simname = """Enter SES output file name with suffix (.OUT for SES v6): 
-  Current working directory is same as NextVis Executable.
-  If desired, specify abolute pathway (C:\\) or simply \\ for sub-folders of working directory.
-  Enter "ALL" for all files in folder, 
-  or blank to quit. 
-"""
-    ext_simname = [".OUT", ".PRN"]
-    e = "Cannot find file, please try again or enter blank to quit. \n"
-    q_visname = "Visio template with suffix (*.vsdx) or blank to quit: "
-    ext_visname = [".VSDX"]
-    q_simtime = "Enter simulation time for Visio template or -1 for last time: "
-    repeat = "no"
-    if settings["control"] != "First":
-        repeat = pyip.inputYesNo(q_repeat, yesVal="yes", noVal="no")
-    else:
-        settings["control"] = "Single"
-    if repeat == "no":
-        # TODO determine version type from simname
-        print(Welcome)
-        settings["output"] = pyip.inputMenu(
-            ["Visio", "Excel", "Both", "Analyses", "Exit"], q_start, numbered=True
-        )
-        if settings["output"] in ["Visio", "Excel", "Both"]:
-            # Get name of output file
-            settings["simname"] = nfm.validate_file(q_simname, e, ext_simname)
-            if settings["simname"][-3:].upper() == "ALL":
-                settings["control"] = "ALL"
-            elif settings["simname"] == "":
-                settings["control"] = "Stop"
+def check_authorized_computer(license_info):
+    machine_fingerprint = license_info['machine_fingerprint']
+    # Check if this is an Authorized Computer. Authorize if desired.
+    activation_is_required = ["NO_MACHINE",
+                              "NO_MACHINES", "FINGERPRINT_SCOPE_MISMATCH"]
+    try:
+        validation_code, license_id, validation_info = keygen.validate_license_key_with_fingerprint(
+            license_info["authorized_computer_key"], machine_fingerprint)
+    except:
+        messagebox.showinfo(message=(
+            "Computer could not validate if this is an Authorized Computer.\n"
+            "The program probably could not communicate over the internet"))
+        system_exit("Cannot validate authorized_computer_key")
+    available = validation_info['data']['attributes']['maxMachines']
+    in_use = validation_info['data']['relationships']['machines']['meta']['count']
+    organization = validation_info['data']['attributes']['metadata']['organization']
+    if validation_code == 'NOT_FOUND':
+        system_exit("There is no record of authorized_computer_key")
+    elif validation_code in activation_is_required:
+        if in_use >= available:
+            msg = (f"Currently, {organization} is using {in_use} of {available} Authorized Computers.\n"
+                   "Please purchase additional licenses.")
+            messagebox.showinfo(message=msg)
+            system_exit("The license is no longer active")
+        elif in_use < available:
+            msg = (f"Currently, {organization} is using {in_use} of {available} Authorized Computers.\n"
+                   "Do you want to License this computer as an Authorized Computer?")
+            answer = messagebox.askyesno(
+                message=msg, icon='question', title='Authorize Computer?')
+            if answer == False:
+                messagebox.showinfo(
+                    message="Next-Vis only runs on Authorized Computers.")
+                system_exit()
             else:
-                settings["control"] = "Single"
-        if settings["output"] in ["Visio", "Both"]:
-            settings["visname"] = nfm.validate_file(q_visname, e, ext_visname)
-            if settings["visname"] != "":
-                settings["simtime"] = pyip.inputNum(q_simtime, min=-1)
-            else:
-                settings["control"] = "Stop"
-        elif settings["output"] == "Analyses":
-            settings["control"] = "Analyses"
-        elif settings["output"] == "Exit":
-            settings["control"] = "Stop"
-    return settings
+                machine_id = keygen.activate_machine_for_license(
+                    license_id, machine_fingerprint, license_info["authorized_computer_token"])
+                if machine_id == None:
+                    messagebox.showinfo(
+                        message="Could not Authorize this Computer. Contact Never Gray for help")
+                    system_exit("Cannot activate license")
+    return True, organization
 
+
+def checkout_floating_license(license_info):
+    machine_fingerprint = license_info['machine_fingerprint']
+    activation_is_required = ["NO_MACHINE",
+                              "NO_MACHINES", "FINGERPRINT_SCOPE_MISMATCH"]
+    validation_code, license_id, validation_info = keygen.validate_license_key_with_fingerprint(
+        license_info["floating_key"], machine_fingerprint)
+    organization = 'Not available'
+    if validation_code == 'NOT_FOUND':
+        system_exit("No floating license found")
+    elif validation_code in activation_is_required:
+        available = validation_info['data']['attributes']['maxMachines']
+        in_use = validation_info['data']['relationships']['machines']['meta']['count']
+        organization = validation_info['data']['attributes']['metadata']['organization']
+        # TODO Add check for number of licenses available
+        machine_id = keygen.activate_machine_for_license(
+            license_id, machine_fingerprint, license_info["floating_token"])
+        if machine_id == None:
+            if available >= in_use:
+                msg = (f"Currently, {organization} is using {in_use} of {available} Floating Licenses.\n"
+                       "Please purchase additional licenses.")
+                messagebox.showinfo(message=msg)
+                system_exit("Maximum Floating Licenses in Use")
+            else:
+                messagebox.showinfo(
+                    message="Error occured while checking out floating license.")
+                system_exit("Error checking out floating license")
+    return True, organization
 
 def main(testing=False):
-    # TODO Update security to allow entering license key only once?
-    try:
-        [license_key, keygen_account_id, keygen_activation_token] = read_lic()
-    except:
-        print(
-            "Your license is not valid. Please contact Justin@NeverGray.biz to continue using the program."
-        )
-        input("Program will exit when you hit enter")
-        return
-    legit, msg = activate_license(
-        license_key, keygen_account_id, keygen_activation_token
-    )
-    # Confirm license is activated
-    # initialize variable
-    print(legit, msg)
-    if not legit:
-        print(
-            "Your license is not valid. Please contact Justin@NeverGray.biz to continue using the program."
-        )
-        input("Program will exit when you hit enter")
-        return
-    elif legit:
-        root = Tk()
-        gui = nvg.start_screen(root)
-        root.mainloop()
+    machine_fingerprint = hashlib.sha256(
+        str(get_mac()).encode('utf-8')).hexdigest()
+    license_info = read_license_file()
+    license_info['machine_fingerprint'] = machine_fingerprint
+    authorized_computer_status, organization = check_authorized_computer(
+        license_info)
+    license_info['organization'] = organization
+    if not authorized_computer_status:
+        system_exit("This is not an Authorized Computer. See License Terms.")
+    # FLOATING LICENSE. Validate the license key scoped to the current machine fingerprint
+    floating_computer_status, organization = checkout_floating_license(
+        license_info)
+    license_info['organization'] = organization
+    # Start a heartbeat ping loop
+    if not floating_computer_status:
+        system_exit("Error checking out Floating License")
 
+    keygen.maintain_hearbeat_for_machine(
+        machine_fingerprint, license_info["floating_token"])
+    root = Tk()
+    nvg.start_screen(root, license_info)
+    # Passing variable to closing function from https://stackoverflow.com/questions/49220464/passing-arguments-in-tkinters-protocolwm-delete-window-function-on-python
+    root.mainloop()
+    keygen.deactivate_machine_on_exit(
+        machine_fingerprint, license_info["floating_token"])
 
 if __name__ == "__main__":
-    multiprocessing.freeze_support()
+    multiprocessing.freeze_support() #TODO Experiement if this command is necessary
     main(testing=False)

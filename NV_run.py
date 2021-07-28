@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pandas as pd
 
+import NV_excel as nve
 import NV_file_manager as nfm
 # Import of scripts
 import NV_parser as nvp
@@ -14,15 +15,25 @@ def single_sim(settings, multi_processor_name="", gui=""):
     if multi_processor_name != "":
         settings["simname"] = multi_processor_name
     data, output_meta_data = nvp.parse_file(settings["simname"], gui)
+    #TODO Update to use Paths in Settings parameters
     base_name = settings["simname"][:-4]
     file_path = Path(settings["simname"])
     file_name = file_path.name
     if len(data) == 0:
         return
     if "Excel" in settings["output"]:  # Create Excel File
-        # TODO Add error checker if excel file is open
-        # TODO Write to memory first, then to file to speed up process (especially for multiple simulations)
         try:
+            nve.create_excel(settings, data)
+            run_msg(gui, "Created Excel File " + file_name[:-4] + ".xlsx")
+        except:
+            run_msg(
+                gui,
+                "ERROR creating Excel file "
+                + file_name
+                + ".xlsx.  Try closing this file in excel and process again",
+            )
+        ''' Previous code to write Excel Files. #TODO Delete when nv_excel finished
+            try:
             with pd.ExcelWriter(base_name + ".xlsx", engine="openpyxl") as writer:
                 for item in data:
                     item.to_excel(writer, sheet_name=item.name, merge_cells=False)
@@ -44,7 +55,7 @@ def single_sim(settings, multi_processor_name="", gui=""):
                 "ERROR creating Excel file "
                 + file_name
                 + ".xlsx.  Try closing this file in excel and process again",
-            )
+            )'''
     if "Visio" in settings["output"]:
         df_dict = {}  # Store data frames in dictionary
         for df in data:
@@ -130,6 +141,6 @@ if __name__ == "__main__":
         "simtime": 9999.0,
         "version": "tbd",
         "control": "First",
-        "output": ["Visio", "Compare"],
+        "output": ["Excel"],
     }
     single_sim(settings)
