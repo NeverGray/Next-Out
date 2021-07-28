@@ -1,10 +1,11 @@
+import datetime
 import logging
+import os
 import re
 from pathlib import Path
 
 import pandas as pd
-import os
-import datetime
+
 logging.basicConfig(
     level=logging.DEBUG, format=" %(asctime)s - %(levelname)s - %(message)s"
 )
@@ -58,8 +59,8 @@ PIT = {
 		(?P<Location>\d+\.\d*)\s+  #Location
 		(?P<Speed>-?\d+\.\d*)\s+     #Speed
 		(?P<Accel>-?\d+\.\d*)\s+     #Accel
-		(?P<Draf_KN>-?\d+\.\d*)\s+
-		(?P<Draf_COEFF>-?\d+\.\d*)\s+
+		(?P<Drag_KN>-?\d+\.\d*)\s+
+		(?P<Drag_COEFF>-?\d+\.\d*)\s+
 		(?P<Tractive>-?\d+\.\d*)\s+
 		(?P<M_Current>-?\d+\.\d*)\s+
 		(?P<L_Current>-?\d+\.\d*)\s+

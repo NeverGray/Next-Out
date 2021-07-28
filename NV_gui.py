@@ -239,9 +239,6 @@ class start_screen:
                 if self.ses.get() == "file":
                     nvr.single_sim(self.settings, gui=self)
                 elif self.ses.get() == "folder":
-                    self.gui_text(
-                        "Error after validation, before single_sim or multiple_sim"
-                    )
                     nvr.multiple_sim(self.settings, gui=self)
             except:
                 self.gui_text(
