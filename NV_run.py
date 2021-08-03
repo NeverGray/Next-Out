@@ -23,7 +23,7 @@ def single_sim(settings, multi_processor_name="", gui=""):
         return
     if "Excel" in settings["output"]:  # Create Excel File
         try:
-            nve.create_excel(settings, data)
+            nve.create_excel(settings, data, output_meta_data)
             run_msg(gui, "Created Excel File " + file_name[:-4] + ".xlsx")
         except:
             run_msg(
@@ -32,30 +32,7 @@ def single_sim(settings, multi_processor_name="", gui=""):
                 + file_name
                 + ".xlsx.  Try closing this file in excel and process again",
             )
-        ''' Previous code to write Excel Files. #TODO Delete when nv_excel finished
-            try:
-            with pd.ExcelWriter(base_name + ".xlsx", engine="openpyxl") as writer:
-                for item in data:
-                    item.to_excel(writer, sheet_name=item.name, merge_cells=False)
-                    # Add code to create filters
-                    # https://stackoverflow.com/questions/51566349/openpyxl-how-to-add-filters-to-all-columns
-                    worksheet = writer.sheets[item.name]
-                    worksheet.auto_filter.ref = worksheet.dimensions
-                    # Freeze cells from https://stackoverflow.com/questions/25588918/how-to-freeze-entire-header-row-in-openpyxl
-                    freeze_column = len(item.index.names)
-                    freeze_cell = worksheet.cell(row=2, column=freeze_column + 1)
-                    worksheet.freeze_panes = freeze_cell
-                # Add properties to Excel File.  Following https://stackoverflow.com/questions/52120125/how-to-edit-core-properties-of-xlsx-file-with-python
-                writer.book.properties.creator = "Next Vis Beta"
-                writer.book.properties.title = file_name
-            run_msg(gui, "Created Excel File " + file_name[:-4] + ".xlsx")
-        except:
-            run_msg(
-                gui,
-                "ERROR creating Excel file "
-                + file_name
-                + ".xlsx.  Try closing this file in excel and process again",
-            )'''
+ 
     if "Visio" in settings["output"]:
         df_dict = {}  # Store data frames in dictionary
         for df in data:
@@ -136,7 +113,7 @@ def run_msg(gui, text):
 
 if __name__ == "__main__":
     settings = {
-        "simname": "siinfern.out",
+        "simname": "sinorm-detailed.out",
         "visname": "2021-07-19 P.vsdx",
         "simtime": 9999.0,
         "version": "tbd",

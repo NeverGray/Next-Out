@@ -168,7 +168,6 @@ or blank to quit.
                             + file_name
                             + ".xlsx. Try closing file and trying again."
                         )
-                    # TODO Speedup process by writing to memory instead of file? See https://pandas.pydata.org/docs/user_guide/io.html#io-excel-writer
                     # TODO Add strings using https://stackoverflow.com/questions/43537598/write-strings-text-and-pandas-dataframe-to-excel
             print("Created Excel File " + file_name + ".xlsx")
             # TODO Remove or enable "Repeat option"

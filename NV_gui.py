@@ -1,3 +1,4 @@
+from pathlib import Path
 from sys import exit as system_exit
 from tkinter import *
 from tkinter import filedialog, messagebox, ttk
