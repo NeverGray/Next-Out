@@ -5,6 +5,7 @@ from tkinter import filedialog, messagebox, ttk
 
 import keygen
 import main as main
+import NV_file_manager as nfm
 import NV_run as nvr
 from NV_parser import percentage_parser
 
@@ -53,13 +54,17 @@ class start_screen:
             self.ss, borderwidth=5, text="SES Output to Process", padding=p
         )
         self.ses = StringVar(value="file")
-        rb_file = ttk.Radiobutton(frm_ses, text="", variable=self.ses, value="file")
-        rb_folder = ttk.Radiobutton(frm_ses, text="", variable=self.ses, value="folder")
-        self.btn_file = ttk.Button(frm_ses, text="File", command=self.ses_files)
+        rb_file = ttk.Radiobutton(frm_ses, text="", variable=self.ses, value="File")
+        rb_files = ttk.Radiobutton(frm_ses, text="", variable=self.ses, value="Files")
+        rb_folder = ttk.Radiobutton(frm_ses, text="", variable=self.ses, value="Folder")
+        self.btn_file = ttk.Button(frm_ses, text="One file", command=self.ses_file)
+        self.btn_files = ttk.Button(frm_ses, text="Many files", command=self.ses_files)
         self.btn_folder = ttk.Button(frm_ses, text="Folder", command=self.ses_folder)
         self.path_file = StringVar()
+        self.path_files = StringVar()
         self.path_folder = StringVar()
         ent_file = ttk.Entry(frm_ses, textvariable=self.path_file)
+        ent_files = ttk.Entry(frm_ses, textvariable=self.path_files)
         ent_folder = ttk.Entry(frm_ses, textvariable=self.path_folder)
         # SES Output Frame creation Remove line wrap from output file
         r = 0
@@ -67,7 +72,12 @@ class start_screen:
         rb_file.grid(column=0, row=r, sticky=[E], pady=py, padx="0")
         self.btn_file.grid(column=1, row=r, sticky=[E], pady=py, padx=px)
         ent_file.grid(column=2, row=r, sticky=[E, W], pady=py, padx=px)
-        r = 1
+        r = 10
+        frm_ses.grid(column=0, row=r)
+        rb_files.grid(column=0, row=r, sticky=[E], pady=py, padx="0")
+        self.btn_files.grid(column=1, row=r, sticky=[E], pady=py, padx=px)
+        ent_files.grid(column=2, row=r, sticky=[E, W], pady=py, padx=px)
+        r = 20
         rb_folder.grid(column=0, row=r, sticky=[E], pady=py, padx="0")
         self.btn_folder.grid(column=1, row=r, sticky=[E], pady=py, padx=px)
         ent_folder.grid(column=2, row=r, sticky=[E, W], pady=py, padx=px)
@@ -126,7 +136,7 @@ class start_screen:
         )
         self.path_ofl = StringVar()
         ent_ofl = ttk.Entry(frm_ofl, textvariable=self.path_ofl, state=DISABLED)
-        ##OUTPUT FILE LOCATION grid
+        # OUTPUT FILE LOCATION grid
         rb_ses.grid(column=0, row=0, sticky=W)
         rb_visio.grid(column=1, row=0, sticky=W)
         rb_selected.grid(column=2, row=0, sticky=(E, W))
@@ -173,7 +183,7 @@ class start_screen:
         floats_available = validation_info['data']['attributes']['maxMachines']
         floats_in_use = validation_info['data']['relationships']['machines']['meta']['count']
         authorized_company = self.license_info["Authorized_Company"]
-        msg = f"Currently {floats_in_use} of {authorized_company}'s {floats_available} floating licenses are in use."
+        msg = f"{authorized_company} is currently using {floats_in_use} of {floats_available} floating licenses."
         messagebox.showinfo(message=msg)
 
     def check_floating_license(self, *args):
@@ -206,22 +216,26 @@ class start_screen:
         except ValueError:
             pass
 
-    def ses_files(self, *args):
+    def ses_file(self, *args):
         try:
             filename = filedialog.askopenfilename(
-                title="Select one or more SES output Files",
+                title="Select one SES output Files",
                 filetypes=[("SES Output", ("*.PRN", "*.OUT")),],
             )
             self.path_file.set(filename)
-            self.ses.set("file")
+            self.ses.set("File")
         except ValueError:
             pass
 
-    def ses_clear(self, *args):  # For clearing text boxses (not needed right now)
+    def ses_files(self, *args):
         try:
-            self.output_files["state"] = "normal"
-            self.output_files.delete("1.0", "end")
-            self.output_files["state"] = "disabled"
+            files = filedialog.askopenfilenames(
+                title="Select many SES output Files by holding Ctrl",
+                filetypes=[("SES Output", ("*.PRN", "*.OUT")),],
+            )
+            files_string = '; '.join(files,)
+            self.path_files.set(files_string)
+            self.ses.set("Files")
         except ValueError:
             pass
 
@@ -232,7 +246,15 @@ class start_screen:
                 mustexist = True
             )
             self.path_folder.set(filename)
-            self.ses.set("folder")
+            self.ses.set("Folder")
+        except ValueError:
+            pass
+
+    def ses_clear(self, *args):  # For clearing text boxses (not needed right now)
+        try:
+            self.output_files["state"] = "normal"
+            self.output_files.delete("1.0", "end")
+            self.output_files["state"] = "disabled"
         except ValueError:
             pass
 
@@ -248,12 +270,13 @@ class start_screen:
         pp_list.append(self.cbo_visio.get())
         pp_list.append(self.cbo_compare.get())
         simtime = -1
-        if self.ses.get() == "folder":
-            simname = self.path_folder.get()
-        else:
-            simname = self.path_file.get()
+        try:
+            self.get_ses_output_str()
+        except:
+            error_msg = "Could not get proper names of output files"
+            self.gui_text(error_msg)
         self.settings = {
-            "simname": simname,
+            "ses_output_str": self.ses_output_str,
             "visname": self.path_visio.get(),
             "simtime": simtime,
             "version": "tbd",
@@ -262,9 +285,9 @@ class start_screen:
         }
         if self.validation(self.settings):
             try:
-                if self.ses.get() == "file":
+                if self.ses.get() == "File":
                     nvr.single_sim(self.settings, gui=self)
-                elif self.ses.get() == "folder":
+                else:
                     nvr.multiple_sim(self.settings, gui=self)
             except:
                 self.gui_text(
@@ -288,7 +311,7 @@ class start_screen:
                 else:
                     msg = msg + "Specify a number for Visio's Simulation Time"
                     valid = False
-        if settings["simname"] == "":
+        if settings["ses_output_str"] == "":
             msg = msg + "No SES output file or folders are specified."
             valid = False
         if not valid:
@@ -301,6 +324,31 @@ class start_screen:
         self.txt_status.see(END)
         self.txt_status["state"] = DISABLED
         self.ss.update()
+
+    def get_ses_output_str(self, *args):
+        if self.ses.get() == "File":
+            self.ses_output_str = self.path_file.get()
+        elif self.ses.get() == "Folder":
+            self.ses_output_str = []
+            folder_path = self.path_folder.get()
+            self.ses_output_str = nfm.find_all_files(pathway=folder_path, with_path=True)
+        else:
+            self.ses_output_str = []
+            files_string = self.path_files.get() 
+            self.ses_output_str = files_string.split('; ')   
+
+    def get_output_file_location(self, *args):
+        if self.ses.get() == "File":
+            self.ses_output_str = self.path_file.get()
+        elif self.ses.get() == "Folder":
+            self.ses_output_str = []
+            folder_path = self.path_folder.get()
+            self.ses_output_str = nfm.find_all_files(pathway=folder_path, with_path=True)
+        else:
+            self.ses_output_str = []
+            files_string = self.path_files.get() 
+            self.ses_output_str = files_string.split('; ')   
+
 
 
 if __name__ == "__main__":

@@ -44,7 +44,7 @@ def get_visXML(visname):
 
 
 # code to modify XML file for emergency (or PIT) simualtions
-def emod_visXML(vxml, df_dict, simname="Not Available", simtime=0.00, output_meta_data={}):
+def emod_visXML(vxml, df_dict, ses_output_str="Not Available", simtime=0.00, output_meta_data={}):
     P1root = ET.fromstring(vxml)  # create XML element from the string
     ET.register_namespace(
         "", "http://schemas.microsoft.com/office/visio/2012/main"
@@ -57,7 +57,7 @@ def emod_visXML(vxml, df_dict, simname="Not Available", simtime=0.00, output_met
     }  # Namespace dictionary to ease file navigation
 
     # Update SimInfo-NV01 text fields
-    file_path = Path(simname)
+    file_path = Path(ses_output_str)
     sim_base_name = file_path.name
     file_time = output_meta_data.get("file_time") 
     shape_dict = {
@@ -208,6 +208,6 @@ def update_visio(settings, df_dict, output_meta_data):
     vxmls = get_visXML(settings["visname"])  # gets the pages in the VISIO XML.
     for name, vxml in vxmls.items():
         vxmls[name] = emod_visXML(
-            vxmls[name], df_dict, settings["simname"][:-4], settings["simtime"], output_meta_data
+            vxmls[name], df_dict, settings["ses_output_str"][:-4], settings["simtime"], output_meta_data
         )
     write_visio(vxmls, settings["visname"], settings["new_visio"])

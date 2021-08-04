@@ -294,7 +294,7 @@ HE = {
 }
 
 # TODO Eliminate NumExpr detected 16 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 8.
-def parse_file(path_string, gui=""):  # Parser
+def parse_file(file_path, gui=""):  # Parser
     # Variables for all referenced functions
     data_pit = []  # All Point in Time data
     data_train = []
@@ -311,10 +311,9 @@ def parse_file(path_string, gui=""):  # Parser
     data_te = []
     data_esc = []
     data_hsa = []
-    file_path = Path(path_string)
     file_name = file_path.name
     # Read output file into variable. OpenSES files require errors="replace" because of extended ASCII
-    with open(path_string, "r", errors="replace") as file_object:
+    with open(file_path, "r", errors="replace") as file_object:
         lines = file_object.readlines()
         # Get modified time of file https://thispointer.com/python-get-last-modification-date-time-of-a-file-os-stat-os-path-getmtime/
         file_time_seconds = os.path.getmtime(file_path)
@@ -556,7 +555,7 @@ def create_ss_dfs(
         + df_sst.index.get_level_values(2).astype(str)
     )
     column_names = df_sst.columns.values.tolist()
-    if len(column_names) > 5:
+    if len(column_names) == 5:
         df_sst = df_sst[
             [
                 "ID",
@@ -564,9 +563,31 @@ def create_ss_dfs(
                 "Humidity",
                 "Sensible",
                 "Latent",
-                "Wall_Temp",
-                "Convection_to_Wall",
-                "Radiation_to_Wall",
+            ]
+        ]
+    elif len(column_names) == 7:
+        df_sst = df_sst[
+            [
+                "ID",
+                "Air_Temp",
+                "Humidity",
+                "Sensible",
+                "Latent",
+                'Working_Fluid_Temp', 
+                'Heat_Absorbed_by_Pipe'
+            ]
+        ]
+    elif len(column_names) == 8:
+        df_sst = df_sst[
+            [
+                "ID",
+                "Air_Temp",
+                "Humidity",
+                "Sensible",
+                "Latent",
+                'Wall_Temp', 
+                'Convection_to_Wall', 
+                'Radiation_to_Wall',
             ]
         ]
     else:
@@ -788,7 +809,8 @@ def parser_msg(gui, text):
 
 
 if __name__ == "__main__":
-    path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/sinorm-detailed.out"
-    list, output_meta_data = parse_file(path_string)
-    print("test finished")
+    path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/coolpipe.out"
+    file_path = Path(path_string)
+    list, output_meta_data = parse_file(file_path)
+    print(list, output_meta_data, "test finished", sep = '\n')
 

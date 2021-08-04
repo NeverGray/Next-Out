@@ -16,13 +16,11 @@ SHEET_NAMES ={
     "ECS" :"Environmental Control System Load Estimates (ECS)"
 }
 
-
-
 def create_excel(settings, data, output_meta_data):
     # TODO Add error checker if excel file is open
     # TODO Write to memory first, then to file to speed up process (especially for multiple simulations)
-    base_name = settings["simname"][:-4]
-    file_path = Path(settings["simname"])
+    file_path = Path(settings['ses_output_str'])
+    base_name = file_path.stem
     file_name = file_path.name
     excel_file_name = base_name + ".xlsx"
     TITLES = {
@@ -71,13 +69,14 @@ def create_excel(settings, data, output_meta_data):
                             + file_name
                             + ".xlsx. Try closing file and trying again."
                         )
-        print("Created Excel File " + file_name[:-4] + ".xlsx")
+        print("Created Excel File " + base_name + ".xlsx")
     except:
-        print("ERROR creating Excel file "+ file_name + ".xlsx.  Try closing this file in excel and process again")
+        print("ERROR creating Excel file "+ base_name + ".xlsx.  Try closing this file in excel and process again")
 
 if __name__ == "__main__":
+    file_path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/coolpipe.out"
     settings = {
-        "simname": "sinorm-detailed.out",
+        "ses_output_str": file_path_string,
         "visname": "2021-07-19 P.vsdx",
         "simtime": 9999.0,
         "version": "tbd",
