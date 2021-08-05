@@ -16,7 +16,6 @@ def single_sim(settings, gui=""):
     file_path = Path(settings['ses_output_str'])
     data, output_meta_data = nvp.parse_file(file_path, gui)
     file_name = file_path.name
-    base_name = file_path.stem
     if len(data) == 0:
         return
     if "Excel" in settings["output"]:  # Create Excel File
@@ -30,23 +29,17 @@ def single_sim(settings, gui=""):
                 + file_name
                 + ".xlsx.  Try closing this file in excel and process again",
             )
- 
     if "Visio" in settings["output"]:
-        df_dict = {}  # Store data frames in dictionary
-        for df in data:
-            df_dict.update({df.name: df})
         try:
-            settings["simtime"] = nvv.valid_simtime(settings["simtime"], df_dict["SSA"])
-            time_4_name = int(settings["simtime"])
-            settings["new_visio"] = base_name + "-" + str(time_4_name) + ".vsdx"
-            nvv.update_visio(settings, df_dict, output_meta_data)
+            nvv.create_visio(settings, data, output_meta_data)
+            run_msg(gui, "Created Visio File for " + file_path.stem)
+        except:
             run_msg(
                 gui,
-                "Created Visio File " + file_name + "-" + str(time_4_name) + ".vsdx",
+                "ERROR creating Visio file for "
+                + file_name
+                + "Try closing the and process again",
             )
-        except:
-            run_msg(gui, "ERROR creating Visio file in NV_run.")
-
 
 def multiple_sim(settings, gui=""):
     num_files = len(settings["ses_output_str"])
@@ -83,24 +76,35 @@ def multiple_sim(settings, gui=""):
         pool.close()
         pool.join()
 
-
 def run_msg(gui, text):
     if gui != "":
         gui.gui_text(text)
     else:
         print("Run msg: " + text)
 
+def get_results_path(settings, suffix):
+    output_file_path = Path(settings['ses_output_str'])
+    output_stem = output_file_path.stem
+    results_name_str = output_stem + suffix
+    results_folder_str = settings.get("results_folder_str")
+    if results_folder_str is None:
+        results_parent = output_file_path.parent
+    else:
+        results_parent = Path(results_folder_str)
+    results_path = results_parent/Path(results_name_str)
+    return results_path
 
 if __name__ == "__main__":
-    single = False
+    single = True
     ses_output_str = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/siinfern.out"
+    visio_template = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/sample012.vsdx"
     settings = {
         "ses_output_str": ses_output_str,
-        "visname": "2021-07-19 P.vsdx",
+        "visio_template": visio_template,
         "simtime": 9999.0,
         "version": "tbd",
         "control": "First",
-        "output": ["Excel","Visio"],
+        "output": ["Visio"],
     }
     if single:
         single_sim(settings)

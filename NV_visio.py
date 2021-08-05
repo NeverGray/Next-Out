@@ -1,16 +1,19 @@
-import zipfile
-
-import pandas as pd
-
-try:
-    import zlib
-
-    compression = zipfile.ZIP_DEFLATED
-except:
-    compression = zipfile.ZIP_STORED
 import os
 import re
 import xml.etree.ElementTree as ET
+import zipfile
+from io import BytesIO
+
+import pandas as pd
+
+import NV_run
+
+try:
+    import zlib
+    compression = zipfile.ZIP_DEFLATED
+except:
+    compression = zipfile.ZIP_STORED
+
 from pathlib import Path
 
 ns = {"Visio": "http://schemas.microsoft.com/office/visio/2012/main"}
@@ -32,8 +35,8 @@ def valid_simtime(simtime, df):
     return time
 
 
-def get_visXML(visname):
-    VZip = zipfile.ZipFile(visname)
+def get_visXML(visio_template):
+    VZip = zipfile.ZipFile(visio_template)
     names = VZip.namelist()
     vxmls = {}
     for name in names:
@@ -171,43 +174,63 @@ def SimInfo_NV01(Shape, find_string, ns, value):
         return ShapeTemp
 
 
-def write_visio(vxmls, visname, new_visio):
+def write_visio(vxmls, visio_template, new_visio):
     # Sample Zip source code from https://stackoverflow.com/questions/513788/delete-file-from-zipfile-with-the-zipfile-module
-    with zipfile.ZipFile(visname, "r") as zin:
+    with zipfile.ZipFile(visio_template, "r") as zin:
         try:
             with zipfile.ZipFile(new_visio, "w") as zout:
                 for item in zin.infolist():
                     buffer = zin.read(item.filename)
-                    if not (
-                        item.filename in vxmls
-                    ):  # File was not updated by this code
+                    # Write any files not updated by this code
+                    if not (item.filename in vxmls):  
                         zout.writestr(item, buffer, compress_type=compression)
                 zout.comment = b"Mfwfs_Hsbz"
         except:
             print(
                 "Error writing "
-                + new_visio
+                + str(new_visio)
                 + ". Try closing the file and process again."
             )
-    temp = new_visio[:-4] + ".xml"  # unique file names to all multiprocessing
+    new_visio_str = str(new_visio)
     try:
         with zipfile.ZipFile(new_visio, "a") as zappend:
             for name, vxml in vxmls.items():
-                # TODO speedup file writing after updating to Python 3.8. Otherwise, cannot write xml_declaration easily
-                ET.ElementTree(vxml).write(temp, encoding="utf-8", xml_declaration=True)
-                zappend.write(temp, name, compress_type=compression)
-                os.remove(temp)
-        print("Created Visio Diagram " + new_visio)
+                temp_string = ET.tostring(vxml, encoding="utf-8", xml_declaration=True)
+                zappend.writestr(name, temp_string, compress_type=compression)
+        print("Created Visio Diagram " + new_visio_str)
     except:
         print(
-            "Error writing " + new_visio + ". Try closing the file and process again."
+            "Error writing " + str(new_visio) + ". Try closing the file and process again."
         )
 
-
-def update_visio(settings, df_dict, output_meta_data):
-    vxmls = get_visXML(settings["visname"])  # gets the pages in the VISIO XML.
+def create_visio(settings, data, output_meta_data):
+    #TODO Change df list to df_dictionary for future use
+    df_dict = {}  # Store data frames in dictionary
+    for df in data:
+        df_dict.update({df.name: df})
+    settings["simtime"] = valid_simtime(settings["simtime"], df_dict["SSA"])
+    time_4_name = int(settings["simtime"])
+    time_suffix = "-" + str(time_4_name) + ".vsdx"
+    settings["new_visio"] = NV_run.get_results_path(settings, time_suffix)
+    # Read in VISIO Template and update with SES OUtput
+    vxmls = get_visXML(settings["visio_template"])  # gets the pages in the VISIO XML.
     for name, vxml in vxmls.items():
         vxmls[name] = emod_visXML(
             vxmls[name], df_dict, settings["ses_output_str"][:-4], settings["simtime"], output_meta_data
         )
-    write_visio(vxmls, settings["visname"], settings["new_visio"])
+    write_visio(vxmls, settings["visio_template"], settings["new_visio"])
+
+if __name__ == "__main__":
+    file_path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/siinfern.out"
+    visio_template = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/sample012.vsdx"
+    results_folder_str = "C:/temp"
+    settings = {
+        "ses_output_str": file_path_string,
+        "visio_template": visio_template,
+        "results_folder_str": results_folder_str,
+        "simtime": 9999.0,
+        "version": "tbd",
+        "control": "First",
+        "output": ["Visio"],
+    }
+    NV_run.single_sim(settings)

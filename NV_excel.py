@@ -4,6 +4,8 @@ from pathlib import Path
 import pandas as pd
 from openpyxl.styles import Alignment, Font
 
+import NV_run
+
 SHEET_NAMES ={
     "SSA" :"Second-by-second Aerodynamic Data (SSA)",
     "SST" :"Second-by-second Thermodynamic data (SST)",
@@ -19,12 +21,11 @@ SHEET_NAMES ={
 def create_excel(settings, data, output_meta_data):
     # TODO Add error checker if excel file is open
     # TODO Write to memory first, then to file to speed up process (especially for multiple simulations)
-    file_path = Path(settings['ses_output_str'])
-    base_name = file_path.stem
-    file_name = file_path.name
-    excel_file_name = base_name + ".xlsx"
+    base_name = str(output_meta_data['file_path'].stem)
+    file_name = str(output_meta_data['file_path'].name)
+    excel_results_path = NV_run.get_results_path(settings, ".xlsx")
     TITLES = {
-        "File Name:" : file_name,
+        "File Name:" : output_meta_data['file_path'].name,
         "File Time:" : output_meta_data['file_time'],
         "Data:": "From worksheet name"
         }
@@ -59,7 +60,7 @@ def create_excel(settings, data, output_meta_data):
             writer.book.properties.title = file_name
             writer.save()
             # From https://techoverflow.net/2019/07/24/how-to-write-bytesio-content-to-file-in-python/
-            with open(excel_file_name, "wb") as outfile:  
+            with open(excel_results_path, "wb") as outfile:  
                     # Copy the BytesIO stream to the output file
                     try:
                         outfile.write(bio.getvalue())
@@ -74,14 +75,16 @@ def create_excel(settings, data, output_meta_data):
         print("ERROR creating Excel file "+ base_name + ".xlsx.  Try closing this file in excel and process again")
 
 if __name__ == "__main__":
-    file_path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/coolpipe.out"
+    file_path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/siinfern.out"
+    visio_template = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/sample012.vsdx"
+    results_folder_str = "C:/Temp"
     settings = {
         "ses_output_str": file_path_string,
-        "visname": "2021-07-19 P.vsdx",
+        "visio_template": visio_template,
+        "results_folder_str": None,
         "simtime": 9999.0,
         "version": "tbd",
         "control": "First",
         "output": ["Excel"],
     }
-    import NV_run
     NV_run.single_sim(settings)

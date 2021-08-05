@@ -86,7 +86,7 @@ class start_screen:
         frm_visio = ttk.LabelFrame(
             self.ss, borderwidth=5, text="Visio Template", padding=p
         )
-        btn_visio = ttk.Button(frm_visio, text="Select", command=self.visio_file)
+        btn_visio = ttk.Button(frm_visio, text="Select", command=self.get_visio_file)
         self.path_visio = StringVar()
         ent_visio = ttk.Entry(frm_visio, textvariable=self.path_visio)
         lbl_time = ttk.Label(frm_visio, text="Simulation Time: ")
@@ -109,40 +109,22 @@ class start_screen:
         rb_user_time.grid(column=2, row=r, sticky=W, pady=py)
         self.ent_user_time.grid(column=3, row=r, sticky=[W, E], pady=py)
         frm_visio.columnconfigure(3, weight=1)
-        # OUTPUT FILE LOCATION widgets
-        frm_ofl = ttk.LabelFrame(
-            self.ss, borderwidth=5, text="Output File Location", padding=p
-        )
-        self.ofl = StringVar(value="ses")
-        rb_ses = ttk.Radiobutton(
-            frm_ofl, text="Same as SES Output", variable=self.ofl, value="ses"
-        )
-        rb_visio = ttk.Radiobutton(
-            frm_ofl,
-            text="Same as SES Visio Template",
-            variable=self.ofl,
-            value="visio",
-            state=DISABLED,
-        )
-        rb_selected = ttk.Radiobutton(
-            frm_ofl,
-            text="Selected",
-            variable=self.ofl,
-            value="Selected",
-            state=DISABLED,
-        )
-        btn_ofl = ttk.Button(
-            frm_ofl, text="Select", command=self.output_folder, state=DISABLED
-        )
-        self.path_ofl = StringVar()
-        ent_ofl = ttk.Entry(frm_ofl, textvariable=self.path_ofl, state=DISABLED)
+        # Results Folder widgets
+        frm_results_folder = ttk.LabelFrame(self.ss, borderwidth=5, text="Folder to write post-processing results", padding=p)
+        self.results_folder = StringVar(value="ses output")
+        rb_ses = ttk.Radiobutton(frm_results_folder, text="Same as SES Output", variable=self.results_folder, value="ses output")
+        rb_visio = ttk.Radiobutton(frm_results_folder,text="Same as Visio Template",variable=self.results_folder,value="visio template")
+        rb_selected = ttk.Radiobutton(frm_results_folder,text="Selected",variable=self.results_folder, value="selected")
+        btn_results_folder = ttk.Button(frm_results_folder, text="Select", command=self.get_results_folder)
+        self.path_results_folder = StringVar()
+        ent_results_folder = ttk.Entry(frm_results_folder, textvariable=self.path_results_folder)
         # OUTPUT FILE LOCATION grid
         rb_ses.grid(column=0, row=0, sticky=W)
         rb_visio.grid(column=1, row=0, sticky=W)
         rb_selected.grid(column=2, row=0, sticky=(E, W))
-        btn_ofl.grid(column=0, row=1, sticky=W)
-        ent_ofl.grid(column=1, row=1, sticky=[W, E], columnspan=2)
-        frm_ofl.columnconfigure(2, weight=1)
+        btn_results_folder.grid(column=0, row=1, sticky=W)
+        ent_results_folder.grid(column=1, row=1, sticky=[W, E], columnspan=2)
+        frm_results_folder.columnconfigure(2, weight=1)
         # RUN button
         frm_run = ttk.Frame(self.ss, padding=p, borderwidth=5)
         self.btn_run = ttk.Button(frm_run, text="Run", command=self.run)
@@ -166,7 +148,7 @@ class start_screen:
         self.ss.columnconfigure(1, weight=1)
         self.ss.rowconfigure(4, weight=1)
         frm_pp.grid(column=0, row=0, rowspan=4, sticky=[N, S], pady=py, padx=px)
-        frm_ofl.grid(column=1, row=2, sticky=[W, E], pady=py, padx=px)
+        frm_results_folder.grid(column=1, row=2, sticky=[W, E], pady=py, padx=px)
         frm_visio.grid(column=1, row=1, sticky=[W, E], pady=py, padx=px)
         frm_ses.grid(column=1, row=0, sticky=[N, S, E, W], pady=py, padx=px)
         frm_run.grid(column=1, row=3, sticky=[W, E], pady=py, padx=px)
@@ -196,23 +178,13 @@ class start_screen:
                 message='No licenses is available. Program is going to shut down')
             system_exit("The license is no longer active")
 
-    def visio_file(self, *args):
+    def get_visio_file(self, *args):
         try:
             filename = filedialog.askopenfilename(
                 title="Select Visio template file", filetypes=[("Visio", "*.vsdx")]
             )
             self.path_visio.set(filename)
             self.cbo_visio.set("Visio")
-        except ValueError:
-            pass
-
-    def output_folder(self, *args):
-        try:
-            folder = filedialog.askdirectory(
-                title="Select one or more SES output Files"
-            )
-            self.path_ofl.set(folder)
-            self.ofl.set("Selected")
         except ValueError:
             pass
 
@@ -242,11 +214,22 @@ class start_screen:
     def ses_folder(self, *args):
         try:
             filename = filedialog.askdirectory(
-                title = "Select file with SES output Files",
+                title = "Select folder with SES output Files",
                 mustexist = True
             )
             self.path_folder.set(filename)
             self.ses.set("Folder")
+        except ValueError:
+            pass
+
+    def get_results_folder(self, *args):
+        try:
+            filename = filedialog.askdirectory(
+                title = "Select folder to write post-processing results",
+                mustexist = True
+            )
+            self.path_results_folder.set(filename)
+            self.results_folder.set("selected")
         except ValueError:
             pass
 
@@ -273,11 +256,17 @@ class start_screen:
         try:
             self.get_ses_output_str()
         except:
-            error_msg = "Could not get proper names of output files"
+            error_msg = "ERROR finding output file locations"
+            self.gui_text(error_msg)
+        try:
+            self.get_results_folder_str()
+        except:
+            error_msg = "EEROR with getting result folder"
             self.gui_text(error_msg)
         self.settings = {
             "ses_output_str": self.ses_output_str,
-            "visname": self.path_visio.get(),
+            "visio_template": self.path_visio.get(),
+            "results_folder_str": self.results_folder_str,
             "simtime": simtime,
             "version": "tbd",
             "control": "First",
@@ -301,7 +290,7 @@ class start_screen:
         valid = True
         msg = ""
         if "Visio" in settings["output"]:
-            if settings["visname"] == "":
+            if settings["visio_template"] == "":
                 msg = msg + "No Visio Template File is Specified. \n"
                 valid = False
             if self.rbo_time.get() == "user_time":
@@ -337,19 +326,19 @@ class start_screen:
             files_string = self.path_files.get() 
             self.ses_output_str = files_string.split('; ')   
 
-    def get_output_file_location(self, *args):
-        if self.ses.get() == "File":
-            self.ses_output_str = self.path_file.get()
-        elif self.ses.get() == "Folder":
-            self.ses_output_str = []
-            folder_path = self.path_folder.get()
-            self.ses_output_str = nfm.find_all_files(pathway=folder_path, with_path=True)
-        else:
-            self.ses_output_str = []
-            files_string = self.path_files.get() 
-            self.ses_output_str = files_string.split('; ')   
-
-
+    def get_results_folder_str(self, *args):
+        option = self.results_folder.get()
+        if option == "selected":
+            self.results_folder_str = self.path_results_folder.get()
+        elif option == "visio template":
+            visio_str = self.path_visio.get()
+            if visio_str !="":
+                visio_path = Path(visio_str)
+                self.results_folder_str = str(visio_path.parent)
+            else:
+                self.results_folder_str = None
+        else: #Default is same as SES output. Use empty string
+            self.results_folder_str = None
 
 if __name__ == "__main__":
     main.main(False)

@@ -300,7 +300,7 @@ def parse_file(file_path, gui=""):  # Parser
     data_train = []
     wall_pit = []
     fluid_pit = []
-    output_meta_data = {}
+    output_meta_data = {"file_path": file_path}
     duplicate_pit = False
     # Global variables for all referenced functions
     global data_segment, data_sub, data_percentage, data_te, data_esc, data_hsa
