@@ -31,24 +31,29 @@ class start_screen:
         self.cbo_excel = StringVar(value="Excel")
         self.cbo_visio = StringVar(value="")
         self.cbo_compare = StringVar(value="")
+        self.cbo_average = StringVar(value="")
         cb_excel = ttk.Checkbutton(
             frm_pp, text="Excel", variable=self.cbo_excel, onvalue="Excel", offvalue=""
         )
         cb_visio = ttk.Checkbutton(
             frm_pp, text="Visio", variable=self.cbo_visio, onvalue="Visio", offvalue=""
         )
-        cb_compare = ttk.Checkbutton(
+        cb_average = ttk.Checkbutton(
+            frm_pp, text="Average", variable=self.cbo_average, onvalue="Average", offvalue=""
+        )
+        '''TODO cb_compare = ttk.Checkbutton(
             frm_pp,
             text="Compare outputs",
             variable=self.cbo_compare,
             onvalue="Compare",
             offvalue="",
             state=DISABLED,
-        )
+        )'''
         # POST PROCESSING grid
         cb_excel.grid(column=0, row=0, sticky=W, pady=py)
         cb_visio.grid(column=0, row=1, sticky=W, pady=py)
-        cb_compare.grid(column=0, row=2, sticky=W, pady=py)
+        # TODO cb_compare.grid(column=0, row=2, sticky=W, pady=py)
+        cb_average.grid(column=0, row=3, sticky=W, pady=py)
         # SES OUTPUT Files to Process
         frm_ses = ttk.LabelFrame(
             self.ss, borderwidth=5, text="SES Output to Process", padding=p
@@ -251,7 +256,8 @@ class start_screen:
         pp_list = []
         pp_list.append(self.cbo_excel.get())
         pp_list.append(self.cbo_visio.get())
-        pp_list.append(self.cbo_compare.get())
+        #TODO pp_list.append(self.cbo_compare.get())
+        pp_list.append(self.cbo_average.get())
         simtime = -1
         try:
             self.get_ses_output_str()
@@ -274,7 +280,7 @@ class start_screen:
         }
         if self.validation(self.settings):
             try:
-                if self.ses.get() == "File":
+                if (self.ses.get() == "File") or ("Average" in pp_list):
                     nvr.single_sim(self.settings, gui=self)
                 else:
                     nvr.multiple_sim(self.settings, gui=self)

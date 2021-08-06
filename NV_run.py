@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 
+import NV_average
 import NV_excel as nve
 import NV_file_manager as nfm
 # Import of scripts
@@ -13,12 +14,27 @@ import NV_visio as nvv
 
 def single_sim(settings, gui=""):
     # Adjustement if multiple files are being processed, simultaneously
+    if "Average" in settings["output"]:
+        try:
+            num = len(settings['ses_output_str'])
+            text = "Averaging " + str(num) + "output files. Please wait."
+            run_msg(gui, text)
+            NV_average.average_outputs(settings)
+            if "Visio" in settings["output"]:
+                run_msg(gui, "Unselect Comparsion to create Visio Templates")
+            run_msg(gui, "Succesffully averaged files.")
+            return
+        except:
+            run_msg(gui, "ERROR! Could not average files.")
+            return
     file_path = Path(settings['ses_output_str'])
     data, output_meta_data = nvp.parse_file(file_path, gui)
     file_name = file_path.name
     if len(data) == 0:
+        run_msg(gui, "Error parsing data")
         return
-    if "Excel" in settings["output"]:  # Create Excel File
+    #Don't run Excel if Average is performed. Excel is created in average
+    elif "Excel" in settings["output"]:  # Create Excel File
         try:
             nve.create_excel(settings, data, output_meta_data)
             run_msg(gui, "Created Excel File " + file_path.stem + ".xlsx")
@@ -82,8 +98,8 @@ def run_msg(gui, text):
     else:
         print("Run msg: " + text)
 
-def get_results_path(settings, suffix):
-    output_file_path = Path(settings['ses_output_str'])
+def get_results_path2(settings, output_meta_data, suffix):
+    output_file_path = Path(output_meta_data['file_path'])
     output_stem = output_file_path.stem
     results_name_str = output_stem + suffix
     results_folder_str = settings.get("results_folder_str")
@@ -96,15 +112,21 @@ def get_results_path(settings, suffix):
 
 if __name__ == "__main__":
     single = True
-    ses_output_str = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/siinfern.out"
-    visio_template = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/sample012.vsdx"
+    # Testing for "Average Function"
+    directory_str = 'C:/Temp/Staggered/'
+    ses_output_list = [
+        directory_str + 'sinorm-detailed.OUT', 
+        directory_str + 'sinorm-detailed018.OUT',
+        directory_str + 'sinorm-detailed062.OUT',
+        directory_str + 'sinorm-detailed080.OUT']
     settings = {
-        "ses_output_str": ses_output_str,
-        "visio_template": visio_template,
+        "ses_output_str": ses_output_list,
+        "results_folder_str": None,
+        "visio_template": None,
         "simtime": 9999.0,
         "version": "tbd",
         "control": "First",
-        "output": ["Visio"],
+        "output": ["Excel","Average","Visio"],
     }
     if single:
         single_sim(settings)

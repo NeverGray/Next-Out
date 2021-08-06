@@ -2,36 +2,13 @@ from io import BytesIO
 from pathlib import Path
 
 import pandas as pd
-import pyinputplus as pyip
 from openpyxl.styles import Font
 
 import NV_file_manager as nfm
 import NV_parser as nvp
 
 
-def analyses_menu(settings):
-    q_start = "Analyses\n"
-    answer = pyip.inputMenu(["Compare Outputs", "Exit"], q_start, lettered=True)
-    if answer == "Compare Outputs":
-        compare_outputs()
-    else:
-        return
-
-
-def compare_outputs(base_file="", second_file=""):
-    # TODO Add ability to repeat last analysis
-    if (base_file == "" and second_file ==""):
-        qbase = """SES output file name with suffix (.OUT for SES v6): 
-Current working directory is same as NextVis Executable.
-If desired, specify abolute pathway (C:\\) or use \\ for sub-folders of working directory.
-Enter "ALL" for all files in folder, 
-or blank to quit. 
-"""
-        q1 = "Enter base " + qbase
-        q2 = "Enter second " + qbase
-        e = "Cannot find output file. Try again"
-        base_file = nfm.validate_file(q1, e)
-        second_file = nfm.validate_file(q2, e)
+def compare_outputs(base_file="", second_file="",settings={}):
     base_list = nvp.parse_file(base_file)
     second_list = nvp.parse_file(second_file)
     base_data = base_list[0]
@@ -62,20 +39,19 @@ or blank to quit.
             p_e_summary.append(p_e_sum_data)
         try:
             # Description of Stem from https://automatetheboringstuff.com/2e/chapter9/
-            base_name = Path(base_file).stem  
-            second_name = Path(second_file).stem
-            file_name = second_name + "_to_" + base_name
-            file_name = file_name[0:250]
-            # TODO output comparison file to directory of second_file
-            p_windows = Path(second_file).parent
-            p = str(p_windows)
-            file_name = p + "\\" + file_name
+            base_name = base_file.name 
+            second_name = second_file.name
+            file_name = base_file.stem + "_to_" + second_file.stem
+            file_name = file_name[0:250] #make name isn't too long
+            file_name_4_path = file_name + ".xlsx"
+            #TODO update to use 'settings' and select output folder
+            compare_results_path = second_file.parent/Path(file_name_4_path)
             p_e_text = (
                 "Percent Error = Absolute value of [(Difference) / ("
-                + base_file
+                + base_name
                 + ")] x 100%"
             )
-            diff_text = "Difference = (" + second_file + ") - (" + base_file + ")"
+            diff_text = "Difference = (" + second_name + ") - (" + base_name + ")"
             bio = BytesIO()
             # with pd.ExcelWriter(file_name + ".xlsx") as writer:
             with pd.ExcelWriter(bio, engine="openpyxl") as writer:
@@ -141,7 +117,7 @@ or blank to quit.
                         startcol=startcol_num,
                     )
                     startcol_num = (data_col * n + n) + 1
-                    ws.cell(row=data_row, column=startcol_num, value=second_file)
+                    ws.cell(row=data_row, column=startcol_num, value=second_name)
                     n += 1
                     startcol_num = data_col * n + n
                     base_data[i].to_excel(
@@ -152,24 +128,23 @@ or blank to quit.
                         startcol=startcol_num,
                     )
                     startcol_num = (data_col * n + n) + 1
-                    ws.cell(row=data_row, column=startcol_num, value=base_file)
+                    ws.cell(row=data_row, column=startcol_num, value=base_name)
                     writer.book.properties.creator = "Next Vis Beta"
                     writer.book.properties.title = file_name
                 writer.save()
-                with open(
-                    file_name + ".xlsx", "wb"
-                ) as outfile:  # From https://techoverflow.net/2019/07/24/how-to-write-bytesio-content-to-file-in-python/
-                    # Copy the BytesIO stream to the output file
+                # From https://techoverflow.net/2019/07/24/how-to-write-bytesio-content-to-file-in-python/
+                # Copy the BytesIO stream to the output file
+                with open(compare_results_path, "wb") as outfile:  
                     try:
                         outfile.write(bio.getvalue())
                     except:
                         print(
                             "Error writing "
-                            + file_name
+                            + str(compare_results_path)
                             + ".xlsx. Try closing file and trying again."
                         )
                     # TODO Add strings using https://stackoverflow.com/questions/43537598/write-strings-text-and-pandas-dataframe-to-excel
-            print("Created Excel File " + file_name + ".xlsx")
+            print("Created Excel File " + str(compare_results_path))
             # TODO Remove or enable "Repeat option"
         except:
             print(
@@ -185,8 +160,9 @@ def remove_columns(df_list):
     return df_list
 
 if __name__ == "__main__":
-    base_path_str = ['4p2\\inferno.PRN','4p2\\normal.PRN']
-    second_path_str = ['4p2\\inferno4p2.out','4p2\\normal4p2.out']
+    base_path_str = ['C:\\Temp\\4p2\\inferno.PRN','C:\\Temp\\4p2\\normal.PRN']
+    second_path_str = ['C:\\Temp\\4p2\\inferno4p2.out','C:\\Temp\\4p2\\normal4p2.out']
     for i in range(len(base_path_str)):
         #if i ==1: break #for testing one
-        compare_outputs(base_file=base_path_str[i], second_file=second_path_str[i])
+
+        compare_outputs(base_file=Path(base_path_str[i]), second_file=Path(second_path_str[i]))

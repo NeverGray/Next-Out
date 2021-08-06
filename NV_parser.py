@@ -467,7 +467,7 @@ def parse_file(file_path, gui=""):  # Parser
         data_te = []
         data_esc = []
         data_hsa = []
-        return [
+        data = create_dictionary_from_list([
             df_ssa,
             df_sst,
             df_train,
@@ -477,15 +477,23 @@ def parse_file(file_path, gui=""):  # Parser
             df_te,
             df_hsa,
             df_ecs,
-        ], output_meta_data
+        ])
+        return data, output_meta_data
     elif len(data_train) > 0:
         data_train = []
         parser_msg(gui, "Read data from " + file_name)
-        return [df_ssa, df_sst, df_train], output_meta_data
+        data = create_dictionary_from_list([df_ssa, df_sst, df_train])
+        return data, output_meta_data
     else:
         parser_msg(gui, "Read data from " + file_name)
-        return [df_ssa, df_sst], output_meta_data
+        data = create_dictionary_from_list([df_ssa, df_sst])
+        return data, output_meta_data
 
+def create_dictionary_from_list(df_list):
+    df_dict = {}
+    for df in df_list:
+        df_dict.update({df.name: df})
+    return df_dict
 
 def get_segment_titles(lines):
     title_rx = INPUT["f3a"]

@@ -47,7 +47,7 @@ def get_visXML(visio_template):
 
 
 # code to modify XML file for emergency (or PIT) simualtions
-def emod_visXML(vxml, df_dict, ses_output_str="Not Available", simtime=0.00, output_meta_data={}):
+def emod_visXML(vxml, data, ses_output_str="Not Available", simtime=0.00, output_meta_data={}):
     P1root = ET.fromstring(vxml)  # create XML element from the string
     ET.register_namespace(
         "", "http://schemas.microsoft.com/office/visio/2012/main"
@@ -89,13 +89,13 @@ def emod_visXML(vxml, df_dict, ses_output_str="Not Available", simtime=0.00, out
         except:
             SubID = 1
         # Pull from data from SSA and SST dataframe
-        ses_airflow = get_df_values(df_dict["SSA"], (simtime, SegID), "Airflow")
+        ses_airflow = get_df_values(data["SSA"], (simtime, SegID), "Airflow")
         airflow = str(round(abs(ses_airflow), 1))
-        ses_velocity = get_df_values(df_dict["SSA"], (simtime, SegID), "Air_Velocity")
+        ses_velocity = get_df_values(data["SSA"], (simtime, SegID), "Air_Velocity")
         velocity = str(round(abs(ses_velocity), 1))
-        ses_airtemp = get_df_values(df_dict["SST"], (simtime, SegID, SubID), "Air_Temp")
+        ses_airtemp = get_df_values(data["SST"], (simtime, SegID, SubID), "Air_Temp")
         airtemp = str(round(ses_airtemp, 1)) + "°"
-        ses_WallTemp = get_df_values(df_dict["SST"], (simtime, SegID, SubID), "Wall_Temp")
+        ses_WallTemp = get_df_values(data["SST"], (simtime, SegID, SubID), "Wall_Temp")
         walltemp = str(round(ses_WallTemp, 1)) + "°"
         # Determines if airflow needs to be flipped for negative airflow
         if (ses_airflow >= 0):  
@@ -204,19 +204,15 @@ def write_visio(vxmls, visio_template, new_visio):
         )
 
 def create_visio(settings, data, output_meta_data):
-    #TODO Change df list to df_dictionary for future use
-    df_dict = {}  # Store data frames in dictionary
-    for df in data:
-        df_dict.update({df.name: df})
-    settings["simtime"] = valid_simtime(settings["simtime"], df_dict["SSA"])
+    settings["simtime"] = valid_simtime(settings["simtime"], data["SSA"])
     time_4_name = int(settings["simtime"])
     time_suffix = "-" + str(time_4_name) + ".vsdx"
-    settings["new_visio"] = NV_run.get_results_path(settings, time_suffix)
+    settings["new_visio"] = NV_run.get_results_path2(settings, output_meta_data, time_suffix)
     # Read in VISIO Template and update with SES OUtput
     vxmls = get_visXML(settings["visio_template"])  # gets the pages in the VISIO XML.
     for name, vxml in vxmls.items():
         vxmls[name] = emod_visXML(
-            vxmls[name], df_dict, settings["ses_output_str"][:-4], settings["simtime"], output_meta_data
+            vxmls[name], data, settings["ses_output_str"][:-4], settings["simtime"], output_meta_data
         )
     write_visio(vxmls, settings["visio_template"], settings["new_visio"])
 

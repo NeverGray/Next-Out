@@ -9,10 +9,10 @@ import NV_run
 SHEET_NAMES ={
     "SSA" :"Second-by-second Aerodynamic Data (SSA)",
     "SST" :"Second-by-second Thermodynamic data (SST)",
-    "TRA" :"Second-by-second Train data (TRA)",
+    "TRA" :"Second-by-second Train Data (TRA)",
     "SA"  :"Summary of Aerodynamic Data (SA)",
     "ST"  :"Summary of Thermodynamic Data (ST)",
-    "PER" :"Percentage of Time Temperature is Above (PER)",
+    "PER" :"Percentage of `Time Temperature is Above (PER)",
     "TES" :"Train Energy Summary (TES)",
     "HSA" :"Heat Sink Analysis (for uncontrolled zones) (HSA)",
     "ECS" :"Environmental Control System Load Estimates (ECS)"
@@ -23,7 +23,7 @@ def create_excel(settings, data, output_meta_data):
     # TODO Write to memory first, then to file to speed up process (especially for multiple simulations)
     base_name = str(output_meta_data['file_path'].stem)
     file_name = str(output_meta_data['file_path'].name)
-    excel_results_path = NV_run.get_results_path(settings, ".xlsx")
+    excel_results_path = NV_run.get_results_path2(settings, output_meta_data, ".xlsx")
     TITLES = {
         "File Name:" : output_meta_data['file_path'].name,
         "File Time:" : output_meta_data['file_time'],
@@ -32,11 +32,11 @@ def create_excel(settings, data, output_meta_data):
     try:
         bio = BytesIO()
         with pd.ExcelWriter(bio, engine="openpyxl") as writer:
-            for item in data:
+            for item in data.values():
                 item.to_excel(writer, sheet_name=item.name, merge_cells=False)
                 worksheet = writer.sheets[item.name]
                 # Create title rows and format
-                df_startrow = len(TITLES)+1
+                df_startrow = len(TITLES) + 1
                 worksheet.insert_rows(0,df_startrow - 1)
                 i = 1
                 for x, y in TITLES.items():
@@ -81,7 +81,7 @@ if __name__ == "__main__":
     settings = {
         "ses_output_str": file_path_string,
         "visio_template": visio_template,
-        "results_folder_str": None,
+        "results_folder_str": results_folder_str,
         "simtime": 9999.0,
         "version": "tbd",
         "control": "First",
