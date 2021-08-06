@@ -4,15 +4,27 @@ from pathlib import Path
 import pandas as pd
 from openpyxl.styles import Font
 
+import NV_excel
 import NV_file_manager as nfm
 import NV_parser as nvp
+import NV_run
 
 
-def compare_outputs(base_file="", second_file="",settings={}):
-    base_list = nvp.parse_file(base_file)
-    second_list = nvp.parse_file(second_file)
-    base_data = base_list[0]
-    second_data = second_list[0]
+def compare_outputs(settings, gui=""):
+    if "Excel" in settings['output']: 
+        Excel = True
+    else:
+        Excel = False
+    base_file = Path(settings['ses_output_str'][0])
+    second_file = Path(settings['ses_output_str'][1])
+    base_df, base_output_meta_data = nvp.parse_file(base_file)
+    if Excel:
+        NV_excel.create_excel(settings, base_df, base_output_meta_data)
+    second_df, second_output_meta_data = nvp.parse_file(second_file)
+    if Excel:
+        NV_excel.create_excel(settings, second_df, second_output_meta_data)
+    base_data = dictionary_to_list(base_df)
+    second_data = dictionary_to_list(second_df)
     print("Both Files post-processed")
     num_df = len(base_data)
     if num_df != len(second_data):
@@ -31,7 +43,7 @@ def compare_outputs(base_file="", second_file="",settings={}):
             sum_data = diff_data.describe()
             sum_data.name = diff_data.name
             diff_summary.append(sum_data)
-            p_e_data = abs(diff_data / base_data[i]) * 100
+            p_e_data = abs(diff_data / base_data[i])
             p_e_data.name = base_data[i].name
             p_e.append(p_e_data)
             p_e_sum_data = p_e_data.describe()
@@ -45,11 +57,15 @@ def compare_outputs(base_file="", second_file="",settings={}):
             file_name = file_name[0:250] #make name isn't too long
             file_name_4_path = file_name + ".xlsx"
             #TODO update to use 'settings' and select output folder
-            compare_results_path = second_file.parent/Path(file_name_4_path)
+            ses_output_str = settings['ses_output_str'][0]
+            parent = str(Path(ses_output_str).parent)
+            base_output_meta_data['file_path'] = Path(parent + '/' + file_name_4_path)
+            compare_results_path = NV_run.get_results_path2(settings, base_output_meta_data, ".xlsx")
+            #compare_results_path = second_file.parent/Path(file_name_4_path)
             p_e_text = (
                 "Percent Error = Absolute value of [(Difference) / ("
                 + base_name
-                + ")] x 100%"
+                + ")]"
             )
             diff_text = "Difference = (" + second_name + ") - (" + base_name + ")"
             bio = BytesIO()
@@ -153,6 +169,13 @@ def compare_outputs(base_file="", second_file="",settings={}):
                 + ".xlsx."
             )
 
+def dictionary_to_list(dic):
+    new_list = []
+    for value in dic.values():
+        new_list.append(value)
+    return new_list
+
+
 def remove_columns(df_list):
     #Removes columns that are strings so comparision can be completed.
     df_list[0].drop(['ID','Title'], axis =1, inplace = True)
@@ -160,9 +183,18 @@ def remove_columns(df_list):
     return df_list
 
 if __name__ == "__main__":
-    base_path_str = ['C:\\Temp\\4p2\\inferno.PRN','C:\\Temp\\4p2\\normal.PRN']
-    second_path_str = ['C:\\Temp\\4p2\\inferno4p2.out','C:\\Temp\\4p2\\normal4p2.out']
-    for i in range(len(base_path_str)):
-        #if i ==1: break #for testing one
-
-        compare_outputs(base_file=Path(base_path_str[i]), second_file=Path(second_path_str[i]))
+    directory_str = 'C:/Temp/Comparison/'
+    ses_output_list = [
+        directory_str + 'sinorm-detailed.OUT', 
+        directory_str + 'sinorm-detailed018.OUT'
+        ]
+    settings = {
+        "ses_output_str": ses_output_list,
+        "results_folder_str": 'C:/Temp',
+        "visio_template": None,
+        "simtime": 9999.0,
+        "version": "tbd",
+        "control": "First",
+        "output": ["Visio","Average","Excel"],
+    }
+    compare_outputs(settings)

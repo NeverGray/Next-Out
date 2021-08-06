@@ -39,20 +39,19 @@ class start_screen:
             frm_pp, text="Visio", variable=self.cbo_visio, onvalue="Visio", offvalue=""
         )
         cb_average = ttk.Checkbutton(
-            frm_pp, text="Staggered\nHeadeways\nMean, Max, Min", variable=self.cbo_average, onvalue="Average", offvalue=""
+            frm_pp, text="Staggered\nheadeways\nmean, max, min", variable=self.cbo_average, onvalue="Average", offvalue=""
         )
-        '''TODO cb_compare = ttk.Checkbutton(
+        cb_compare = ttk.Checkbutton(
             frm_pp,
-            text="Compare outputs",
+            text="Compare two\noutputs",
             variable=self.cbo_compare,
             onvalue="Compare",
             offvalue="",
-            state=DISABLED,
-        )'''
+        )
         # POST PROCESSING grid
         cb_excel.grid(column=0, row=0, sticky=W, pady=py)
         cb_visio.grid(column=0, row=1, sticky=W, pady=py)
-        # TODO cb_compare.grid(column=0, row=2, sticky=W, pady=py)
+        cb_compare.grid(column=0, row=2, sticky=W, pady=py)
         cb_average.grid(column=0, row=3, sticky=W, pady=py)
         # SES OUTPUT Files to Process
         frm_ses = ttk.LabelFrame(
@@ -115,7 +114,7 @@ class start_screen:
         self.ent_user_time.grid(column=3, row=r, sticky=[W, E], pady=py)
         frm_visio.columnconfigure(3, weight=1)
         # Results Folder widgets
-        frm_results_folder = ttk.LabelFrame(self.ss, borderwidth=5, text="Folder to write post-processing results", padding=p)
+        frm_results_folder = ttk.LabelFrame(self.ss, borderwidth=5, text="Folder to write results", padding=p)
         self.results_folder = StringVar(value="ses output")
         rb_ses = ttk.Radiobutton(frm_results_folder, text="Same as SES Output", variable=self.results_folder, value="ses output")
         rb_visio = ttk.Radiobutton(frm_results_folder,text="Same as Visio Template",variable=self.results_folder,value="visio template")
@@ -256,7 +255,7 @@ class start_screen:
         pp_list = []
         pp_list.append(self.cbo_excel.get())
         pp_list.append(self.cbo_visio.get())
-        #TODO pp_list.append(self.cbo_compare.get())
+        pp_list.append(self.cbo_compare.get())
         pp_list.append(self.cbo_average.get())
         simtime = -1
         try:
@@ -280,7 +279,7 @@ class start_screen:
         }
         if self.validation(self.settings):
             try:
-                if (self.ses.get() == "File") or ("Average" in pp_list):
+                if (self.ses.get() == "File") or ("Average" in pp_list) or ("Compare" in pp_list):
                     nvr.single_sim(self.settings, gui=self)
                 else:
                     nvr.multiple_sim(self.settings, gui=self)

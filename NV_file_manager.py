@@ -1,31 +1,6 @@
 import os
 from pathlib import Path
 
-import pyinputplus as pyip
-
-
-def validate_file(
-    q, e, extensions=[".OUT", ".PRN"]
-):  # Q is for prompt, e is for error, ext is for extension
-    invalid = True
-    while invalid:  # Output File name
-        # answer = pyip.inputFilename(prompt = q,blank = True, limit=5)
-        answer = pyip.inputFilepath(prompt=q, blank=True, limit=5)
-        if answer.upper()[-3:] != "ALL":
-            path_answer = Path() / answer  # Creates a path object
-            if path_answer.is_file():
-                if path_answer.suffix.upper() in extensions:
-                    invalid = False
-                else:
-                    print("Invalid file extension")
-            elif answer == "":
-                invalid = False
-            else:
-                print(e, end="")
-        else:
-            invalid = False
-    return answer
-
 
 def find_all_files(extensions=[".OUT", ".PRN"], pathway=None, character=None, with_path=False):
     all_files = []

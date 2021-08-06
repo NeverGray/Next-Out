@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 
+import NV_compare
 import NV_average
 import NV_excel as nve
 import NV_file_manager as nfm
@@ -14,19 +15,36 @@ import NV_visio as nvv
 
 def single_sim(settings, gui=""):
     # Adjustement if multiple files are being processed, simultaneously
+    if "Compare" in settings["output"]:
+        try:
+            NV_compare.compare_outputs(settings)
+            run_msg(gui, "Succesffully compared first two files")
+            if "Excel" in settings["output"]:
+                settings["output"].remove("Excel")
+            if "Visio" in settings["output"]:
+                settings["output"].remove("Visio")
+                run_msg(gui, "Unselect Comparsion to create Visio Templates")
+            return
+        except:
+            run_msg(gui, "ERROR! Could not compare files.")
+            return
     if "Average" in settings["output"]:
         try:
             num = len(settings['ses_output_str'])
             text = "Averaging " + str(num) + "output files. Please wait."
             run_msg(gui, text)
             NV_average.average_outputs(settings)
-            if "Visio" in settings["output"]:
-                run_msg(gui, "Unselect Comparsion to create Visio Templates")
             run_msg(gui, "Succesffully averaged files.")
+            if "Excel" in settings["output"]:
+                settings["output"].remove("Excel")
+            if "Visio" in settings["output"]:
+                settings["output"].remove("Visio")
+                run_msg(gui, "Unselect Average to create Visio Templates")
             return
         except:
             run_msg(gui, "ERROR! Could not average files.")
             return
+    #TODO Get "Run to work with a string in file_path
     file_path = Path(settings['ses_output_str'])
     data, output_meta_data = nvp.parse_file(file_path, gui)
     file_name = file_path.name
@@ -111,14 +129,11 @@ def get_results_path2(settings, output_meta_data, suffix):
     return results_path
 
 if __name__ == "__main__":
-    single = True
-    # Testing for "Average Function"
-    directory_str = 'C:/Temp/Staggered/'
+    directory_str = 'C:/Temp/Comparison/'
     ses_output_list = [
-        directory_str + 'sinorm-detailed.OUT', 
-        directory_str + 'sinorm-detailed018.OUT',
-        directory_str + 'sinorm-detailed062.OUT',
-        directory_str + 'sinorm-detailed080.OUT']
+        directory_str + 'normal.prn', 
+        directory_str + 'normal4p2.OUT'
+        ]
     settings = {
         "ses_output_str": ses_output_list,
         "results_folder_str": None,
@@ -126,10 +141,6 @@ if __name__ == "__main__":
         "simtime": 9999.0,
         "version": "tbd",
         "control": "First",
-        "output": ["Excel","Average","Visio"],
+        "output": ["Excel",'Compare','Visio']
     }
-    if single:
-        single_sim(settings)
-    else:
-        settings["ses_output_str"] = ['C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/siinfern.out', 'C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/siinfern - copy.out']
-        multiple_sim(settings)
+    single_sim(settings)
