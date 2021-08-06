@@ -13,6 +13,8 @@ def average_outputs(settings):
     first_iteration = True
     if "Excel" in settings['output']: 
         Excel = True
+    else:
+        Excel = False
     # For each ses_output, add dataframes to a Dictionary organized by data type ('SSA', 'SST', etc...) 
     # TODO Use multiprocessor
     for ses_output in settings['ses_output_str']:
@@ -29,34 +31,49 @@ def average_outputs(settings):
         for key, value in data.items():
             df_by_type[key].append(value)
     # For each data type, create a data frame with the average
-    dfs_averaged_dict = {}
+    dfs_mean_dict = {}
+    dfs_max_dict = {}
+    dfs_min_dict = {}
     for key, value in df_by_type.items():
         # From https://stackoverflow.com/questions/25057835/get-the-mean-across-multiple-pandas-dataframes
         df_concat = None
         df_concat = pd.concat(value)
         by_row_index = df_concat.groupby(df_concat.index.names)
-        dfs_averaged_dict[key] = by_row_index.mean()
-        dfs_averaged_dict[key].name = key
+        dfs_mean_dict[key] = by_row_index.mean()
+        dfs_max_dict[key] = by_row_index.max()
+        dfs_min_dict[key] = by_row_index.min()
+        #Add ID, Title, and other non-numerical average dataframes
+        if key in ['SSA','SST']:
+            df_objects_only = value[0].select_dtypes(include=[object])
+            dfs_mean_dict[key] = pd.merge(df_objects_only,dfs_mean_dict[key],how="right",on=df_concat.index.names)
+            dfs_max_dict[key] =  pd.merge(df_objects_only,dfs_max_dict[key],how="right",on=df_concat.index.names)
+            dfs_min_dict[key] =  pd.merge(df_objects_only,dfs_min_dict[key],how="right",on=df_concat.index.names)
+        dfs_mean_dict[key].name = key
+        dfs_max_dict[key].name = key
+        dfs_min_dict[key].name = key
     # Create filename for Excel File
     number = str(len(settings['ses_output_str']) - 1)
     parent = str(Path(first_ses_output_str).parent)
-    average_ses_output_str = (
-        "Average of " 
-        + Path(first_ses_output_str).stem
-        + " and " + number + " others" 
-        + Path(first_ses_output_str).suffix
-        )
-    average_ses_output_str = parent + '/' + average_ses_output_str
-    output_meta_data['file_path'] = Path(average_ses_output_str)
-    NV_excel.create_excel(settings, dfs_averaged_dict, output_meta_data)
+    second_ses_output_str = (' of ' + Path(first_ses_output_str).stem
+                            + " and " + number + " others" 
+                            + Path(first_ses_output_str).suffix
+                            )
+    dict_of_dfs = {'Mean':dfs_mean_dict,
+                    'Max':dfs_max_dict,
+                    'Min': dfs_min_dict}
+    for type, df in  dict_of_dfs.items():
+        first_ses_output_str = type
+        both_ses_output_str = parent + '/' + first_ses_output_str + second_ses_output_str
+        output_meta_data['file_path'] = Path(both_ses_output_str)
+        NV_excel.create_excel(settings, df, output_meta_data)
 
 if __name__ == "__main__":
     directory_str = 'C:/Temp/Staggered/'
     ses_output_list = [
         directory_str + 'sinorm-detailed.OUT', 
-        directory_str + 'sinorm-detailed018.OUT'
-        #directory_str + 'sinorm-detailed062.OUT',
-        #directory_str + 'sinorm-detailed080.OUT'
+        directory_str + 'sinorm-detailed018.OUT',
+        directory_str + 'sinorm-detailed062.OUT',
+        directory_str + 'sinorm-detailed080.OUT'
         ]
     settings = {
         "ses_output_str": ses_output_list,
@@ -65,6 +82,6 @@ if __name__ == "__main__":
         "simtime": 9999.0,
         "version": "tbd",
         "control": "First",
-        "output": ["Visio","Excel"],
+        "output": ["Visio","Average","Excel"],
     }
     average_outputs(settings)

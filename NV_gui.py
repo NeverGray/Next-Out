@@ -39,7 +39,7 @@ class start_screen:
             frm_pp, text="Visio", variable=self.cbo_visio, onvalue="Visio", offvalue=""
         )
         cb_average = ttk.Checkbutton(
-            frm_pp, text="Average", variable=self.cbo_average, onvalue="Average", offvalue=""
+            frm_pp, text="Staggered\nHeadeways\nMean, Max, Min", variable=self.cbo_average, onvalue="Average", offvalue=""
         )
         '''TODO cb_compare = ttk.Checkbutton(
             frm_pp,
