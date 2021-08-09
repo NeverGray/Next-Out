@@ -6,9 +6,10 @@ from openpyxl.styles import Font
 
 import NV_excel
 import NV_parser
+import NV_run
 
 
-def average_outputs(settings):
+def average_outputs(settings, gui=""):
     df_by_type = {}
     first_iteration = True
     if "Excel" in settings['output']: 
@@ -17,6 +18,10 @@ def average_outputs(settings):
         Excel = False
     # For each ses_output, add dataframes to a Dictionary organized by data type ('SSA', 'SST', etc...) 
     # TODO Use multiprocessor
+    num = len(settings['ses_output_str'])
+    msg = f'Finding mean, max, and min of {num} output files.'
+    NV_run.run_msg(gui, msg)
+    i = 1
     for ses_output in settings['ses_output_str']:
         ses_output_path = Path(ses_output)
         data, output_meta_data = NV_parser.parse_file(ses_output_path)
@@ -30,6 +35,9 @@ def average_outputs(settings):
             first_iteration = False
         for key, value in data.items():
             df_by_type[key].append(value)
+        msg = f'Parsed {ses_output_path.name}, {i} of {num} output files'
+        NV_run.run_msg(gui, msg)
+        i +=1
     # For each data type, create a data frame with the average
     dfs_mean_dict = {}
     dfs_max_dict = {}
@@ -65,7 +73,8 @@ def average_outputs(settings):
         first_ses_output_str = type
         both_ses_output_str = parent + '/' + first_ses_output_str + second_ses_output_str
         output_meta_data['file_path'] = Path(both_ses_output_str)
-        NV_excel.create_excel(settings, df, output_meta_data)
+        NV_excel.create_excel(settings, df, output_meta_data, gui)
+
 
 if __name__ == "__main__":
     directory_str = 'C:/Temp/Staggered/'

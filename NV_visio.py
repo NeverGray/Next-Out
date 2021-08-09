@@ -19,19 +19,19 @@ from pathlib import Path
 ns = {"Visio": "http://schemas.microsoft.com/office/visio/2012/main"}
 
 
-def valid_simtime(simtime, df):
+def valid_simtime(simtime, df, gui=""):
     timeseries_index = df.index.unique(0)  # Creates a series of unique times
     timeseries_list = timeseries_index.tolist()
     time = float(simtime)
     if time == -1 or time > timeseries_list[-1]:
         time = timeseries_list[-1]
-        print("Using last simulation time ", time)
+        NV_run.run_msg(gui, f'Using last simulation time {time}')
     elif not time in timeseries_list:
         for x in timeseries_list:
             if x - time > 0:
                 time = x
                 break
-        print("Could not find requested simulation time. Using ", time)
+        NV_run.run_msg(gui, f"Could not find requested simulation time. Using {time}")
     return time
 
 
@@ -174,7 +174,7 @@ def SimInfo_NV01(Shape, find_string, ns, value):
         return ShapeTemp
 
 
-def write_visio(vxmls, visio_template, new_visio):
+def write_visio(vxmls, visio_template, new_visio ,gui=""):
     # Sample Zip source code from https://stackoverflow.com/questions/513788/delete-file-from-zipfile-with-the-zipfile-module
     with zipfile.ZipFile(visio_template, "r") as zin:
         try:
@@ -186,25 +186,25 @@ def write_visio(vxmls, visio_template, new_visio):
                         zout.writestr(item, buffer, compress_type=compression)
                 zout.comment = b"Mfwfs_Hsbz"
         except:
-            print(
-                "Error writing "
+            msg = ("Error writing "
                 + str(new_visio)
                 + ". Try closing the file and process again."
             )
+            NV_run.run_msg(gui, msg)
+                
     new_visio_str = str(new_visio)
     try:
         with zipfile.ZipFile(new_visio, "a") as zappend:
             for name, vxml in vxmls.items():
                 temp_string = ET.tostring(vxml, encoding="utf-8", xml_declaration=True)
                 zappend.writestr(name, temp_string, compress_type=compression)
-        print("Created Visio Diagram " + new_visio_str)
+        NV_run.run_msg(gui,f'Created Visio Diagram {new_visio.name}')
     except:
-        print(
-            "Error writing " + str(new_visio) + ". Try closing the file and process again."
-        )
+        msg = "Error writing " + str(new_visio) + ". Try closing the file and process again."
+        NV_run.run_msg(gui, msg)
 
-def create_visio(settings, data, output_meta_data):
-    settings["simtime"] = valid_simtime(settings["simtime"], data["SSA"])
+def create_visio(settings, data, output_meta_data, gui=""):
+    settings["simtime"] = valid_simtime(settings["simtime"], data["SSA"], gui)
     time_4_name = int(settings["simtime"])
     time_suffix = "-" + str(time_4_name) + ".vsdx"
     settings["new_visio"] = NV_run.get_results_path2(settings, output_meta_data, time_suffix)
@@ -214,7 +214,7 @@ def create_visio(settings, data, output_meta_data):
         vxmls[name] = emod_visXML(
             vxmls[name], data, settings["ses_output_str"][:-4], settings["simtime"], output_meta_data
         )
-    write_visio(vxmls, settings["visio_template"], settings["new_visio"])
+    write_visio(vxmls, settings["visio_template"], settings["new_visio"],gui)
 
 if __name__ == "__main__":
     file_path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/siinfern.out"

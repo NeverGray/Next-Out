@@ -169,7 +169,7 @@ class start_screen:
         floats_available = validation_info['data']['attributes']['maxMachines']
         floats_in_use = validation_info['data']['relationships']['machines']['meta']['count']
         authorized_company = self.license_info["Authorized_Company"]
-        msg = f"{authorized_company} is currently using {floats_in_use} of {floats_available} floating licenses."
+        msg = f"{authorized_company} is using {floats_in_use} of {floats_available} floating licenses."
         messagebox.showinfo(message=msg)
 
     def check_floating_license(self, *args):
@@ -179,7 +179,7 @@ class start_screen:
             return True
         else:
             messagebox.showinfo(
-                message='No licenses is available. Program is going to shut down')
+                message='No licenses is available or there is no internet connection.\nProgram is going to shut down')
             system_exit("The license is no longer active")
 
     def get_visio_file(self, *args):
@@ -246,7 +246,6 @@ class start_screen:
             pass
 
     def run(self, *args):
-        # TODO Create status window
         self.btn_run["text"] = "In-progress"
         self.btn_run["state"] = DISABLED
         self.ss.update()
@@ -257,7 +256,6 @@ class start_screen:
         pp_list.append(self.cbo_visio.get())
         pp_list.append(self.cbo_compare.get())
         pp_list.append(self.cbo_average.get())
-        simtime = -1
         try:
             self.get_ses_output_str()
         except:
@@ -272,7 +270,7 @@ class start_screen:
             "ses_output_str": self.ses_output_str,
             "visio_template": self.path_visio.get(),
             "results_folder_str": self.results_folder_str,
-            "simtime": simtime,
+            "simtime": -1, #Updated in validation
             "version": "tbd",
             "control": "First",
             "output": pp_list,
@@ -289,7 +287,7 @@ class start_screen:
                 )
         self.btn_run["state"] = NORMAL
         self.btn_run["text"] = "Run"
-        self.gui_text("Post processing completed")
+        self.gui_text("Post processing completed.")
 
     def validation(self, settings):
         valid = True

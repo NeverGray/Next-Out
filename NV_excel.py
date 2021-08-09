@@ -18,7 +18,7 @@ SHEET_NAMES ={
     "ECS" :"Environmental Control System Load Estimates (ECS)"
 }
 
-def create_excel(settings, data, output_meta_data):
+def create_excel(settings, data, output_meta_data, gui=""):
     # TODO Add error checker if excel file is open
     # TODO Write to memory first, then to file to speed up process (especially for multiple simulations)
     base_name = str(output_meta_data['file_path'].stem)
@@ -70,9 +70,9 @@ def create_excel(settings, data, output_meta_data):
                             + file_name
                             + ".xlsx. Try closing file and trying again."
                         )
-        print("Created Excel File " + base_name + ".xlsx")
+        NV_run.run_msg(gui, "Created Excel File " + base_name + ".xlsx")
     except:
-        print("ERROR creating Excel file "+ base_name + ".xlsx.  Try closing this file in excel and process again")
+        NV_run.run_msg(gui, "ERROR creating Excel file "+ base_name + ".xlsx.  Try closing this file in excel and process again.")
 
 if __name__ == "__main__":
     file_path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/siinfern.out"

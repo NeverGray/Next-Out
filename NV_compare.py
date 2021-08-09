@@ -16,20 +16,28 @@ def compare_outputs(settings, gui=""):
     else:
         Excel = False
     base_file = Path(settings['ses_output_str'][0])
+    base_file_name = base_file.name
     second_file = Path(settings['ses_output_str'][1])
+    second_file_name = second_file.name
     base_df, base_output_meta_data = nvp.parse_file(base_file)
+    msg = base_file_name + " parsed."
+    NV_run.run_msg(gui, msg)
     if Excel:
         NV_excel.create_excel(settings, base_df, base_output_meta_data)
     second_df, second_output_meta_data = nvp.parse_file(second_file)
+    msg = second_file_name + " parsed."
+    NV_run.run_msg(gui, msg)
     if Excel:
-        NV_excel.create_excel(settings, second_df, second_output_meta_data)
+        NV_excel.create_excel(settings, base_df, base_output_meta_data, gui)
     base_data = dictionary_to_list(base_df)
     second_data = dictionary_to_list(second_df)
-    print("Both Files post-processed")
     num_df = len(base_data)
     if num_df != len(second_data):
-        print("Error - Parsed files are different")
+        msg = "Error in Compare two inputs! " + base_file_name + "and" + second_file_name + "have different structures."
+        NV_run.run_msg(gui, msg)
     else:
+        msg = f'Comparing {base_file_name} and {second_file_name}, then creating Excel sheet.'
+        NV_run.run_msg(gui, msg)
         diff = []
         diff_summary = []
         p_e = []  # percent Error
@@ -154,20 +162,21 @@ def compare_outputs(settings, gui=""):
                     try:
                         outfile.write(bio.getvalue())
                     except:
-                        print(
+                        NV_run.run_msg(gui,
                             "Error writing "
                             + str(compare_results_path)
                             + ".xlsx. Try closing file and trying again."
                         )
                     # TODO Add strings using https://stackoverflow.com/questions/43537598/write-strings-text-and-pandas-dataframe-to-excel
-            print("Created Excel File " + str(compare_results_path))
-            # TODO Remove or enable "Repeat option"
+            NV_run.run_msg = ("Created " + str(compare_results_path))
+            NV_run.run_msg(gui, msg)
         except:
-            print(
+            msg = (
                 "CRITICAL ERROR! Constructing (not saving) Excel File"
                 + file_name
-                + ".xlsx."
+                + ".xlsx. Close the file if opened."
             )
+            NV_run.run_msg(gui, msg)
 
 def dictionary_to_list(dic):
     new_list = []

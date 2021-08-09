@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pandas as pd
 
-import NV_compare
 import NV_average
+import NV_compare
 import NV_excel as nve
 import NV_file_manager as nfm
 # Import of scripts
@@ -17,8 +17,7 @@ def single_sim(settings, gui=""):
     # Adjustement if multiple files are being processed, simultaneously
     if "Compare" in settings["output"]:
         try:
-            NV_compare.compare_outputs(settings)
-            run_msg(gui, "Succesffully compared first two files")
+            NV_compare.compare_outputs(settings, gui)
             if "Excel" in settings["output"]:
                 settings["output"].remove("Excel")
             if "Visio" in settings["output"]:
@@ -27,14 +26,10 @@ def single_sim(settings, gui=""):
             return
         except:
             run_msg(gui, "ERROR! Could not compare files.")
-            return
+#            return
     if "Average" in settings["output"]:
         try:
-            num = len(settings['ses_output_str'])
-            text = "Averaging " + str(num) + "output files. Please wait."
-            run_msg(gui, text)
-            NV_average.average_outputs(settings)
-            run_msg(gui, "Succesffully averaged files.")
+            NV_average.average_outputs(settings, gui)
             if "Excel" in settings["output"]:
                 settings["output"].remove("Excel")
             if "Visio" in settings["output"]:
@@ -51,11 +46,10 @@ def single_sim(settings, gui=""):
     if len(data) == 0:
         run_msg(gui, "Error parsing data")
         return
-    #Don't run Excel if Average is performed. Excel is created in average
-    elif "Excel" in settings["output"]:  # Create Excel File
+    if "Excel" in settings["output"]:  # Create Excel File
         try:
             nve.create_excel(settings, data, output_meta_data)
-            run_msg(gui, "Created Excel File " + file_path.stem + ".xlsx")
+            #run_msg(gui, "Created Excel File " + file_path.stem + ".xlsx")
         except:
             run_msg(
                 gui,
@@ -65,8 +59,7 @@ def single_sim(settings, gui=""):
             )
     if "Visio" in settings["output"]:
         try:
-            nvv.create_visio(settings, data, output_meta_data)
-            run_msg(gui, "Created Visio File for " + file_path.stem)
+            nvv.create_visio(settings, data, output_meta_data, gui)
         except:
             run_msg(
                 gui,
@@ -98,7 +91,7 @@ def multiple_sim(settings, gui=""):
         # TODO Add messages to GUI when processing multiple files, with multiple processors
         run_msg(
             gui,
-            "Status window doesn't monitor post-processing.\n See terminal window and Windows's Task Manager to watch progress",
+            "Status window doesn't monitor post-processing.\nSee terminal window and Windows's Task Manager to watch progress",
         )
         pool = multiprocessing.Pool(num_of_p, maxtasksperchild=1)
         for name in settings["ses_output_str"]:
