@@ -49,17 +49,20 @@ def check_authorized_computer(license_info):
     available = validation_info['data']['attributes']['maxMachines']
     in_use = validation_info['data']['relationships']['machines']['meta']['count']
     organization = validation_info['data']['attributes']['metadata']['organization']
-    if validation_code == 'NOT_FOUND':
+    if validation_code == "VALID":
+        return True, organization
+    elif validation_code == 'NOT_FOUND':
+        messagebox.showinfo(message=("Never Gray has no record of this license"))
         system_exit("There is no record of authorized_computer_key")
     elif validation_code in activation_is_required:
         if in_use >= available:
             msg = (f"Currently, {organization} is using {in_use} of {available} Authorized Computers.\n"
                    "Please purchase additional licenses.")
             messagebox.showinfo(message=msg)
-            system_exit("The license is no longer active")
+            system_exit("This not an Authorized Computer")
         elif in_use < available:
             msg = (f"Currently, {organization} is using {in_use} of {available} Authorized Computers.\n"
-                   "Do you want to License this computer as an Authorized Computer?")
+                   "Do you want use a License to make this an Authorized Computer?")
             answer = messagebox.askyesno(
                 message=msg, icon='question', title='Authorize Computer?')
             if answer == False:
@@ -73,7 +76,11 @@ def check_authorized_computer(license_info):
                     messagebox.showinfo(
                         message="Could not Authorize this Computer. Contact Never Gray for help")
                     system_exit("Cannot activate license")
-    return True, organization
+                else:
+                    return check_authorized_computer(license_info)
+    else:
+        system_exit("Cannot validate Authorized Computer status")
+
 
 
 def checkout_floating_license(license_info):
@@ -83,7 +90,9 @@ def checkout_floating_license(license_info):
     validation_code, license_id, validation_info = keygen.validate_license_key_with_fingerprint(
         license_info["floating_key"], machine_fingerprint)
     organization = 'Not available'
-    if validation_code == 'NOT_FOUND':
+    if validation_code == 'VALID':
+        return True, organization
+    elif validation_code == 'NOT_FOUND':
         system_exit("No floating license found")
     elif validation_code in activation_is_required:
         available = validation_info['data']['attributes']['maxMachines']
@@ -92,17 +101,17 @@ def checkout_floating_license(license_info):
         # TODO Add check for number of licenses available
         machine_id = keygen.activate_machine_for_license(
             license_id, machine_fingerprint, license_info["floating_token"])
-        if machine_id == None:
-            if available >= in_use:
-                msg = (f"Currently, {organization} is using {in_use} of {available} Floating Licenses.\n"
-                       "Please purchase additional licenses.")
-                messagebox.showinfo(message=msg)
-                system_exit("Maximum Floating Licenses in Use")
-            else:
-                messagebox.showinfo(
-                    message="Error occured while checking out floating license.")
-                system_exit("Error checking out floating license")
-    return True, organization
+        if machine_id == None and available >= in_use:
+            msg = (f"Currently, {organization} is using all {available} Floating Licenses.\n"
+                    "Wait for a floating license to become free or purchase additional licenses.")
+            messagebox.showinfo(message=msg)
+            system_exit("Maximum Floating Licenses in Use")
+        else:
+            return checkout_floating_license(license_info)
+    else:
+        msg = (f"ERROR in checkout_floating_license. Try again and report to Never Gray.")
+        messagebox.showinfo(message=msg)
+        system_exit("Maximum Floating Licenses in Use")
 
 def main(testing=False):
     machine_fingerprint = hashlib.sha256(
@@ -121,7 +130,6 @@ def main(testing=False):
     # Start a heartbeat ping loop
     if not floating_computer_status:
         system_exit("Error checking out Floating License")
-
     keygen.maintain_hearbeat_for_machine(
         machine_fingerprint, license_info["floating_token"])
     root = Tk()
@@ -134,3 +142,4 @@ def main(testing=False):
 if __name__ == "__main__":
     multiprocessing.freeze_support() #TODO Experiement if this command is necessary
     main(testing=False)
+ 

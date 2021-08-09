@@ -70,7 +70,7 @@ class start_screen:
         ent_file = ttk.Entry(frm_ses, textvariable=self.path_file)
         ent_files = ttk.Entry(frm_ses, textvariable=self.path_files)
         ent_folder = ttk.Entry(frm_ses, textvariable=self.path_folder)
-        # SES Output Frame creation Remove line wrap from output file
+        # SES Output Frame creation
         r = 0
         frm_ses.grid(column=0, row=r)
         rb_file.grid(column=0, row=r, sticky=[E], pady=py, padx="0")
@@ -169,8 +169,14 @@ class start_screen:
         floats_available = validation_info['data']['attributes']['maxMachines']
         floats_in_use = validation_info['data']['relationships']['machines']['meta']['count']
         authorized_company = self.license_info["Authorized_Company"]
-        msg = f"{authorized_company} is using {floats_in_use} of {floats_available} floating licenses."
-        messagebox.showinfo(message=msg)
+        msg_line=[]
+        msg_line.append(f"Click OKAY to accept the license agreement: \n'Never Gray Software License Agreement for Next-Vis'")
+        msg_line.append("Otherwise, click Cancel to exit")
+        msg_line.append(f"\n{floats_in_use} of {floats_available} floating licenses in use for {authorized_company}.")
+        msg = "\n".join(msg_line)
+        answer = messagebox.askokcancel(title='Use and accept license', message=msg, icon ='info')
+        if not answer:
+            system_exit("User did not accept license agreement")
 
     def check_floating_license(self, *args):
         active_license = keygen.ping_heartbeat_for_machine(

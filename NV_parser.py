@@ -459,7 +459,7 @@ def parse_file(file_path, gui=""):  # Parser
             to_index=["Time", "ZN", "Segment", "Sub"],
         )
         df_ecs.name = "ECS"
-        parser_msg(gui, "Read data form " + file_name)
+        parser_msg(gui, "Read data from " + file_name)
         # Reduce memory requirements when multiple files are being processed.
         data_segment = []
         data_sub = []

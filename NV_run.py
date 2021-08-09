@@ -48,7 +48,7 @@ def single_sim(settings, gui=""):
         return
     if "Excel" in settings["output"]:  # Create Excel File
         try:
-            nve.create_excel(settings, data, output_meta_data)
+            nve.create_excel(settings, data, output_meta_data, gui)
             #run_msg(gui, "Created Excel File " + file_path.stem + ".xlsx")
         except:
             run_msg(
@@ -91,7 +91,7 @@ def multiple_sim(settings, gui=""):
         # TODO Add messages to GUI when processing multiple files, with multiple processors
         run_msg(
             gui,
-            "Status window doesn't monitor post-processing.\nSee terminal window and Windows's Task Manager to watch progress",
+            "Status window doesn't monitor post-processing.\nSee terminal window and Windows's Task Manager to watch progress.",
         )
         pool = multiprocessing.Pool(num_of_p, maxtasksperchild=1)
         for name in settings["ses_output_str"]:

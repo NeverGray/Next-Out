@@ -190,9 +190,7 @@ def write_visio(vxmls, visio_template, new_visio ,gui=""):
                 + str(new_visio)
                 + ". Try closing the file and process again."
             )
-            NV_run.run_msg(gui, msg)
-                
-    new_visio_str = str(new_visio)
+            NV_run.run_msg(gui, msg)         
     try:
         with zipfile.ZipFile(new_visio, "a") as zappend:
             for name, vxml in vxmls.items():

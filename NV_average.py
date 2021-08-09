@@ -17,7 +17,6 @@ def average_outputs(settings, gui=""):
     else:
         Excel = False
     # For each ses_output, add dataframes to a Dictionary organized by data type ('SSA', 'SST', etc...) 
-    # TODO Use multiprocessor
     num = len(settings['ses_output_str'])
     msg = f'Finding mean, max, and min of {num} output files.'
     NV_run.run_msg(gui, msg)

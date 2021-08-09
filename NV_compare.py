@@ -1,3 +1,4 @@
+import datetime
 from io import BytesIO
 from pathlib import Path
 
@@ -19,16 +20,12 @@ def compare_outputs(settings, gui=""):
     base_file_name = base_file.name
     second_file = Path(settings['ses_output_str'][1])
     second_file_name = second_file.name
-    base_df, base_output_meta_data = nvp.parse_file(base_file)
-    msg = base_file_name + " parsed."
-    NV_run.run_msg(gui, msg)
-    if Excel:
-        NV_excel.create_excel(settings, base_df, base_output_meta_data)
-    second_df, second_output_meta_data = nvp.parse_file(second_file)
-    msg = second_file_name + " parsed."
-    NV_run.run_msg(gui, msg)
+    base_df, base_output_meta_data = nvp.parse_file(base_file, gui)
     if Excel:
         NV_excel.create_excel(settings, base_df, base_output_meta_data, gui)
+    second_df, second_output_meta_data = nvp.parse_file(second_file, gui)
+    if Excel:
+        NV_excel.create_excel(settings, base_df, second_output_meta_data, gui)
     base_data = dictionary_to_list(base_df)
     second_data = dictionary_to_list(second_df)
     num_df = len(base_data)
@@ -64,12 +61,10 @@ def compare_outputs(settings, gui=""):
             file_name = base_file.stem + "_to_" + second_file.stem
             file_name = file_name[0:250] #make name isn't too long
             file_name_4_path = file_name + ".xlsx"
-            #TODO update to use 'settings' and select output folder
             ses_output_str = settings['ses_output_str'][0]
             parent = str(Path(ses_output_str).parent)
             base_output_meta_data['file_path'] = Path(parent + '/' + file_name_4_path)
             compare_results_path = NV_run.get_results_path2(settings, base_output_meta_data, ".xlsx")
-            #compare_results_path = second_file.parent/Path(file_name_4_path)
             p_e_text = (
                 "Percent Error = Absolute value of [(Difference) / ("
                 + base_name
@@ -153,8 +148,8 @@ def compare_outputs(settings, gui=""):
                     )
                     startcol_num = (data_col * n + n) + 1
                     ws.cell(row=data_row, column=startcol_num, value=base_name)
-                    writer.book.properties.creator = "Next Vis Beta"
-                    writer.book.properties.title = file_name
+                writer.book.properties.creator = "Next Vis Beta"
+                writer.book.properties.title = file_name
                 writer.save()
                 # From https://techoverflow.net/2019/07/24/how-to-write-bytesio-content-to-file-in-python/
                 # Copy the BytesIO stream to the output file
@@ -168,7 +163,7 @@ def compare_outputs(settings, gui=""):
                             + ".xlsx. Try closing file and trying again."
                         )
                     # TODO Add strings using https://stackoverflow.com/questions/43537598/write-strings-text-and-pandas-dataframe-to-excel
-            NV_run.run_msg = ("Created " + str(compare_results_path))
+            msg = ("Created " + str(compare_results_path))
             NV_run.run_msg(gui, msg)
         except:
             msg = (
@@ -194,8 +189,8 @@ def remove_columns(df_list):
 if __name__ == "__main__":
     directory_str = 'C:/Temp/Comparison/'
     ses_output_list = [
-        directory_str + 'sinorm-detailed.OUT', 
-        directory_str + 'sinorm-detailed018.OUT'
+        directory_str + 'NV-6p0-base.out', 
+        directory_str + 'NV-6p0-second.out'
         ]
     settings = {
         "ses_output_str": ses_output_list,
@@ -206,4 +201,12 @@ if __name__ == "__main__":
         "control": "First",
         "output": ["Visio","Average","Excel"],
     }
+    now1 = datetime.datetime.now()
+    print ("start date and time : ")
+    print (now1.strftime("%Y-%m-%d %H:%M:%S"))
     compare_outputs(settings)
+    now2 = datetime.datetime.now()
+    print ("end date and time : ")
+    print (now2.strftime("%Y-%m-%d %H:%M:%S"))
+    print(now2-now1)
+
