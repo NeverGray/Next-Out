@@ -6,7 +6,6 @@ import pandas as pd
 from openpyxl.styles import Font
 
 import NV_excel
-import NV_file_manager as nfm
 import NV_parser as nvp
 import NV_run
 
@@ -148,7 +147,7 @@ def compare_outputs(settings, gui=""):
                     )
                     startcol_num = (data_col * n + n) + 1
                     ws.cell(row=data_row, column=startcol_num, value=base_name)
-                writer.book.properties.creator = "Next Vis Beta"
+                writer.book.properties.creator = "Next Vis Beta 030"
                 writer.book.properties.title = file_name
                 writer.save()
                 # From https://techoverflow.net/2019/07/24/how-to-write-bytesio-content-to-file-in-python/

@@ -1,8 +1,6 @@
-import os
 import re
 import xml.etree.ElementTree as ET
 import zipfile
-from io import BytesIO
 
 import pandas as pd
 
@@ -176,6 +174,7 @@ def SimInfo_NV01(Shape, find_string, ns, value):
 
 def write_visio(vxmls, visio_template, new_visio ,gui=""):
     # Sample Zip source code from https://stackoverflow.com/questions/513788/delete-file-from-zipfile-with-the-zipfile-module
+    # TODO Write file to memory, BytesIO, then to file.
     with zipfile.ZipFile(visio_template, "r") as zin:
         try:
             with zipfile.ZipFile(new_visio, "w") as zout:

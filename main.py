@@ -29,8 +29,9 @@ def read_license_file(folder_path=''):
     if len(dict_data) > 0:
         return dict_data
     else:
-        print('Error reading in license file.')
-        system_exit("Error reading license file.")
+        msg = 'Error reading in license file.'
+        messagebox.showinfo(message=msg)
+        system_exit(msg)
 
 
 def check_authorized_computer(license_info):
@@ -79,6 +80,8 @@ def check_authorized_computer(license_info):
                 else:
                     return check_authorized_computer(license_info)
     else:
+        msg = f'ERROR with Authorized Computer: {validation_code}'
+        messagebox.showinfo(message=msg)
         system_exit("Cannot validate Authorized Computer status")
 
 
@@ -93,6 +96,8 @@ def checkout_floating_license(license_info):
     if validation_code == 'VALID':
         return True, organization
     elif validation_code == 'NOT_FOUND':
+        msg = "No floating license found"
+        messagebox.showinfo(message=msg)
         system_exit("No floating license found")
     elif validation_code in activation_is_required:
         available = validation_info['data']['attributes']['maxMachines']
@@ -109,9 +114,9 @@ def checkout_floating_license(license_info):
         else:
             return checkout_floating_license(license_info)
     else:
-        msg = (f"ERROR in checkout_floating_license. Try again and report to Never Gray.")
+        msg = (f"ERROR in checkout_floating_license: {validation_code}")
         messagebox.showinfo(message=msg)
-        system_exit("Maximum Floating Licenses in Use")
+        system_exit(msg)
 
 def main(testing=False):
     machine_fingerprint = hashlib.sha256(
