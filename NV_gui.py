@@ -17,7 +17,7 @@ class start_screen:
         p = "5"  # padding
         py = "5"  # vertical padding
         px = "5"
-        root.title("Next-Vis Beta 030")
+        root.title("Next-Vis")
         # root.iconbitmap('icon4.ico')
         # Eliminate icon
         # TODO Replace Icon in title bar with NV icon (icon4.ico)
@@ -171,7 +171,7 @@ class start_screen:
         authorized_company = self.license_info["Authorized_Company"]
         expiry = validation_info['data']['attributes']['expiry'][:10]
         msg_line=[]
-        msg_line.append(f"Click OKAY to accept the license agreement: \n'Never Gray Software License Agreement for Next-Vis'")
+        msg_line.append(f'Click OKAY to accept "Next-Vis License Agrement"')
         msg_line.append("Otherwise, click Cancel to exit")
         msg_line.append(f"\n{floats_in_use} of {floats_available} floating licenses in use for {authorized_company}.")
         msg_line.append(f'License Expires on {expiry}.')

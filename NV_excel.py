@@ -12,7 +12,7 @@ SHEET_NAMES ={
     "TRA" :"Second-by-second Train Data (TRA)",
     "SA"  :"Summary of Aerodynamic Data (SA)",
     "ST"  :"Summary of Thermodynamic Data (ST)",
-    "PER" :"Percentage of `Time Temperature is Above (PER)",
+    "PER" :"Percentage of Time Temperature is Above (PER)",
     "TES" :"Train Energy Summary (TES)",
     "HSA" :"Heat Sink Analysis (for uncontrolled zones) (HSA)",
     "ECS" :"Environmental Control System Load Estimates (ECS)"

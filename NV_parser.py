@@ -111,7 +111,7 @@ INPUT = {
 # Used in the function select_version
 IP_INDICATION = [[1, "SES VER 4"], [52, "VERSION 4."], [9, "4.2"], [61, "4.2"]]
 
-SUM = {  # TODO replace sum_time value with PIT value of PIT['sum_time']?
+SUM = {
     "sum_time": re.compile(
         r"SUMMARY OF SIMULATION FROM\s+\d+\.\d+\sTO\s+(?P<Time>\d+.\d{2})\sSECONDS"
     ),  # Find the first time Simulation
@@ -189,28 +189,26 @@ SUM = {  # TODO replace sum_time value with PIT value of PIT['sum_time']?
         r"EXCEEDS\s+(?P<Outflow_Velocity_Exceedance>-?\d+\.\d+).+(?:\d+)\s-\s*(?P<Segment>\d+)\s{57,}(?P<Percentage_of_Velocity_Exceedance>-?\d+\.\d*)$"
     ),
     "HTPB": re.compile(
-        r"TRAIN PROPULSION AND BRAKING SYSTEM HEAT\s+(?P<HTPB>-?\d+\.\d*)$"
+        r"TRAIN PROPULSION AND BRAKING SYSTEM HEAT\s+(?P<Train_Propulsion__and_Braking_Heat>-?\d+\.\d*)$"
     ),
     "HTA": re.compile(
-        r"TRAIN AUXILIARY SYSTEM AND PASSENGER HEAT\s+(?P<HTAS>-?\d+\.\d*)\s+(?P<HTAL>-?\d+\.\d*)$"
+        r"TRAIN AUXILIARY SYSTEM AND PASSENGER HEAT\s+(?P<Train_Aux_and_Passenger_Sensible>-?\d+\.\d*)\s+(?P<Train_Aux_and_Passenger_Latent>-?\d+\.\d*)$"
     ),
     "HSS": re.compile(
-        r"SEGMENT STEADY-STATE HEAT SOURCES\s+(?P<HSS>-?\d+\.\d*)\s+(?P<HSL>-?\d+\.\d*)$"
+        r"SEGMENT STEADY-STATE HEAT SOURCES\s+(?P<Steady_State_Heat_Sensible>-?\d+\.\d*)\s+(?P<Steady_State_Heat_Latent>-?\d+\.\d*)$"
     ),
     "HU": re.compile(
-        r"SEGMENT UNSTEADY-STATE HEAT SOURCES, EVAPORATION AND VISCOUS HEATING\s+(?P<HUS>-?\d+\.\d*)\s+(?P<HUL>-?\d+\.\d*)$"
+        r"SEGMENT UNSTEADY-STATE HEAT SOURCES, EVAPORATION AND VISCOUS HEATING\s+(?P<Unsteady_State_Heat_Sensible>-?\d+\.\d*)\s+(?P<Unsteady_State_Heat_Latent>-?\d+\.\d*)$"
     ),
     "HE": re.compile(
-        r"SEGMENT ENVIRONMENTAL CONTROL SYSTEM\s+(?P<HES>-?\d+\.\d*)\s+(?P<HEL>-?\d+\.\d*)$"
+        r"SEGMENT ENVIRONMENTAL CONTROL SYSTEM\s+(?P<Environental_Control_System_Sensible>-?\d+\.\d*)\s+(?P<Environental_Control_System_Latent>-?\d+\.\d*)$"
     ),
     "HC": re.compile(
-        r"SEGMENT COOLING PIPES\s+(?P<HCS>-?\d+\.\d?)\s+(?P<HCL>-?\d+\.\d*)$"
+        r"SEGMENT COOLING PIPES\s+(?P<Cooling_Pipes_Sensible>-?\d+\.\d?)\s+(?P<Cooling_Pipes_Latent>-?\d+\.\d*)$"
     ),
-    "HS": re.compile(r"HEAT SINK\s+(?P<HS>-?\d+\.\d*)$"),
+    "HS": re.compile(r"HEAT SINK\s+(?P<Heat_Sink>-?\d+\.\d*)$"),
     "train_energy": re.compile(r"\s{50,}TRAIN ENERGY SUMMARY"),
     "heat_sink": re.compile(r"\s{50,}SES HEAT SINK ANALYSIS")
-    # May need to update 'segmentdetail' in SI to Match IP by replace '-..1' with '-\s{2}1'
-    # test parser using https://www.debuggex.com/
 }
 
 PERCENTAGE = {
@@ -445,7 +443,7 @@ def parse_file(file_path, gui=""):  # Parser
         df_sub.name = "ST"
         df_percentage = to_dataframe2(data_percentage)
         df_percentage.name = "PER"
-        df_te = to_dataframe2(data_te, to_integers=["ES"], to_index=["Time", "ES"])
+        df_te = to_dataframe2(data_te, to_integers=["Energy_Sector"], to_index=["Time", "Energy_Sector"])
         df_te.name = "TES"
         df_hsa = to_dataframe2(
             data_hsa,
@@ -647,23 +645,20 @@ def sum_parser(lines, time):  # Parser for summary portion of output, between ti
         m = False
         if lines[i] != "\n":
             for key, rx in SUM.items():
-                m = rx.search(
-                    lines[i]
-                )  # using .match searched the beginning of the line
+                # using .match searched the beginning of the line
+                m = rx.search(lines[i])  
                 if m is not None:
                     m_dict = m.groupdict()
                     m_dict["Time"] = time
                     if key == "sum_time":  # sets time interval
                         time = float(m.group("Time"))
                         m_dict["Time"] = time
-                    elif (
-                        key == "percentage"
-                    ):  # Found precentage of time temperature is above data
+                    # Found precentage of time temperature is above data
+                    elif (key == "percentage"):  
                         start_line = i + 2
                         end_line = start_line + 3
-                        while (
-                            lines[end_line] != "\n"
-                        ):  # Find the lines containing the percentage of time data
+                        # Find the lines containing the percentage of time data
+                        while (lines[end_line] != "\n"):  
                             end_line += 1
                             assert i < (len(lines) - 1), (
                                 "Error with precentage of time temperature is above, line "
@@ -673,7 +668,6 @@ def sum_parser(lines, time):  # Parser for summary portion of output, between ti
                         for item in percentage:
                             data_percentage.append(item)
                         i = end_line
-                    # TODO Update function
                     elif key == "train_energy":
                         start_line = i
                         end_line = start_line
@@ -690,7 +684,7 @@ def sum_parser(lines, time):  # Parser for summary portion of output, between ti
                             end_line += 1
                             assert i < (
                                 len(lines) - 1
-                            ), "Error with Train Energeny Summary, Line " + str(i)
+                            ), "Error with Train Energny Summary, Line " + str(i)
                         train_energy = te_parser(lines[start_line:end_line], time)
                         for item in train_energy:
                             data_te.append(item)
@@ -707,6 +701,7 @@ def sum_parser(lines, time):  # Parser for summary portion of output, between ti
                         i = end_line
                     elif not "Segment" in m_dict:
                         m_dict["Segment"] = last_segment
+                        data_segment.append(m_dict)
                     elif not "Sub" in m_dict:  # no subsegment information
                         data_segment.append(m_dict)
                         last_segment = m_dict["Segment"]
@@ -734,7 +729,7 @@ def percentage_parser(p_lines, time):
 
 
 def te_parser(p_lines, time):
-    TES = {
+    '''TES = {
         "es": re.compile(r"\s+ENERGY SECTOR\s*(?P<ES>\d+)$"),
         "et": re.compile(
             r"\s+PROPULSION ENERGY FROM THIRD RAIL\s+(?P<ET>-?\d*\.\d*)\s+"
@@ -746,7 +741,7 @@ def te_parser(p_lines, time):
         "er": re.compile(
             r"\s+REGENERATED ENERGY ACCEPTED BY THIRD RAIL\s+(?P<ER>-?\d*\.\d*)\s+"
         ),
-    }
+    }'''
     # TODO write pseduo code
     i = 7
     te_list = []
@@ -817,8 +812,7 @@ def parser_msg(gui, text):
 
 
 if __name__ == "__main__":
-    path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/coolpipe.out"
+    path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/sinorm-detailed.out"
     file_path = Path(path_string)
-    list, output_meta_data = parse_file(file_path)
+    d, output_meta_data = parse_file(file_path)
     print(list, output_meta_data, "test finished", sep = '\n')
-
