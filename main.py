@@ -138,7 +138,6 @@ def main(testing=False):
     keygen.maintain_hearbeat_for_machine(
         machine_fingerprint, license_info["floating_token"])
     root = Tk()
-    root.iconbitmap("icon4.ico")
     nvg.start_screen(root, license_info)
     # Passing variable to closing function from https://stackoverflow.com/questions/49220464/passing-arguments-in-tkinters-protocolwm-delete-window-function-on-python
     root.mainloop()

@@ -289,17 +289,20 @@ class start_screen:
                     nvr.single_sim(self.settings, gui=self)
                 else:
                     nvr.multiple_sim(self.settings, gui=self)
+                self.gui_text("Post processing completed.")
             except:
                 self.gui_text(
                     "Error after validation, before single_sim or multiple_sim"
                 )
+        else:
+            self.gui_text("Error with Validation of Settings")
         self.btn_run["state"] = NORMAL
         self.btn_run["text"] = "Run"
-        self.gui_text("Post processing completed.")
 
     def validation(self, settings):
         valid = True
         msg = ""
+        # Check if settings are valid for Visio Files
         if "Visio" in settings["output"]:
             if settings["visio_template"] == "":
                 msg = msg + "No Visio Template File is Specified. \n"
@@ -309,10 +312,14 @@ class start_screen:
                 if time.isnumeric():
                     self.settings["simtime"] = time
                 else:
-                    msg = msg + "Specify a number for Visio's Simulation Time"
+                    msg = msg + "Specify a number for Visio's Simulation Time\n"
                     valid = False
         if settings["ses_output_str"] == "":
             msg = msg + "No SES output file or folders are specified."
+            valid = False
+        results_folder_path = Path(self.settings["results_folder_str"])
+        if not results_folder_path.is_dir():
+            msg = msg + "Folder to write results does not exist\n"
             valid = False
         if not valid:
             messagebox.showinfo(message=msg)
