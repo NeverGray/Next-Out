@@ -1,11 +1,20 @@
+import base64
 import json
+import os
 import sys
 import threading
 
+import ed25519
 import requests
+
+#from cryptography.exceptions import InvalidSignature
+#from cryptography.hazmat.backends import default_backend
+#from cryptography.hazmat.primitives import hashes, serialization
+#from cryptography.hazmat.primitives.asymmetric import padding
 
 KEYGN_ACCOUNT_ID = "11635372-552d-48aa-aa1b-8b927fcaccd2"
 
+KEYGEN_PUBLIC_KEY = '52bd96f2e1649060125967aa9a6e177c59ab665c0fde1ebf723b646ef3cb073c'
 
 def to_error_message(errs):
     """
@@ -178,3 +187,34 @@ def maintain_hearbeat_for_machine(machine_id, keygen_activation_token):
         sys.exit("Heart beat failed to ping.")
 
     timer.start()
+
+def verify_ed25519(sig, msg):
+  # Load the hex-encoded verify key from the env
+  verify_key = ed25519.VerifyingKey(
+    KEYGEN_PUBLIC_KEY.encode(),
+    encoding='hex'
+  )
+
+  # Verify the license
+  try:
+    verify_key.verify(sig, msg)
+
+    return True
+  except ed25519.BadSignatureErr:
+    return False
+
+def verify_offline_license_key(license_key):
+
+    # Split license key to obtain key and signature, then decode base64url encoded values
+    signing_data, enc_sig = license_key.split(".")
+    prefix, enc_key       = signing_data.split("/")
+    assert prefix == 'key', 'license key prefix %s is invalid' % prefix
+
+    sig = base64.urlsafe_b64decode(enc_sig)
+    key = base64.urlsafe_b64decode(enc_key)
+
+    ok = verify_ed25519(sig, ("key/%s" % enc_key).encode())
+
+    key_info = json.loads(key.decode("utf-8"))
+
+    return ok, key_info

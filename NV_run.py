@@ -39,8 +39,8 @@ def single_sim(settings, gui=""):
         except:
             run_msg(gui, "ERROR! Could not average files.")
             return
-    #TODO Get "Run to work with a string in file_path
-    file_path = Path(settings['ses_output_str'])
+    #TODO Works on first file in the list
+    file_path = Path(settings['ses_output_str'][0])
     data, output_meta_data = nvp.parse_file(file_path, gui)
     file_name = file_path.name
     if len(data) == 0:
@@ -65,7 +65,7 @@ def single_sim(settings, gui=""):
                 gui,
                 "ERROR creating Visio file for "
                 + file_name
-                + "Try closing the and process again",
+                + ". Try closing the and process again",
             )
 
 def multiple_sim(settings, gui=""):
@@ -91,14 +91,14 @@ def multiple_sim(settings, gui=""):
         # TODO Add messages to GUI when processing multiple files, with multiple processors
         run_msg(
             gui,
-            "Status window doesn't monitor post-processing.\nSee terminal window and Windows's Task Manager to watch progress.",
+            "Status window doesn't monitor post-processing on multiple threads.\nSee terminal window and Windows's Task Manager to watch progress.",
         )
         pool = multiprocessing.Pool(num_of_p, maxtasksperchild=1)
         for name in settings["ses_output_str"]:
             # Reference2 code for multiprocess https://pymotw.com/2/multiprocessing/basics.html
             # Another code for multiprocessing https://stackoverflow.com/questions/20886565/using-multiprocessing-process-with-a-maximum-number-of-simultaneous-processes
             single_settings = copy.copy(settings)
-            single_settings["ses_output_str"] = name
+            single_settings["ses_output_str"] = [name]
             pool.apply_async(single_sim, args=(single_settings,))
         pool.close()
         pool.join()

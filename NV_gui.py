@@ -1,3 +1,5 @@
+import datetime
+import os
 from pathlib import Path
 from sys import exit as system_exit
 from tkinter import *
@@ -17,7 +19,7 @@ class start_screen:
         p = "5"  # padding
         py = "5"  # vertical padding
         px = "5"
-        root.title("Next-Vis")
+        root.title("Next-Vis 1.00")
         # root.iconbitmap('icon4.ico')
         # Eliminate icon
         # TODO Replace Icon in title bar with NV icon (icon4.ico)
@@ -39,7 +41,7 @@ class start_screen:
             frm_pp, text="Visio", variable=self.cbo_visio, onvalue="Visio", offvalue=""
         )
         cb_average = ttk.Checkbutton(
-            frm_pp, text="Staggered\nheadeways\nmean, max, min", variable=self.cbo_average, onvalue="Average", offvalue=""
+            frm_pp, text="Staggered\nheadways\nmean, max, min", variable=self.cbo_average, onvalue="Average", offvalue=""
         )
         cb_compare = ttk.Checkbutton(
             frm_pp,
@@ -164,17 +166,21 @@ class start_screen:
         # root.maxsize(1080,385) worried about scaling on other monitors
 
     def display_validation_info(self, *args):
-        validation_code, license_id, validation_info = keygen.validate_license_key_with_fingerprint(
-            self.license_info["floating_key"], self.license_info['machine_fingerprint'])
-        floats_available = validation_info['data']['attributes']['maxMachines']
-        floats_in_use = validation_info['data']['relationships']['machines']['meta']['count']
-        authorized_company = self.license_info["Authorized_Company"]
-        expiry = validation_info['data']['attributes']['expiry'][:10]
         msg_line=[]
         msg_line.append(f'Click OKAY to accept "Next-Vis License Agrement"')
         msg_line.append("Otherwise, click Cancel to exit")
-        msg_line.append(f"\n{floats_in_use} of {floats_available} floating licenses in use for {authorized_company}.")
-        msg_line.append(f'License Expires on {expiry}.')
+        if self.license_info['type'] == 'Floating':
+            validation_code, license_id, validation_info = keygen.validate_license_key_with_fingerprint(
+                self.license_info["floating_key"], self.license_info['machine_fingerprint'])
+            floats_available = validation_info['data']['attributes']['maxMachines']
+            floats_in_use = validation_info['data']['relationships']['machines']['meta']['count']
+            authorized_company = self.license_info["Authorized_Company"]
+            expiry = validation_info['data']['attributes']['expiry'][:10]
+            msg_line.append(f"\n{floats_in_use} of {floats_available} floating licenses in use for {authorized_company}.")
+            msg_line.append(f'License Expires on {expiry}.')
+        else:
+            expiry = str(self.license_info['expiry'])
+            msg_line.append(f"\nOffline License Expires on {expiry}.")
         msg = "\n".join(msg_line)
         answer = messagebox.askokcancel(title='Use and accept license', message=msg, icon ='info')
         if not answer:
@@ -257,8 +263,6 @@ class start_screen:
         self.btn_run["text"] = "In-progress"
         self.btn_run["state"] = DISABLED
         self.ss.update()
-        if not self.check_floating_license():
-            system_exit("Floating License is not Active")
         pp_list = []
         pp_list.append(self.cbo_excel.get())
         pp_list.append(self.cbo_visio.get())
@@ -284,16 +288,20 @@ class start_screen:
             "output": pp_list,
         }
         if self.validation(self.settings):
-            try:
-                if (self.ses.get() == "File") or ("Average" in pp_list) or ("Compare" in pp_list):
-                    nvr.single_sim(self.settings, gui=self)
-                else:
-                    nvr.multiple_sim(self.settings, gui=self)
-                self.gui_text("Post processing completed.")
-            except:
-                self.gui_text(
-                    "Error after validation, before single_sim or multiple_sim"
-                )
+            # Check validity of license
+            if self.valid_license():
+                try:
+                    if (self.ses.get() == "File") or ("Average" in pp_list) or ("Compare" in pp_list):
+                        nvr.single_sim(self.settings, gui=self)
+                    else:
+                        nvr.multiple_sim(self.settings, gui=self)
+                    self.gui_text("Post processing completed.")
+                except:
+                    self.gui_text(
+                        "Error after validation, before single_sim or multiple_sim"
+                    )
+            else:
+                self.gui_text("Error Checking validity of license.")
         else:
             self.gui_text("Error with Validation of Settings")
         self.btn_run["state"] = NORMAL
@@ -317,10 +325,11 @@ class start_screen:
         if settings["ses_output_str"] == "":
             msg = msg + "No SES output file or folders are specified."
             valid = False
-        results_folder_path = Path(self.settings["results_folder_str"])
-        if not results_folder_path.is_dir():
-            msg = msg + "Folder to write results does not exist\n"
-            valid = False
+        if not self.settings["results_folder_str"] is None:
+            results_folder_path = Path(self.settings["results_folder_str"])
+            if not results_folder_path.is_dir():
+                msg = msg + "Folder to write results does not exist\n"
+                valid = False
         if not valid:
             messagebox.showinfo(message=msg)
         return valid
@@ -334,7 +343,8 @@ class start_screen:
 
     def get_ses_output_str(self, *args):
         if self.ses.get() == "File":
-            self.ses_output_str = self.path_file.get()
+            self.ses_output_str = []
+            self.ses_output_str.append(self.path_file.get())
         elif self.ses.get() == "Folder":
             self.ses_output_str = []
             folder_path = self.path_folder.get()
@@ -357,6 +367,26 @@ class start_screen:
                 self.results_folder_str = None
         else: #Default is same as SES output. Use empty string
             self.results_folder_str = None
+
+    def valid_license(self, *args):
+        if self.license_info['type'] == 'Floating':
+            ok = self.check_floating_license()
+            return ok
+        else:
+            delta = datetime.timedelta(1)
+            expiry = self.license_info['expiry']
+            for file_path in self.settings["ses_output_str"]:
+                file_time_seconds = os.path.getmtime(file_path)
+                file_date= datetime.date.fromtimestamp(file_time_seconds)
+                new_delta = expiry - file_date
+                if new_delta < delta:
+                    delta = new_delta
+            if delta < datetime.timedelta(0):
+                messagebox.showinfo(
+                message='Offline License is being used past the expiry date')
+                system_exit("License is expired")
+            else:
+                return True
 
 if __name__ == "__main__":
     main.main(False)

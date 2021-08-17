@@ -209,16 +209,16 @@ def create_visio(settings, data, output_meta_data, gui=""):
     vxmls = get_visXML(settings["visio_template"])  # gets the pages in the VISIO XML.
     for name, vxml in vxmls.items():
         vxmls[name] = emod_visXML(
-            vxmls[name], data, settings["ses_output_str"][:-4], settings["simtime"], output_meta_data
+            vxmls[name], data, settings["ses_output_str"][0][:-4], settings["simtime"], output_meta_data
         )
     write_visio(vxmls, settings["visio_template"], settings["new_visio"],gui)
 
 if __name__ == "__main__":
     file_path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/siinfern.out"
-    visio_template = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/sample012.vsdx"
+    visio_template = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/sample030.vsdx"
     results_folder_str = "C:/temp"
     settings = {
-        "ses_output_str": file_path_string,
+        "ses_output_str": [file_path_string],
         "visio_template": visio_template,
         "results_folder_str": results_folder_str,
         "simtime": 9999.0,
