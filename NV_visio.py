@@ -5,6 +5,7 @@ import zipfile
 import pandas as pd
 
 import NV_run
+import NV_settings
 
 try:
     import zlib
@@ -70,8 +71,8 @@ def emod_visXML(vxml, data, ses_output_str="Not Available", simtime=0.00, output
         ShapeChilds = P1root.findall(find_string, ns)
         if ShapeChilds:
             for ShapeChild in ShapeChilds:
-                ShapeChild = NV01_text(ShapeChild, find_string, ns, value)
-    # Update Sub-NV01The "../.." at the end of the string moves the selection up two tiers (Section, then shape)
+                ShapeChild = NV01_text(ShapeChild, ns, value)
+    # Update Sub-NV01 The "../.." at the end of the string moves the selection up two tiers (Section, then shape)
     for Shape in P1root.findall(".//Visio:Row[@N='NV01_SegID']../..", ns):
         # Get SegID and Sub-segment from XML
         try:
@@ -110,12 +111,43 @@ def emod_visXML(vxml, data, ses_output_str="Not Available", simtime=0.00, output
         for find_string, value in shape_dict.items():
             ShapeChild = Shape.find(find_string, ns)
             if ShapeChild:
-                ShapeChild = NV01_text(ShapeChild, find_string, ns, value)
+                ShapeChild = NV01_text(ShapeChild, ns, value)
         find_string = ".//Visio:Cell[@N='FlipX']"
         Shape = NV01_arrow(Shape, find_string, ns, flip)  # Flip arrow as needed
-
-    # Update Airflow-NV01
+    # Update Damper Shapes
+    for Shape in P1root.findall(".//Visio:Row[@N='Damper_Segment']../..", ns):
+        Shape = update_damper(Shape, output_meta_data['damper_position'], ns)
     return P1root
+
+def update_damper(shape, damper_position_dict, ns):
+    try:
+        SegID = int(shape.find(".//Visio:Row[@N='Damper_Segment']/Visio:Cell", ns).get("V")) 
+    except:
+        SegID = -1
+    status = damper_position_dict.get(SegID)
+    damper_settings = NV_settings.damper_settings.get(status)
+    shape_text = shape.find(".//Visio:Shape[@Name='NV01_Damper_Position']",ns)
+    shape_text = NV01_text(shape_text, ns, damper_settings['status'])
+    shape_child = shape.find(".//Visio:Shape[@Name='Damper_Closed_Lines']", ns)
+    line_shapes = shape_child.findall(".//Visio:Shape",ns)
+    for line_shape in line_shapes:
+        if line_shape.find(".//Visio:Cell[@N='LineColor']",ns) is None:
+            line_properties ={
+                'N':'LineColor',
+                'Y': damper_settings['line_color_v'],
+                'F':damper_settings['line_color_f']
+            }
+            ET.SubElement(line_shape,'Cell',attrib=line_properties)
+        else:
+            try:
+                line_shape.find(".//Visio:Cell[@N='LineColor']",ns).set('V',damper_settings['line_color_v'])
+                line_shape.find(".//Visio:Cell[@N='LineColor']",ns).set('F',damper_settings['line_color_f'])
+            except:
+                print('No LineColor cells are there')
+    '''#for shape_babe in shape_child.findall(".//Visio:Cell[@N='LineColor']", ns):
+    #    shape_babe.set("V",damper_settings['line_color_v'])
+    #    shape_babe.set("F",damper_settings['line_color_f'])'''
+    return shape
 
 
 def get_df_values(df, df_indexes, column_name):
@@ -139,7 +171,7 @@ def NV01_arrow(Shape, find_string, ns, flip):
         print("Error with NV01_arrow")
         return ShapeTemp
 
-def NV01_text(ShapeChild, find_string, ns, value):
+def NV01_text(ShapeChild, ns, value):
     ShapeTemp = ShapeChild
     try:
         ShapeBabe = ShapeChild.find(".//Visio:Text", ns)
@@ -215,8 +247,8 @@ def create_visio(settings, data, output_meta_data, gui=""):
 
 if __name__ == "__main__":
     file_path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/siinfern.out"
-    visio_template = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/sample030.vsdx"
-    results_folder_str = "C:/temp"
+    visio_template = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Projects and Issues/2021-09-01 Stencils/Damper_064_pp.vsdx"
+    results_folder_str = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Projects and Issues/2021-09-01 Stencils"
     settings = {
         "ses_output_str": [file_path_string],
         "visio_template": visio_template,
@@ -227,3 +259,4 @@ if __name__ == "__main__":
         "output": ["Visio"],
     }
     NV_run.single_sim(settings)
+    print('Finished')

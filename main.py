@@ -163,7 +163,7 @@ def main(testing=False):
             messagebox.showinfo(message=msg)
             system_exit(msg)
         elif license_info['machine_fingerprint'] != key_info['machine_fingerprint']:
-            msg = "Machine fingerprint do not match. Contact Never Gray for more information."
+            msg = "Machine fingerprint does not match license. Contact Never Gray for more information."
             messagebox.showinfo(message=msg)
             system_exit(msg)
         elif expiry - today < datetime.timedelta(0):

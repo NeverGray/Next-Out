@@ -94,6 +94,19 @@ INPUT = {
         r"INPUT VERIFICATION FOR (LINE SEGMENT|VENTILATION SHAFT)\s+\d+\s\-\s*(?P<segment>\d+)\s+(?P<title>\S.+)+FORM"
     ),
     "f12": re.compile(r"INPUT VERIFICATION OF CONTROL GROUP INFORMATION\s+FORM 12"),
+    "f5a": re.compile(
+        r"INPUT VERIFICATION FOR VENTILATION SHAFT\s+\d+\s\-\s*(?P<segment>\d+)\s+(?P<title>\S.+)+FORM"
+    ),
+    "f5d_head_loss": re.compile(
+        r"""(
+        .{18}\..{15}.{15}\.\d+\s{12,} #Left hand side of line
+        (?P<for_pos>\d+\.\d+)\s+
+        (?P<for_neg>\d+\.\d+)\s+
+        (?P<back_pos>\d+\.\d+)\s+
+        (?P<back_neg>\d+\.\d+)\n
+        )""",
+        re.VERBOSE
+    ),
     "sum_op": re.compile(
         r"""(
         \d+\s+     #Group Number
@@ -317,12 +330,18 @@ def parse_file(file_path, gui=""):  # Parser
         file_time_seconds = os.path.getmtime(file_path)
         file_time_str = datetime.datetime.fromtimestamp(file_time_seconds).strftime('%Y-%m-%d, %H:%M:%S')
         output_meta_data.update({"file_time": file_time_str})
-    i = 0  # Start at first line
+    # Read input verification information form outputfile
     version = select_version(lines)
     output_meta_data.update({"ses_version": version})
+    try:
+        damper_position_dict = get_form5(lines)
+        output_meta_data.update({"damper_position": damper_position_dict})
+    except:
+        msg = 'Error Processing Damper position'
+        parser_msg(gui, msg)
     m = None  # Sets the value equal to none to start while loop
-    # TODO get title information for Form 3 and 5
     rx = INPUT["f12"]  # Matching string for Form 12 Output
+    i = 0  # Start at first line
     while m is None and i < len(lines):
         m = rx.search(lines[i])
         i += 1
@@ -426,7 +445,6 @@ def parse_file(file_path, gui=""):  # Parser
         version,
     )
 
-    # TODO Create post process all dataframes
     if summary:
         df_segment = to_dataframe2(
             data_segment,
@@ -510,6 +528,31 @@ def get_segment_titles(lines):
         i += 1
     return segment_titles
 
+def get_form5(lines):
+    title_rx = INPUT["f5a"]
+    f5d_head_loss = INPUT["f5d_head_loss"]
+    time_rx = PIT["time"] #signals start of simualtion and end of input
+    time_match = None
+    i = 0
+    form5_data = {}
+    segment_number = 0
+    while time_match is None and i < len(lines):
+        title_match = title_rx.search(lines[i])
+        head_loss_match = f5d_head_loss.search(lines[i])
+        time_match = time_rx.search(lines[i])
+        if title_match is not None:
+            title_dict = title_match.groupdict()
+            segment_number = int(title_dict["segment"])
+            form5_data.update(
+                {segment_number: "OPEN"}
+            )
+        elif head_loss_match is not None:
+            head_loss_dict = head_loss_match.groupdict()
+            head_loss_list = list(map(float,head_loss_dict.values()))
+            if sum(head_loss_list) >= 1998:
+                form5_data[segment_number] = "CLOSED"
+        i +=1
+    return form5_data     
 
 def create_ss_dfs(
     data_pit, data_train, wall_pit, fluid_pit, duplicate_pit, segment_titles, version
