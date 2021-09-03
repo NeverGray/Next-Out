@@ -19,7 +19,7 @@ class start_screen:
         p = "5"  # padding
         py = "5"  # vertical padding
         px = "5"
-        root.title("Next-Vis 1.00")
+        root.title("Next-Vis 1.01")
         # root.iconbitmap('icon4.ico')
         # Eliminate icon
         # TODO Replace Icon in title bar with NV icon (icon4.ico)
@@ -88,13 +88,14 @@ class start_screen:
         self.btn_folder.grid(column=1, row=r, sticky=[E], pady=py, padx=px)
         ent_folder.grid(column=2, row=r, sticky=[E, W], pady=py, padx=px)
         frm_ses.columnconfigure(2, weight=1)
-        # VISIO Template
+        # VISIO Template - Row 1
         frm_visio = ttk.LabelFrame(
             self.ss, borderwidth=5, text="Visio Template", padding=p
         )
         btn_visio = ttk.Button(frm_visio, text="Select", command=self.get_visio_file)
         self.path_visio = StringVar()
         ent_visio = ttk.Entry(frm_visio, textvariable=self.path_visio)
+        # Visio Template - Row 2
         lbl_time = ttk.Label(frm_visio, text="Simulation Time: ")
         self.rbo_time = StringVar(value="end")
         rb_end_time = ttk.Radiobutton(
@@ -105,16 +106,30 @@ class start_screen:
         )
         self.user_time = StringVar()
         self.ent_user_time = ttk.Entry(frm_visio, textvariable=self.user_time)
+        # Visio Template - Row 3
+        lbl_image = ttk.Label(frm_visio, text="More Image Outputs: ")
+        self.cbo_pdf = StringVar(value="")
+        self.cbo_png = StringVar(value="")
+        cb_pdf = ttk.Checkbutton(
+            frm_visio, text="PDF", variable=self.cbo_pdf, onvalue="visio_2_pdf", offvalue=""
+        )
+        cb_png = ttk.Checkbutton(
+            frm_visio, text="PNG", variable=self.cbo_png, onvalue="visio_2_png", offvalue=""
+        )
         # VISIO GRID
-        r = 0  # Top Row
+        r = 1  # Top Row
         btn_visio.grid(column=0, row=r, sticky=W, pady=py)
         ent_visio.grid(column=1, row=r, columnspan=3, sticky=[W, E], pady=py)
-        r = 1
+        r = 2
         lbl_time.grid(column=0, row=r, sticky=W, pady=py)
         rb_end_time.grid(column=1, row=r, sticky=W, pady=py)
         rb_user_time.grid(column=2, row=r, sticky=W, pady=py)
         self.ent_user_time.grid(column=3, row=r, sticky=[W, E], pady=py)
         frm_visio.columnconfigure(3, weight=1)
+        r = 3
+        lbl_image.grid(column=0, row=r, sticky=W, pady=py)
+        cb_pdf.grid(column=1, row=r, sticky=W, pady=py)
+        cb_png.grid(column=2, row=r, sticky=W, pady=py)
         # Results Folder widgets
         frm_results_folder = ttk.LabelFrame(self.ss, borderwidth=5, text="Folder to write results", padding=p)
         self.results_folder = StringVar(value="ses output")
@@ -268,6 +283,8 @@ class start_screen:
         pp_list.append(self.cbo_visio.get())
         pp_list.append(self.cbo_compare.get())
         pp_list.append(self.cbo_average.get())
+        pp_list.append(self.cbo_pdf.get())
+        pp_list.append(self.cbo_png.get())
         try:
             self.get_ses_output_str()
         except:

@@ -3,6 +3,7 @@ import xml.etree.ElementTree as ET
 import zipfile
 
 import pandas as pd
+import win32com.client
 
 import NV_run
 import NV_settings
@@ -232,6 +233,37 @@ def write_visio(vxmls, visio_template, new_visio ,gui=""):
         msg = "Error writing " + str(new_visio) + ". Try closing the file and process again."
         NV_run.run_msg(gui, msg)
 
+def convert_visio(new_visio,settings_output,gui):
+    try:
+        visio = win32com.client.Dispatch("Visio.InvisibleApp")
+        doc = visio.Documents.Open(str(new_visio))
+        if "visio_2_pdf" in settings_output:
+            new_pdf = new_visio.with_suffix('.pdf')
+            doc.ExportAsFixedFormat( 1, str(new_pdf), 1, 0)
+            NV_run.run_msg(gui,f'Created PDF of {new_visio.name}')
+        if "visio_2_png" in settings_output:   
+        #Export document as PNG 
+            pages = doc.Pages
+            if len(pages) == 1:
+                new_png = new_visio.with_suffix('.png')
+                for page in pages:
+                    page.Export(str(new_png))
+                NV_run.run_msg(gui,f'Created PNG of {new_visio.name}')
+            else:
+                #TODO add ability to print each page. Get page name and add to suffix
+                #Reference for muptile PNG for pages http://blog.darrenparkinson.uk/2012/12/so-following-my-post-about-using-python.html
+                #Reference for multiple PNG https://github.com/visio2img/visio2img/blob/master/visio2img/visio2img.py
+                #Reference for quality https://docs.microsoft.com/en-us/office/vba/api/visio.page.export
+                #Reference for quality https://docs.microsoft.com/en-us/office/vba/api/visio.applicationsettings
+                msg = "Currently, Visio to PNG only prints first page. Request feature for all pages at info@nevergray.biz"
+                NV_run.run_msg(gui, msg) 
+        visio.Application.Quit()
+    except:
+        if visio is not None:
+            visio.Application.Quit()
+        msg = 'Error creating PDF or PNG for '+ str(new_visio)
+        NV_run.run_msg(gui, msg)
+
 def create_visio(settings, data, output_meta_data, gui=""):
     settings["simtime"] = valid_simtime(settings["simtime"], data["SSA"], gui)
     time_4_name = int(settings["simtime"])
@@ -244,11 +276,17 @@ def create_visio(settings, data, output_meta_data, gui=""):
             vxmls[name], data, settings["ses_output_str"][0][:-4], settings["simtime"], output_meta_data
         )
     write_visio(vxmls, settings["visio_template"], settings["new_visio"],gui)
+    if ("visio_2_pdf" in settings["output"]) or ("visio_2_png" in settings["output"]):
+        convert_visio(settings["new_visio"],settings["output"],gui)
+        
 
 if __name__ == "__main__":
-    file_path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/siinfern.out"
-    visio_template = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Projects and Issues/2021-09-01 Stencils/Damper_064_pp.vsdx"
-    results_folder_str = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Projects and Issues/2021-09-01 Stencils"
+    file_path_string =   "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/siinfern.out"
+    visio_template =     "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/Sample1p00.vsdx"
+    results_folder_str = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021"
+    
+    #visio_template =     "C:/temp/test.vsdx"
+    #results_folder_str = "C:/temp"
     settings = {
         "ses_output_str": [file_path_string],
         "visio_template": visio_template,
@@ -256,7 +294,7 @@ if __name__ == "__main__":
         "simtime": 9999.0,
         "version": "tbd",
         "control": "First",
-        "output": ["Visio"],
+        "output": ["Visio","visio_2_pdf","visio_2_png"],
     }
     NV_run.single_sim(settings)
     print('Finished')
