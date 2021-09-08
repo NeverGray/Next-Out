@@ -25,7 +25,7 @@ def average_outputs(settings, gui=""):
         ses_output_path = Path(ses_output)
         data, output_meta_data = NV_parser.parse_file(ses_output_path)
         if Excel:
-            NV_excel.create_excel(settings, data, output_meta_data)
+            NV_excel.create_excel(settings, data, output_meta_data, gui)
         if first_iteration:
             # Create empty lists to append values to
             for key, value in data.items():

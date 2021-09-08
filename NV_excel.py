@@ -15,7 +15,9 @@ SHEET_NAMES ={
     "PER" :"Percentage of Time Temperature is Above (PER)",
     "TES" :"Train Energy Summary (TES)",
     "HSA" :"Heat Sink Analysis (for uncontrolled zones) (HSA)",
-    "ECS" :"Environmental Control System Load Estimates (ECS)"
+    "ECS" :"Environmental Control System Load Estimates (ECS)",
+    "SA-" :"Summary of Aerodynamic Data (SA)",
+    "ST-" :"Summary of Thermodynamic Data (ST)"
 }
 
 def create_excel(settings, data, output_meta_data, gui=""):
@@ -43,7 +45,7 @@ def create_excel(settings, data, output_meta_data, gui=""):
                     worksheet.cell(row=i,column = 1, value=x).font = Font(size=10)
                     worksheet.cell(row=i,column = 2, value=y)
                     i +=1
-                worksheet.cell(row=df_startrow-1, column =2, value = SHEET_NAMES.get(item.name))
+                worksheet.cell(row=df_startrow-1, column =2, value = SHEET_NAMES.get(item.name[:3]))
                 # Create filters from https://stackoverflow.com/questions/51566349/openpyxl-how-to-add-filters-to-all-columns
                 df_dimensions = 'A'+ str(df_startrow) + worksheet.dimensions[2:]
                 worksheet.auto_filter.ref = df_dimensions

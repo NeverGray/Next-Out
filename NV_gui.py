@@ -34,6 +34,7 @@ class start_screen:
         self.cbo_visio = StringVar(value="")
         self.cbo_compare = StringVar(value="")
         self.cbo_average = StringVar(value="")
+        self.cbo_route = StringVar(value="")
         cb_excel = ttk.Checkbutton(
             frm_pp, text="Excel", variable=self.cbo_excel, onvalue="Excel", offvalue=""
         )
@@ -50,11 +51,15 @@ class start_screen:
             onvalue="Compare",
             offvalue="",
         )
+        cb_route = ttk.Checkbutton(
+            frm_pp, text="Route Data", variable=self.cbo_route, onvalue="Route", offvalue=""
+        )
         # POST PROCESSING grid
         cb_excel.grid(column=0, row=0, sticky=W, pady=py)
         cb_visio.grid(column=0, row=1, sticky=W, pady=py)
         cb_compare.grid(column=0, row=2, sticky=W, pady=py)
         cb_average.grid(column=0, row=3, sticky=W, pady=py)
+        cb_route.grid(column=0, row=4, sticky=W, pady=py)
         # SES OUTPUT Files to Process
         frm_ses = ttk.LabelFrame(
             self.ss, borderwidth=5, text="SES Output to Process", padding=p
@@ -283,6 +288,7 @@ class start_screen:
         pp_list.append(self.cbo_visio.get())
         pp_list.append(self.cbo_compare.get())
         pp_list.append(self.cbo_average.get())
+        pp_list.append(self.cbo_route.get())
         pp_list.append(self.cbo_pdf.get())
         pp_list.append(self.cbo_png.get())
         try:

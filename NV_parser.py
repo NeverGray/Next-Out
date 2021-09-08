@@ -107,6 +107,19 @@ INPUT = {
         )""",
         re.VERBOSE
     ),
+    "f8a": re.compile(
+        r"INPUT VERIFICATION FOR TRAIN ROUTE\s+(?P<Route_Number>\d+)\s+(?P<Title>\S.+)FORM"
+    ),
+    "f8f": re.compile(
+        r"""(
+        .{46}
+        (?P<Segment>-?\d+)\s+
+        (?P<Start>\d+\.\d+)\s{2}TO\s+
+        (?P<End>\d+\.\d+)\n
+        )""",
+        re.VERBOSE
+    ),
+
     "sum_op": re.compile(
         r"""(
         \d+\s+     #Group Number
@@ -330,15 +343,32 @@ def parse_file(file_path, gui=""):  # Parser
         file_time_seconds = os.path.getmtime(file_path)
         file_time_str = datetime.datetime.fromtimestamp(file_time_seconds).strftime('%Y-%m-%d, %H:%M:%S')
         output_meta_data.update({"file_time": file_time_str})
-    # Read input verification information form outputfile
+    
+    # Read input verification information form outputfile before Form 1
     version = select_version(lines)
     output_meta_data.update({"ses_version": version})
+    
+    # Read segment titles from Form 3 and Form 5
+    segment_titles = get_segment_titles(lines)
+
+    # Read damper position from Form 5
+    # TODO Update to get open or closed status for Form 3. Combine with Segment_titles.
     try:
         damper_position_dict = get_form5(lines)
         output_meta_data.update({"damper_position": damper_position_dict})
     except:
         msg = 'Error Processing Damper position'
         parser_msg(gui, msg)
+    
+    # Read route data from Form 8F
+    try:
+        form8f_df = get_form8fs(lines)
+        output_meta_data.update({"form_8f": form8f_df})
+    except:
+        msg = 'Error Processing Form 8F'
+        parser_msg(gui, msg)
+
+    # Determine if there are abbreviated prints from Form 12.
     m = None  # Sets the value equal to none to start while loop
     rx = INPUT["f12"]  # Matching string for Form 12 Output
     i = 0  # Start at first line
@@ -351,7 +381,6 @@ def parse_file(file_path, gui=""):  # Parser
     rx = PIT["time"]
     rx2 = INPUT["sum_op"]
     m = None
-    # Determine if there are abbreviated prints from Fom 12.
     while m is None and i < len(lines):
         m = rx.search(lines[i])  # Find time variable for start of simulation output
         m2 = rx2.search(lines[i])
@@ -433,7 +462,7 @@ def parse_file(file_path, gui=""):  # Parser
                     fluid_pit.append(m_dict)
         i += 1
 
-    segment_titles = get_segment_titles(lines)
+
 
     df_ssa, df_sst, df_train = create_ss_dfs(
         data_pit,
@@ -552,7 +581,32 @@ def get_form5(lines):
             if sum(head_loss_list) >= 1998:
                 form5_data[segment_number] = "CLOSED"
         i +=1
-    return form5_data     
+    return form5_data  
+
+def get_form8fs(lines):
+    title_rx = INPUT["f8a"]
+    form_8f = INPUT["f8f"]
+    time_rx = PIT["time"] #signals start of simualtion and end of input
+    time_match = None
+    i = 0
+    form8f_data = []
+    while time_match is None and i < len(lines):
+        title_match = title_rx.search(lines[i])
+        form_8f_match = form_8f.search(lines[i])
+        time_match = time_rx.search(lines[i])
+        if title_match is not None:
+            title_dict = title_match.groupdict()
+            route_number = int(title_dict['Route_Number'])
+        elif form_8f_match is not None:
+            form_8f_dict = form_8f_match.groupdict()
+            form_8f_dict.update({"Route_Number" : route_number})
+            form8f_data.append(form_8f_dict)
+        i +=1
+    #Convert from list to dataframes
+    form8f_df = pd.DataFrame(form8f_data)
+    form8f_df = form8f_df.apply(pd.to_numeric, errors="coerce")
+    form8f_df.set_index(['Route_Number','Segment'], inplace=True)
+    return form8f_df 
 
 def create_ss_dfs(
     data_pit, data_train, wall_pit, fluid_pit, duplicate_pit, segment_titles, version
@@ -836,7 +890,6 @@ def he_parser(p_lines, time):
                 break
         i += 1
     return heu_list, hec_list
-
 
 def delete_duplicate_pit(df_pit, df_train):
     # One set of answers https://stackoverflow.com/questions/13035764/remove-pandas-rows-with-duplicate-indices

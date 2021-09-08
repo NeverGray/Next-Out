@@ -10,6 +10,7 @@ import NV_excel as nve
 import NV_file_manager as nfm
 # Import of scripts
 import NV_parser as nvp
+import NV_route
 import NV_visio as nvv
 
 
@@ -57,6 +58,12 @@ def single_sim(settings, gui=""):
                 + file_name
                 + ".xlsx.  Try closing this file in excel and process again",
             )
+    if "Route" in settings["output"]:  # Route data
+        try:
+            NV_route.create_route_sheets(settings,data,output_meta_data,gui)
+        except:
+            msg = "Error creating Route Data Excel Files"
+            run_msg(gui,msg)
     if "Visio" in settings["output"]:
         try:
             nvv.create_visio(settings, data, output_meta_data, gui)
@@ -122,10 +129,9 @@ def get_results_path2(settings, output_meta_data, suffix):
     return results_path
 
 if __name__ == "__main__":
-    directory_str = 'C:/Temp/Comparison/'
+    directory_str = 'C:\\Users\\msn\\OneDrive - Never Gray\\Software Development\\Next-Vis\\Python2021\\'
     ses_output_list = [
-        directory_str + 'normal.prn', 
-        directory_str + 'normal4p2.OUT'
+        directory_str + 'sinorm-detailed.out'
         ]
     settings = {
         "ses_output_str": ses_output_list,
@@ -134,6 +140,6 @@ if __name__ == "__main__":
         "simtime": 9999.0,
         "version": "tbd",
         "control": "First",
-        "output": ["Excel",'Compare','Visio']
+        "output": ["Excel","Route"]
     }
     single_sim(settings)

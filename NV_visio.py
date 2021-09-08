@@ -250,7 +250,7 @@ def convert_visio(new_visio,settings_output,gui):
                     page.Export(str(new_png))
                 NV_run.run_msg(gui,f'Created PNG of {new_visio.name}')
             else:
-                #TODO add ability to print each page. Get page name and add to suffix
+                #TODO add ability to print each page and SVG files. Get page name and add to suffix
                 #Reference for muptile PNG for pages http://blog.darrenparkinson.uk/2012/12/so-following-my-post-about-using-python.html
                 #Reference for multiple PNG https://github.com/visio2img/visio2img/blob/master/visio2img/visio2img.py
                 #Reference for quality https://docs.microsoft.com/en-us/office/vba/api/visio.page.export
