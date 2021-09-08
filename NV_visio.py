@@ -241,22 +241,23 @@ def convert_visio(new_visio,settings_output,gui):
             new_pdf = new_visio.with_suffix('.pdf')
             doc.ExportAsFixedFormat( 1, str(new_pdf), 1, 0)
             NV_run.run_msg(gui,f'Created PDF of {new_visio.name}')
-        if "visio_2_png" in settings_output:   
+        if ("visio_2_png" in settings_output) or ("visio_2_svg" in settings_output):   
         #Export document as PNG 
             pages = doc.Pages
-            if len(pages) == 1:
-                new_png = new_visio.with_suffix('.png')
-                for page in pages:
+            for page in pages:
+                if len(pages) == 1:
+                    new_png = new_visio.with_suffix('.png')
+                    new_svg = new_visio.with_suffix('.svg')
+                else:
+                    new_name = new_visio.stem + '-' + str(page)
+                    new_name2 = new_visio.parent/new_name
+                    new_png = new_name2.with_suffix('.png')
+                    new_svg = new_name2.with_suffix('.svg')             
+                if "visio_2_png" in settings_output:
                     page.Export(str(new_png))
-                NV_run.run_msg(gui,f'Created PNG of {new_visio.name}')
-            else:
-                #TODO add ability to print each page and SVG files. Get page name and add to suffix
-                #Reference for muptile PNG for pages http://blog.darrenparkinson.uk/2012/12/so-following-my-post-about-using-python.html
-                #Reference for multiple PNG https://github.com/visio2img/visio2img/blob/master/visio2img/visio2img.py
-                #Reference for quality https://docs.microsoft.com/en-us/office/vba/api/visio.page.export
-                #Reference for quality https://docs.microsoft.com/en-us/office/vba/api/visio.applicationsettings
-                msg = "Currently, Visio to PNG only prints first page. Request feature for all pages at info@nevergray.biz"
-                NV_run.run_msg(gui, msg) 
+                if "visio_2_svg" in settings_output:
+                    page.Export(str(new_svg))
+            NV_run.run_msg(gui,f'Created png or svg or both of {new_visio.name}') 
         visio.Application.Quit()
     except:
         if visio is not None:
@@ -282,7 +283,7 @@ def create_visio(settings, data, output_meta_data, gui=""):
 
 if __name__ == "__main__":
     file_path_string =   "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/siinfern.out"
-    visio_template =     "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/Sample1p00.vsdx"
+    visio_template =     "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/two_page.vsdx"
     results_folder_str = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021"
     
     #visio_template =     "C:/temp/test.vsdx"
@@ -294,7 +295,7 @@ if __name__ == "__main__":
         "simtime": 9999.0,
         "version": "tbd",
         "control": "First",
-        "output": ["Visio","visio_2_pdf","visio_2_png"],
+        "output": ["Visio","visio_2_pdf","visio_2_png","visio_2_svg"],
     }
     NV_run.single_sim(settings)
     print('Finished')

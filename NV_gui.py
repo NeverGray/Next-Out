@@ -115,11 +115,15 @@ class start_screen:
         lbl_image = ttk.Label(frm_visio, text="More Image Outputs: ")
         self.cbo_pdf = StringVar(value="")
         self.cbo_png = StringVar(value="")
+        self.cbo_svg = StringVar(value="")
         cb_pdf = ttk.Checkbutton(
             frm_visio, text="PDF", variable=self.cbo_pdf, onvalue="visio_2_pdf", offvalue=""
         )
         cb_png = ttk.Checkbutton(
             frm_visio, text="PNG", variable=self.cbo_png, onvalue="visio_2_png", offvalue=""
+        )
+        cb_svg = ttk.Checkbutton(
+            frm_visio, text="SVG", variable=self.cbo_svg, onvalue="visio_2_svg", offvalue=""
         )
         # VISIO GRID
         r = 1  # Top Row
@@ -135,6 +139,7 @@ class start_screen:
         lbl_image.grid(column=0, row=r, sticky=W, pady=py)
         cb_pdf.grid(column=1, row=r, sticky=W, pady=py)
         cb_png.grid(column=2, row=r, sticky=W, pady=py)
+        cb_svg.grid(column=3, row=r, sticky=W, pady=py)
         # Results Folder widgets
         frm_results_folder = ttk.LabelFrame(self.ss, borderwidth=5, text="Folder to write results", padding=p)
         self.results_folder = StringVar(value="ses output")
@@ -291,6 +296,7 @@ class start_screen:
         pp_list.append(self.cbo_route.get())
         pp_list.append(self.cbo_pdf.get())
         pp_list.append(self.cbo_png.get())
+        pp_list.append(self.cbo_svg.get())
         try:
             self.get_ses_output_str()
         except:
