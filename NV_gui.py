@@ -125,6 +125,12 @@ class start_screen:
         cb_svg = ttk.Checkbutton(
             frm_visio, text="SVG", variable=self.cbo_svg, onvalue="visio_2_svg", offvalue=""
         )
+        # Visio Template - Row 4
+        self.cbo_visio_open = StringVar(value="")
+        cb_visio_open = ttk.Checkbutton(
+            frm_visio, text="Open in Visio", variable=self.cbo_visio_open, onvalue="visio_open", offvalue=""
+        )
+
         # VISIO GRID
         r = 1  # Top Row
         btn_visio.grid(column=0, row=r, sticky=W, pady=py)
@@ -135,11 +141,13 @@ class start_screen:
         rb_user_time.grid(column=2, row=r, sticky=W, pady=py)
         self.ent_user_time.grid(column=3, row=r, sticky=[W, E], pady=py)
         frm_visio.columnconfigure(3, weight=1)
-        r = 3
+        r = 4
         lbl_image.grid(column=0, row=r, sticky=W, pady=py)
         cb_pdf.grid(column=1, row=r, sticky=W, pady=py)
         cb_png.grid(column=2, row=r, sticky=W, pady=py)
         cb_svg.grid(column=3, row=r, sticky=W, pady=py)
+        r = 3
+        cb_visio_open.grid(column=0, row=r, sticky=W, pady=py)
         # Results Folder widgets
         frm_results_folder = ttk.LabelFrame(self.ss, borderwidth=5, text="Folder to write results", padding=p)
         self.results_folder = StringVar(value="ses output")
@@ -297,6 +305,7 @@ class start_screen:
         pp_list.append(self.cbo_pdf.get())
         pp_list.append(self.cbo_png.get())
         pp_list.append(self.cbo_svg.get())
+        pp_list.append(self.cbo_visio_open.get())
         try:
             self.get_ses_output_str()
         except:

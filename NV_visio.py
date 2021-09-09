@@ -149,11 +149,14 @@ def update_fan(shape, form5_fan_data, simtime, ns):
     if seg_id in form5_fan_data.index:
         fan_on = float(form5_fan_data.at[seg_id,"fan_on"])
         fan_off = float(form5_fan_data.at[seg_id,"fan_off"])
-        fan_direction = int(form5_fan_data.at[seg_id,"fan_direction"])
         if fan_on < simtime < fan_off:
             fan_status = "on"
         else:
             fan_status = "off"
+        if fan_status == "on":
+            fan_direction = int(form5_fan_data.at[seg_id,"fan_direction"])
+        else:
+            fan_direction = "fan_arrow_off"
     else:
         fan_status = "unknown"
         fan_direction = 1
@@ -312,12 +315,22 @@ def create_visio(settings, data, output_meta_data, gui=""):
             vxmls[name], data, settings["ses_output_str"][0][:-4], settings["simtime"], output_meta_data
         )
     write_visio(vxmls, settings["visio_template"], settings["new_visio"],gui)
-    if ("visio_2_pdf" in settings["output"]) or ("visio_2_png" in settings["output"]):
-        convert_visio(settings["new_visio"],settings["output"],gui)
-        
+    for setting in settings["output"]:
+        if "visio_2_" in setting:
+            convert_visio(settings["new_visio"],settings["output"],gui)
+            break
+    if 'visio_open' in settings["output"]:
+        try:
+            visio = win32com.client.Dispatch("Visio.Application")
+            doc = visio.Documents.Open(str(settings["new_visio"]))
+        except:
+            if visio is not None:
+                visio.Application.Quit()
+            msg = 'Error Openning '+ str(settings["new_visio"])
+            NV_run.run_msg(gui, msg)
 
 if __name__ == "__main__":
-    visio_template = "Fan_012_pp.vsdx"
+    visio_template = "Fan_012.vsdx"
     file_path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/siinfern.out"
     visio_template_folder = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Projects and Issues/2021-09-01 Stencils"
     results_folder_str = visio_template_folder
@@ -331,7 +344,7 @@ if __name__ == "__main__":
         "simtime": 9999.0,
         "version": "tbd",
         "control": "First",
-        "output": ["Visio"],
+        "output": ["Visio",'visio_open'],
     }
     NV_run.single_sim(settings)
     print('Finished')

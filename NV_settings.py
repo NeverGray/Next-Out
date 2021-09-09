@@ -38,10 +38,15 @@ fan_supply={
     "BeginArrow_V":'0',
     "EndArrow_V"  :'1'
 }
+fan_arrow_off={
+    "BeginArrow_V":'0',
+    "EndArrow_V"  :'0'
+}
 fan_settings={
     "on": fan_on,
     "off": fan_off,
     "unknown":fan_unknown,
     1:  fan_exhaust,
-    -1: fan_supply
+    -1: fan_supply,
+    "fan_arrow_off" : fan_arrow_off
 }
