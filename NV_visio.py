@@ -47,7 +47,7 @@ def get_visXML(visio_template):
 
 
 # code to modify XML file for emergency (or PIT) simualtions
-def emod_visXML(vxml, data, ses_output_str="Not Available", simtime=0.00, output_meta_data={}):
+def emod_visXML(vxml, data, ses_output_str="Not Available", simtime=0.00, output_meta_data={},gui=""):
     P1root = ET.fromstring(vxml)  # create XML element from the string
     ET.register_namespace(
         "", "http://schemas.microsoft.com/office/visio/2012/main"
@@ -117,7 +117,16 @@ def emod_visXML(vxml, data, ses_output_str="Not Available", simtime=0.00, output
         Shape = NV01_arrow(Shape, find_string, ns, flip)  # Flip arrow as needed
     # Update Damper Shapes
     for Shape in P1root.findall(".//Visio:Row[@N='Damper_Segment']../..", ns):
-        Shape = update_damper(Shape, output_meta_data['damper_position'], ns)
+        try:
+            Shape = update_damper(Shape, output_meta_data['damper_position'], ns)
+        except:
+            NV_run.run_msg(gui, f'Error Updating Damper')
+    # Update Fan_NV01
+    for Shape in P1root.findall(".//Visio:Row[@N='Fan_Segment']../..", ns):
+        try:
+            Shape = update_fan(Shape, output_meta_data['form5_fan_data'], simtime, ns)
+        except:
+            NV_run.run_msg(gui, f'Error Updating Fan')
     return P1root
 
 def update_damper(shape, damper_position_dict, ns):
@@ -135,8 +144,8 @@ def update_damper(shape, damper_position_dict, ns):
         if line_shape.find(".//Visio:Cell[@N='LineColor']",ns) is None:
             line_properties ={
                 'N':'LineColor',
-                'Y': damper_settings['line_color_v'],
-                'F':damper_settings['line_color_f']
+                'V': damper_settings['line_color_v'],
+                'F': damper_settings['line_color_f']
             }
             ET.SubElement(line_shape,'Cell',attrib=line_properties)
         else:
@@ -145,9 +154,48 @@ def update_damper(shape, damper_position_dict, ns):
                 line_shape.find(".//Visio:Cell[@N='LineColor']",ns).set('F',damper_settings['line_color_f'])
             except:
                 print('No LineColor cells are there')
-    '''#for shape_babe in shape_child.findall(".//Visio:Cell[@N='LineColor']", ns):
-    #    shape_babe.set("V",damper_settings['line_color_v'])
-    #    shape_babe.set("F",damper_settings['line_color_f'])'''
+    return shape
+
+def update_fan(shape, form5_fan_data, simtime, ns):
+    seg_id = int(shape.find(".//Visio:Row[@N='Fan_Segment']/Visio:Cell", ns).get("V",default=-1)) 
+    # TODO Check if seg_id is in dataframe and adjust
+    if seg_id in form5_fan_data.index:
+        fan_on = float(form5_fan_data.at[seg_id,"fan_on"])
+        fan_off = float(form5_fan_data.at[seg_id,"fan_off"])
+        fan_direction = int(form5_fan_data.at[seg_id,"fan_direction"])
+        if fan_on < simtime < fan_off:
+            fan_status = "on"
+        else:
+            fan_status = "off"
+    else:
+        fan_status = "unknown"
+        fan_direction = 1
+    # Modify Fan_Blades. Changing from Unknown (default) to "ON"
+    fan_settings = NV_settings.fan_settings.get(fan_status)
+    shape_child = shape.find(".//Visio:Shape[@Name='Fan_Blades']", ns)
+    # TODO Modify incase shape doesn't exist
+    shape_toddlers = shape_child.findall(".//Visio:Shape",ns)
+    for shape_toddler in shape_toddlers:
+        shape_toddler = update_shape_NV01(shape_toddler,fan_settings)
+    # Modify Fan_center_line.
+    fan_settings = NV_settings.fan_settings.get(fan_direction)
+    shape_child = shape.find(".//Visio:Shape[@Name='Fan_center_line']", ns)
+    shape_child = update_shape_NV01(shape_child,fan_settings)
+    return shape
+
+def update_shape_NV01(shape,settings_dict):
+    for key, value in settings_dict.items():
+        attribute_n = key[:-2]
+        value_setting = key[-1]
+        search_string = ''.join([".//Visio:Cell[@N='",attribute_n,"']"])
+        if shape.find(search_string,ns) is None:
+            attributes={
+                'N':attribute_n,
+                value_setting : value
+            }
+            ET.SubElement(shape,"Cell",attrib=attributes)
+        else:
+            shape.find(search_string,ns).set(value_setting,value)
     return shape
 
 
@@ -282,20 +330,21 @@ def create_visio(settings, data, output_meta_data, gui=""):
         
 
 if __name__ == "__main__":
-    file_path_string =   "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/siinfern.out"
-    visio_template =     "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/two_page.vsdx"
-    results_folder_str = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021"
+    visio_template = "Fan_012.vsdx"
+    file_path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/siinfern.out"
+    visio_template_folder = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Projects and Issues/2021-09-01 Stencils"
+    results_folder_str = visio_template_folder
     
     #visio_template =     "C:/temp/test.vsdx"
     #results_folder_str = "C:/temp"
     settings = {
         "ses_output_str": [file_path_string],
-        "visio_template": visio_template,
+        "visio_template": "/".join([visio_template_folder, visio_template]),
         "results_folder_str": results_folder_str,
         "simtime": 9999.0,
         "version": "tbd",
         "control": "First",
-        "output": ["Visio","visio_2_pdf","visio_2_png","visio_2_svg"],
+        "output": ["Visio"],
     }
     NV_run.single_sim(settings)
     print('Finished')

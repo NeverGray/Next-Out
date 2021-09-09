@@ -97,6 +97,10 @@ INPUT = {
     "f5a": re.compile(
         r"INPUT VERIFICATION FOR VENTILATION SHAFT\s+\d+\s\-\s*(?P<segment>\d+)\s+(?P<title>\S.+)+FORM"
     ),
+    "f5c_fan_type": re.compile(r"FAN TYPE\s+(?P<fan_type>\d+)\s+FORM 5C"),
+    "f5c_fan_on":re.compile(r"SIMULATION TIME AFTER WHICH FAN SWITCHES ON\s+(?P<fan_on>\d+)\s+SECONDS"),
+    "f5c_fan_off":re.compile(r"SIMULATION TIME AFTER WHICH FAN SWITCHES OFF\s+(?P<fan_off>\d+)\s+SECONDS"),
+    "f5c_fan_direction":re.compile(r"DIRECTION OF FAN OPERATION\s+(?P<fan_direction>\-?\d+)\s+"),
     "f5d_head_loss": re.compile(
         r"""(
         .{18}\..{15}.{15}\.\d+\s{12,} #Left hand side of line
@@ -354,10 +358,11 @@ def parse_file(file_path, gui=""):  # Parser
     # Read damper position from Form 5
     # TODO Update to get open or closed status for Form 3. Combine with Segment_titles.
     try:
-        damper_position_dict = get_form5(lines)
+        damper_position_dict, form5_fan_data_df = get_form5(lines)
         output_meta_data.update({"damper_position": damper_position_dict})
+        output_meta_data.update({"form5_fan_data": form5_fan_data_df})
     except:
-        msg = 'Error Processing Damper position'
+        msg = 'Error Processing Form 5 position'
         parser_msg(gui, msg)
     
     # Read route data from Form 8F
@@ -564,24 +569,38 @@ def get_form5(lines):
     time_match = None
     i = 0
     form5_data = {}
+    form5_fan_data = []
     segment_number = 0
     while time_match is None and i < len(lines):
         title_match = title_rx.search(lines[i])
         head_loss_match = f5d_head_loss.search(lines[i])
         time_match = time_rx.search(lines[i])
+        fan_type_match = INPUT['f5c_fan_type'].search(lines[i])
         if title_match is not None:
             title_dict = title_match.groupdict()
             segment_number = int(title_dict["segment"])
             form5_data.update(
                 {segment_number: "OPEN"}
             )
+        elif fan_type_match is not None:
+            fan_dict = {'Segment': segment_number}
+            fan_dict.update(fan_type_match.groupdict())
+            i +=2
+            fan_dict.update(INPUT['f5c_fan_on'].search(lines[i]).groupdict())
+            i +=2
+            fan_dict.update(INPUT['f5c_fan_off'].search(lines[i]).groupdict())
+            i +=2
+            fan_dict.update(INPUT['f5c_fan_direction'].search(lines[i]).groupdict())
+            form5_fan_data.append(fan_dict) 
         elif head_loss_match is not None:
             head_loss_dict = head_loss_match.groupdict()
             head_loss_list = list(map(float,head_loss_dict.values()))
             if sum(head_loss_list) >= 1998:
                 form5_data[segment_number] = "CLOSED"
         i +=1
-    return form5_data  
+    form5_fan_data_df = pd.DataFrame(form5_fan_data)
+    form5_fan_data_df.set_index("Segment", inplace=True)
+    return form5_data, form5_fan_data_df  
 
 def get_form8fs(lines):
     title_rx = INPUT["f8a"]
@@ -908,7 +927,7 @@ def parser_msg(gui, text):
 
 
 if __name__ == "__main__":
-    path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/sinorm-detailed.out"
+    path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/test.out"
     file_path = Path(path_string)
     d, output_meta_data = parse_file(file_path)
     print(list, output_meta_data, "test finished", sep = '\n')
