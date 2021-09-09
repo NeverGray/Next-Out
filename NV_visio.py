@@ -130,30 +130,17 @@ def emod_visXML(vxml, data, ses_output_str="Not Available", simtime=0.00, output
     return P1root
 
 def update_damper(shape, damper_position_dict, ns):
-    try:
-        SegID = int(shape.find(".//Visio:Row[@N='Damper_Segment']/Visio:Cell", ns).get("V")) 
-    except:
-        SegID = -1
+    SegID = int(shape.find(".//Visio:Row[@N='Damper_Segment']/Visio:Cell", ns).get("V", default=-1)) 
     status = damper_position_dict.get(SegID)
-    damper_settings = NV_settings.damper_settings.get(status)
+    if status is None:
+        status = "STATUS?"
     shape_text = shape.find(".//Visio:Shape[@Name='NV01_Damper_Position']",ns)
-    shape_text = NV01_text(shape_text, ns, damper_settings['status'])
+    shape_text = NV01_text(shape_text, ns, status)
     shape_child = shape.find(".//Visio:Shape[@Name='Damper_Closed_Lines']", ns)
     line_shapes = shape_child.findall(".//Visio:Shape",ns)
+    damper_settings = NV_settings.damper_settings.get(status)
     for line_shape in line_shapes:
-        if line_shape.find(".//Visio:Cell[@N='LineColor']",ns) is None:
-            line_properties ={
-                'N':'LineColor',
-                'V': damper_settings['line_color_v'],
-                'F': damper_settings['line_color_f']
-            }
-            ET.SubElement(line_shape,'Cell',attrib=line_properties)
-        else:
-            try:
-                line_shape.find(".//Visio:Cell[@N='LineColor']",ns).set('V',damper_settings['line_color_v'])
-                line_shape.find(".//Visio:Cell[@N='LineColor']",ns).set('F',damper_settings['line_color_f'])
-            except:
-                print('No LineColor cells are there')
+        line_shape = update_shape_NV01(line_shape,damper_settings)
     return shape
 
 def update_fan(shape, form5_fan_data, simtime, ns):
@@ -330,7 +317,7 @@ def create_visio(settings, data, output_meta_data, gui=""):
         
 
 if __name__ == "__main__":
-    visio_template = "Fan_012.vsdx"
+    visio_template = "Fan_012_pp.vsdx"
     file_path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/siinfern.out"
     visio_template_folder = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Projects and Issues/2021-09-01 Stencils"
     results_folder_str = visio_template_folder
