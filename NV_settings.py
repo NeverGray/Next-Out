@@ -17,8 +17,8 @@ damper_settings={
 }
 fan_on={
     "FillPattern_V":'1',
-    "FillForegnd_V":'#000000',
-    "FillForegnd_F":'THEMEGUARD(RGB(0,0,0))'
+    "FillForegnd_V":'#00b050',
+    "FillForegnd_F":'THEMEGUARD(RGB(0,176,80))'
 }
 fan_unknown={
     "FillPattern_V":'1',
@@ -49,4 +49,26 @@ fan_settings={
     1:  fan_exhaust,
     -1: fan_supply,
     "fan_arrow_off" : fan_arrow_off
+}
+jet_fan_on={
+    'FillForegnd_V': '#00b050',
+    'fillForegnd_F': 'THEMEGUARD(RGB(0,176,80))'
+}
+jet_fan_off={
+    'FillForegnd_V': '#ffffff',
+    'fillForegnd_F': 'THEMEGUARD(RGB(255,255,255))'
+}
+jet_fan_power={
+    'on':jet_fan_on,
+    'off':jet_fan_off
+}
+
+line_black={
+    'LineColor_V': '#000000',
+    'LineColor_F': 'THEMEGUARD(RGB(0,0,0)'
+}
+
+line_white={
+    'LineColor_V': '#ffffff',
+    'LineColor_F': 'THEMEGUARD(RGB(255,255,255)'
 }

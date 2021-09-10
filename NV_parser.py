@@ -91,7 +91,10 @@ PIT = {
 # Input data praser
 INPUT = {
     "f3a": re.compile(
-        r"INPUT VERIFICATION FOR (LINE SEGMENT|VENTILATION SHAFT)\s+\d+\s\-\s*(?P<segment>\d+)\s+(?P<title>\S.+)+FORM"
+        r"INPUT VERIFICATION FOR (?P<type>LINE SEGMENT|VENTILATION SHAFT)\s+\d+\s\-\s*(?P<segment>\d+)\s+(?P<title>\S.+)+FORM"
+    ),
+    "f3a_2": re.compile(
+        r"LINE SEGMENT TYPE.{72}\s*(?P<segment_type>\d+)\s+"
     ),
     "f12": re.compile(r"INPUT VERIFICATION OF CONTROL GROUP INFORMATION\s+FORM 12"),
     "f5a": re.compile(
@@ -110,6 +113,21 @@ INPUT = {
         (?P<back_neg>\d+\.\d+)\n
         )""",
         re.VERBOSE
+    ),
+    "f7c_A": re.compile(
+        r"IMPULSE FAN TYPE\s{49,}(?P<fan_type>\d+)"
+    ),
+    "f7c_B":re.compile(
+        r"FOR LINE SEGMENT TYPE\s{44,}(?P<segment_type>\d+)"
+    ),
+    "f7c_3":re.compile(
+        r"IMPULSE FAN NOZZLE DISCHARGE VELOCITY\s+(?P<discharge_velocity>-?\d+\.\d+)\s+"
+    ),
+    "f7c_4":re.compile(
+        r"SIMULATION TIME AFTER WHICH IMPULSE FAN SWITCHES ON\s+(?P<jet_fan_on>-?\d+\.\d+)\s+"
+    ),
+    "f7c_5":re.compile(
+        r"SIMULATION TIME AFTER WHICH IMPULSE FAN SWITCHES OFF\s+(?P<jet_fan_off>-?\d+\.\d+)\s+"
     ),
     "f8a": re.compile(
         r"INPUT VERIFICATION FOR TRAIN ROUTE\s+(?P<Route_Number>\d+)\s+(?P<Title>\S.+)FORM"
@@ -352,11 +370,11 @@ def parse_file(file_path, gui=""):  # Parser
     version = select_version(lines)
     output_meta_data.update({"ses_version": version})
     
-    # Read segment titles from Form 3 and Form 5
-    segment_titles = get_segment_titles(lines)
+    # Read segment titles from Form 3 and Form 5 and types from form 3
+    segment_titles, form3_type = get_titles_and_form3(lines)
 
-    # Read damper position from Form 5
-    # TODO Update to get open or closed status for Form 3. Combine with Segment_titles.
+    # Read damper position and fan data from Form 5
+    # TODO Update to get open or closed status for Form 3. Combine with get_titles_and_form3.
     try:
         damper_position_dict, form5_fan_data_df = get_form5(lines)
         output_meta_data.update({"damper_position": damper_position_dict})
@@ -365,6 +383,15 @@ def parse_file(file_path, gui=""):  # Parser
         msg = 'Error Processing Form 5 position'
         parser_msg(gui, msg)
     
+    # Read jet fan data from Form 7C
+    try:
+        form7c_data = get_form7c(lines)
+        jet_fan_data = get_jet_fan_data(form7c_data, form3_type)
+        output_meta_data.update({"jet_fan_data": jet_fan_data})
+    except:
+        msg = 'Error Processing Form 7C, Jet Fan Data'
+        parser_msg(gui, msg)
+
     # Read route data from Form 8F
     try:
         form8f_df = get_form8fs(lines)
@@ -562,6 +589,30 @@ def get_segment_titles(lines):
         i += 1
     return segment_titles
 
+def get_titles_and_form3(lines):
+    title_rx = INPUT["f3a"]
+    time_rx = PIT["time"]
+    time_match = None
+    i = 0
+    segment_titles = {}
+    form3_type = {}
+    while time_match is None and i < len(lines):
+        title_match = title_rx.search(lines[i])
+        time_match = time_rx.search(lines[i])
+        if title_match is not None:
+            title_dict = title_match.groupdict()
+            segment_titles.update(
+                {int(title_dict["segment"]): title_dict["title"].strip()}
+            )
+            #Form 3 data
+            if title_dict['type'] == "LINE SEGMENT":
+                i +=2
+                form3_type.update(
+                    {int(title_dict["segment"]):int(INPUT['f3a_2'].search(lines[i])[1])}
+                )
+        i += 1
+    return segment_titles, form3_type
+
 def get_form5(lines):
     title_rx = INPUT["f5a"]
     f5d_head_loss = INPUT["f5d_head_loss"]
@@ -601,6 +652,41 @@ def get_form5(lines):
     form5_fan_data_df = pd.DataFrame(form5_fan_data)
     form5_fan_data_df.set_index("Segment", inplace=True)
     return form5_data, form5_fan_data_df  
+
+def get_form7c(lines):
+    first_line = INPUT["f7c_A"]
+    time_rx = PIT["time"] #signals start of simualtion and end of input
+    time_match = None
+    i = 0
+    form7c_data = []
+    segment_number = 0
+    while time_match is None and i < len(lines):
+        time_match = time_rx.search(lines[i])
+        first_line_match = first_line.search(lines[i])
+        if first_line_match is not None:
+            form7c_dict = first_line_match.groupdict()
+            i +=1
+            form7c_dict.update(INPUT['f7c_B'].search(lines[i]).groupdict())
+            i +=7
+            form7c_dict.update(INPUT['f7c_3'].search(lines[i]).groupdict())
+            i +=2
+            form7c_dict.update(INPUT['f7c_4'].search(lines[i]).groupdict())
+            i +=2
+            form7c_dict.update(INPUT['f7c_5'].search(lines[i]).groupdict())
+            form7c_data.append(form7c_dict)
+        i +=1
+    return form7c_data
+
+def get_jet_fan_data(form7c_data, form3_type):
+    jet_fan_data = []
+    form7c_df = pd.DataFrame(form7c_data)
+    form7c_df = form7c_df.apply(pd.to_numeric, errors="coerce")
+    form7c_df.set_index("segment_type",inplace=True)
+    form3_type_df = pd.DataFrame.from_dict(form3_type,orient='index',columns=['segment_type'])
+    form3_type_df.index.set_names('segment_ID',inplace=True)
+    form3_type_df = form3_type_df .apply(pd.to_numeric, errors="coerce")
+    jet_fan_data = form3_type_df.join(form7c_df,on="segment_type",how="inner")
+    return jet_fan_data
 
 def get_form8fs(lines):
     title_rx = INPUT["f8a"]
@@ -927,7 +1013,7 @@ def parser_msg(gui, text):
 
 
 if __name__ == "__main__":
-    path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/test.out"
+    path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Projects and Issues/2021-09-01 Stencils/sinorm-detailed.out"
     file_path = Path(path_string)
     d, output_meta_data = parse_file(file_path)
     print(list, output_meta_data, "test finished", sep = '\n')

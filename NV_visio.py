@@ -127,6 +127,11 @@ def emod_visXML(vxml, data, ses_output_str="Not Available", simtime=0.00, output
             Shape = update_fan(Shape, output_meta_data['form5_fan_data'], simtime, ns)
         except:
             NV_run.run_msg(gui, f'Error Updating Fan')
+    for Shape in P1root.findall(".//Visio:Row[@N='Jet_Fan_Segment']../..", ns):
+        try:
+            Shape = update_jet_fan(Shape, output_meta_data['jet_fan_data'], simtime, ns)
+        except:
+            NV_run.run_msg(gui, f'Error Updating Jet Fan')
     return P1root
 
 def update_damper(shape, damper_position_dict, ns):
@@ -145,7 +150,7 @@ def update_damper(shape, damper_position_dict, ns):
 
 def update_fan(shape, form5_fan_data, simtime, ns):
     seg_id = int(shape.find(".//Visio:Row[@N='Fan_Segment']/Visio:Cell", ns).get("V",default=-1)) 
-    # TODO Check if seg_id is in dataframe and adjust
+    # Determine appropriate settings for seg_id: On, Off, or unknown
     if seg_id in form5_fan_data.index:
         fan_on = float(form5_fan_data.at[seg_id,"fan_on"])
         fan_off = float(form5_fan_data.at[seg_id,"fan_off"])
@@ -160,18 +165,46 @@ def update_fan(shape, form5_fan_data, simtime, ns):
     else:
         fan_status = "unknown"
         fan_direction = 1
-    # Modify Fan_Blades. Changing from Unknown (default) to "ON"
+    # Modify Fan_Blades for fan_status
     fan_settings = NV_settings.fan_settings.get(fan_status)
     shape_child = shape.find(".//Visio:Shape[@Name='Fan_Blades']", ns)
-    # TODO Modify incase shape doesn't exist
     shape_toddlers = shape_child.findall(".//Visio:Shape",ns)
     for shape_toddler in shape_toddlers:
         shape_toddler = update_shape_NV01(shape_toddler,fan_settings)
-    # Modify Fan_center_line.
+    # Modify Fan_center_line for fan direction
     fan_settings = NV_settings.fan_settings.get(fan_direction)
     shape_child = shape.find(".//Visio:Shape[@Name='Fan_center_line']", ns)
     shape_child = update_shape_NV01(shape_child,fan_settings)
     return shape
+
+def update_jet_fan(shape, jet_fan_data, simtime, ns):
+    seg_id = int(shape.find(".//Visio:Row[@N='Jet_Fan_Segment']/Visio:Cell", ns).get("V",default=-1))
+    jet_fan_direction = 'positive'
+    if seg_id in jet_fan_data.index:
+        fan_on = float(jet_fan_data.at[seg_id,"jet_fan_on"])
+        fan_off = float(jet_fan_data.at[seg_id,"jet_fan_off"])
+        if fan_on < simtime < fan_off:
+            jet_fan_status = "on"
+        if jet_fan_status == "on":
+            velocity_discharge = float(jet_fan_data.at[seg_id,"discharge_velocity"])
+            if velocity_discharge < 0:
+                jet_fan_direction = 'negative'
+    else:
+        jet_fan_status = "off"
+    shape_child = shape.find(".//Visio:Shape[@Name='jet_fan_outter_shell']", ns)
+    shape_child = update_shape_NV01(shape_child,NV_settings.jet_fan_power[jet_fan_status])
+    if jet_fan_direction == 'positive':
+        shape_child = shape.find(".//Visio:Shape[@Name='Arrow_positive']", ns)
+        shape_child = update_shape_NV01(shape_child,NV_settings.line_black)
+        shape_child = shape.find(".//Visio:Shape[@Name='Arrow_negative']", ns)
+        shape_child = update_shape_NV01(shape_child,NV_settings.line_white)
+    else:
+        shape_child = shape.find(".//Visio:Shape[@Name='Arrow_positive']", ns)
+        shape_child = update_shape_NV01(shape_child,NV_settings.line_white)
+        shape_child = shape.find(".//Visio:Shape[@Name='Arrow_negative']", ns)
+        shape_child = update_shape_NV01(shape_child,NV_settings.line_black)
+    return shape
+
 
 def update_shape_NV01(shape,settings_dict):
     for key, value in settings_dict.items():
@@ -330,8 +363,8 @@ def create_visio(settings, data, output_meta_data, gui=""):
             NV_run.run_msg(gui, msg)
 
 if __name__ == "__main__":
-    visio_template = "Fan_012.vsdx"
-    file_path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/siinfern.out"
+    visio_template = "Jetfans_010.vsdx"
+    file_path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Projects and Issues/2021-09-01 Stencils/sinorm-detailed.out"
     visio_template_folder = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Projects and Issues/2021-09-01 Stencils"
     results_folder_str = visio_template_folder
     
@@ -344,7 +377,7 @@ if __name__ == "__main__":
         "simtime": 9999.0,
         "version": "tbd",
         "control": "First",
-        "output": ["Visio",'visio_open'],
+        "output": ["Visio"],
     }
     NV_run.single_sim(settings)
     print('Finished')
