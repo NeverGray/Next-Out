@@ -306,6 +306,7 @@ def write_visio(vxmls, visio_template, new_visio ,gui=""):
 
 def convert_visio(new_visio,settings_output,gui):
     try:
+        #https://stackoverflow.com/questions/10214003/can-python-win32com-use-visio-or-any-program-without-popping-up-a-gui
         visio = win32com.client.Dispatch("Visio.InvisibleApp")
         doc = visio.Documents.Open(str(new_visio))
         if "visio_2_pdf" in settings_output:
@@ -324,10 +325,11 @@ def convert_visio(new_visio,settings_output,gui):
                     new_name2 = new_visio.parent/new_name
                     new_png = new_name2.with_suffix('.png')
                     new_svg = new_name2.with_suffix('.svg')             
-                if "visio_2_png" in settings_output:
-                    page.Export(str(new_png))
-                if "visio_2_svg" in settings_output:
-                    page.Export(str(new_svg))
+                if page.Background != -1: #Only print foreground page
+                    if "visio_2_png" in settings_output:
+                        page.Export(str(new_png))
+                    if "visio_2_svg" in settings_output:
+                        page.Export(str(new_svg))
             NV_run.run_msg(gui,f'Created png or svg or both of {new_visio.name}') 
         visio.Application.Quit()
     except:
@@ -363,7 +365,7 @@ def create_visio(settings, data, output_meta_data, gui=""):
             NV_run.run_msg(gui, msg)
 
 if __name__ == "__main__":
-    visio_template = "Jetfans_010.vsdx"
+    visio_template = "SINORM-Sample.vsdx"
     file_path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Projects and Issues/2021-09-01 Stencils/sinorm-detailed.out"
     visio_template_folder = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Projects and Issues/2021-09-01 Stencils"
     results_folder_str = visio_template_folder
@@ -377,7 +379,7 @@ if __name__ == "__main__":
         "simtime": 9999.0,
         "version": "tbd",
         "control": "First",
-        "output": ["Visio"],
+        "output": ["Visio","visio_2_pdf","visio_2_png","visio_2_svg"],
     }
     NV_run.single_sim(settings)
     print('Finished')
