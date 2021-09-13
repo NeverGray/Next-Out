@@ -136,7 +136,7 @@ INPUT = {
         r"""(
         .{46}
         (?P<Segment>-?\d+)\s+
-        (?P<Start>\d+\.\d+)\s{2}TO\s+
+        (?P<Start>\d+\.\d+)\s+TO\s+
         (?P<End>\d+\.\d+)\n
         )""",
         re.VERBOSE
@@ -1013,7 +1013,9 @@ def parser_msg(gui, text):
 
 
 if __name__ == "__main__":
-    path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Projects and Issues/2021-09-01 Stencils/sinorm-detailed.out"
+    directory_string = "C:\\Simulations\\Next-Vis\\Samples\\"
+    file_name = "normal.prn"
+    path_string = directory_string + file_name
     file_path = Path(path_string)
     d, output_meta_data = parse_file(file_path)
     print(list, output_meta_data, "test finished", sep = '\n')

@@ -129,9 +129,9 @@ def get_results_path2(settings, output_meta_data, suffix):
     return results_path
 
 if __name__ == "__main__":
-    directory_str = 'C:\\Users\\msn\\OneDrive - Never Gray\\Software Development\\Next-Vis\\Python2021\\'
+    directory_str = 'C:\\Simulations\\Next-Vis\\Samples'
     ses_output_list = [
-        directory_str + 'sinorm-detailed.out'
+        directory_str + '\\normal.prn'
         ]
     settings = {
         "ses_output_str": ses_output_list,
