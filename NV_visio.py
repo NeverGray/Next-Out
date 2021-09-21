@@ -7,6 +7,7 @@ import win32com.client
 
 import NV_run
 import NV_settings
+import NV_Tunnel_Segment
 
 try:
     import zlib
@@ -81,7 +82,7 @@ def emod_visXML(vxml, data, ses_output_str="Not Available", simtime=0.00, output
                 Shape.find(".//Visio:Row[@N='NV01_SegID']/Visio:Cell", ns).get("V")
             ) 
         except:
-            continue
+            SegID = -1
         try: 
             SubID = int(
                 Shape.find(".//Visio:Row[@N='NV01_Sub']/Visio:Cell", ns).get("V")
@@ -132,7 +133,87 @@ def emod_visXML(vxml, data, ses_output_str="Not Available", simtime=0.00, output
             Shape = update_jet_fan(Shape, output_meta_data['jet_fan_data'], simtime, ns)
         except:
             NV_run.run_msg(gui, f'Error Updating Jet Fan')
+    for Shape in P1root.findall(".//Visio:Row[@N='Jet_Fan_Segment']../..", ns):
+        try:
+            Shape = update_jet_fan(Shape, output_meta_data['jet_fan_data'], simtime, ns)
+        except:
+            NV_run.run_msg(gui, f'Error Updating Jet Fan')
+    if P1root.find(".//Visio:Row[@N='Tunnel_Segment_NV01']../..", ns) is not None:
+        segment_time_df = NV_Tunnel_Segment.create_segment_info(data, output_meta_data, simtime)
+        for shape in P1root.findall(".//Visio:Row[@N='Tunnel_Segment_NV01']../..", ns):
+            try:
+                update_tunnel_segment(shape, segment_time_df)       
+            except:
+                NV_run.run_msg(gui, f'Error Updating Tunnel Segment')
     return P1root
+
+def update_tunnel_segment(shape, segment_time_df):
+    # Look up values for segment values
+    seg_id = int(
+        shape.find(".//Visio:Row[@N='Tunnel_Segment_NV01']/Visio:Cell[@N='Value']",ns).get('V', default=-1))
+    #Default values 1 of 2
+    end_arrow = '5'
+    begin_arrow = '0'
+    train_fire_values = NV_settings.train_fire_values
+    if seg_id in segment_time_df.index:
+        data_airflow = segment_time_df.loc[seg_id]['Airflow']
+        airflow = str(round(abs(data_airflow), 1))
+        if (data_airflow < 0):  
+            end_arrow = '0'
+            begin_arrow = '5'
+        active_fire = segment_time_df.loc[seg_id]['active_fire']
+        train_present = segment_time_df.loc[seg_id]['train_present']
+        # Update Template
+    else: #Default values 2 of 2
+        airflow = 'Airflow?'
+        active_fire = 'unknown'
+        train_present = 'unknown'
+    #Update arrows, fire, and train
+    name = 'Arrow_NV02'
+    cell_n_v_dictionary ={
+        'EndArrow': end_arrow,
+        'BeginArrow': begin_arrow
+    }
+    update_shape(shape, name, cell_n_v_dictionary)
+    name = 'Fire'
+    cell_n_v_dictionary ={
+        "FillForegndTrans": train_fire_values[active_fire],
+        "FillBkgndTrans": train_fire_values[active_fire]
+        }
+    update_shape(shape, name, cell_n_v_dictionary)
+    name = 'Train'
+    cell_n_v_dictionary ={
+        "FillForegndTrans": train_fire_values[train_present],
+        "FillBkgndTrans": train_fire_values[train_present]
+        }
+    update_shape(shape, name, cell_n_v_dictionary)
+    #Update Text
+    child = shape.find(".//Visio:Shape[@Name='airflow_text_NV02']",ns)
+    babe = child.find(".//Visio:Text", ns)
+    if ET.iselement(babe):
+        babe.text = airflow
+    else:
+        ET.SubElement(child,"Text").text = airflow
+
+    #Old update text
+    #shape_babe = shape.find(".//Visio:Shape[@Name='airflow_text_NV02']/Visio:Text/Visio:cp",ns)
+    '''if ET.iselement(shape_babe):
+        shape_babe.tail = airflow
+    else:
+        #TODO update text when makin it default value
+        print('Text element does not exist and cannot be updated')'''
+
+def update_shape(shape, child_name, cell_n_v_dictionary):
+    child_string = ".//Visio:Shape[@Name='{}']"
+    child = shape.find(child_string.format(child_name), ns)
+    if ET.iselement(child):
+        for n_value, v_value in cell_n_v_dictionary.items():
+            babe_string = ".//Visio:Cell[@N='{}']"
+            babe = child.find(babe_string.format(n_value),ns)
+            if ET.iselement(babe):
+                babe.set('V', v_value)
+            else:
+                ET.SubElement(child,"Cell",N=n_value,V=v_value)
 
 def update_damper(shape, damper_position_dict, ns):
     SegID = int(shape.find(".//Visio:Row[@N='Damper_Segment']/Visio:Cell", ns).get("V", default=-1)) 
@@ -206,7 +287,7 @@ def update_jet_fan(shape, jet_fan_data, simtime, ns):
     return shape
 
 
-def update_shape_NV01(shape,settings_dict):
+def update_shape_NV01(shape, settings_dict):
     for key, value in settings_dict.items():
         attribute_n = key[:-2]
         value_setting = key[-1]
@@ -365,9 +446,9 @@ def create_visio(settings, data, output_meta_data, gui=""):
             NV_run.run_msg(gui, msg)
 
 if __name__ == "__main__":
-    visio_template = "SINORM-Sample.vsdx"
-    file_path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Projects and Issues/2021-09-01 Stencils/sinorm-detailed.out"
-    visio_template_folder = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Projects and Issues/2021-09-01 Stencils"
+    visio_template = "TS_042.vsdx"
+    file_path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Projects and Issues/2021-09-14 Tunnel Stencil/siinfern.out"
+    visio_template_folder = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Projects and Issues/2021-09-14 Tunnel Stencil"
     results_folder_str = visio_template_folder
     
     #visio_template =     "C:/temp/test.vsdx"
@@ -376,10 +457,11 @@ if __name__ == "__main__":
         "ses_output_str": [file_path_string],
         "visio_template": "/".join([visio_template_folder, visio_template]),
         "results_folder_str": results_folder_str,
-        "simtime": 9999.0,
-        "version": "tbd",
+        "simtime": 500.0,
+        "version": "IP",
         "control": "First",
-        "output": ["Visio","visio_2_pdf","visio_2_png","visio_2_svg"],
+        "output": ["Visio"],
     }
+    simtime = settings['simtime']
     NV_run.single_sim(settings)
     print('Finished')

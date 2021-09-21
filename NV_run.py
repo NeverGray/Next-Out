@@ -60,7 +60,7 @@ def single_sim(settings, gui=""):
             )
     if "Route" in settings["output"]:  # Route data
         try:
-            NV_route.create_route_sheets(settings,data,output_meta_data,gui)
+            NV_route.create_route_excel(settings,data,output_meta_data,gui)
         except:
             msg = "Error creating Route Data Excel Files"
             run_msg(gui,msg)

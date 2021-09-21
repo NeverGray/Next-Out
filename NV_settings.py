@@ -72,3 +72,14 @@ line_white={
     'LineColor_V': '#ffffff',
     'LineColor_F': 'THEMEGUARD(RGB(255,255,255)'
 }
+train_fire_values={
+    True : '0',
+    False : '1', 
+    'unknown': '0.75'
+}
+train_fire_settings ={
+    "FillForegndTrans": 'V',
+    "FillBkgndTrans": 'V'
+}
+
+train_fire_names = [".//Visio:Shape[@Name='Fire']",".//Visio:Shape[@Name='Train']"]

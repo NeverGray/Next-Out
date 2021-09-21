@@ -5,7 +5,7 @@ import pandas as pd
 import NV_excel
 
 
-def create_route_sheets(settings, data, output_meta_data, gui=""):
+def create_route_data(settings, data, output_meta_data, gui=""):
     # Get number of sub-segments per segement, from SST last timestep
     form8f_df = output_meta_data['form_8f']
     time = data['SST'].index.get_level_values("Time").max()
@@ -73,6 +73,10 @@ def create_route_sheets(settings, data, output_meta_data, gui=""):
             df = dfs.loc[route_num]
             df.name = df_name
             route_data.update({df.name: df})
+    return route_data
+
+def create_route_excel(settings, data, output_meta_data, gui=""):
+    route_data = create_route_data(settings, data, output_meta_data, gui)
     #Create Excel Files
     file_path = output_meta_data['file_path']
     new_file_name = file_path.name[:-4] + "-Routes.out"
@@ -81,13 +85,12 @@ def create_route_sheets(settings, data, output_meta_data, gui=""):
     NV_excel.create_excel(settings, route_data, output_meta_data, gui="")
     #Revert back to original output_meta_data name (incase needed elsewhere)
     output_meta_data['file_path'] = file_path
-    print(time)
-    return True
 
 if __name__ == "__main__":
     import NV_parser
-    directory_str = 'C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/'
-    ses_output_list = [directory_str + 'sinorm-detailed.out']
+    directory_str = "C:\\Users\\msn\\OneDrive - Never Gray\\Software Development\\Next-Vis\\Projects and Issues\\2021-09-14 Tunnel Stencil\\Parsing\\"
+    file_name = "Form4.prn"
+    ses_output_list = [directory_str + file_name]
     file_path = Path(directory_str)/ses_output_list[0]
     settings = {
         "ses_output_str": ses_output_list,
@@ -99,8 +102,7 @@ if __name__ == "__main__":
         "output": ["Excel","Route"],
     }
     data, output_meta_data = NV_parser.parse_file(file_path)
-    create_route_sheets(settings, data, output_meta_data)
-
+    create_route_excel(settings, data, output_meta_data)
     print('finished')
     
 
