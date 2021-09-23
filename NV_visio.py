@@ -56,11 +56,9 @@ def emod_visXML(vxml, data, ses_output_str="Not Available", simtime=0.00, output
     ET.register_namespace(
         "r", "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
     )
-    ns = {
-        "Visio": "http://schemas.microsoft.com/office/visio/2012/main"
-    }  # Namespace dictionary to ease file navigation
-
-    # Update SimInfo-NV01 text fields
+    #TODO Move simtime outside of page file to speed up processing
+    simtime_df = data["SSA"].loc[simtime]
+    # SimInfo-NV01 text fields
     file_path = Path(ses_output_str)
     sim_base_name = file_path.name
     file_time = output_meta_data.get("file_time") 
@@ -73,72 +71,58 @@ def emod_visXML(vxml, data, ses_output_str="Not Available", simtime=0.00, output
         ShapeChilds = P1root.findall(find_string, ns)
         if ShapeChilds:
             for ShapeChild in ShapeChilds:
-                ShapeChild = NV01_text(ShapeChild, ns, value)
-    # Update Sub-NV01 The "../.." at the end of the string moves the selection up two tiers (Section, then shape)
-    for Shape in P1root.findall(".//Visio:Row[@N='NV01_SegID']../..", ns):
-        # Get SegID and Sub-segment from XML
-        try:
-            SegID = int(
-                Shape.find(".//Visio:Row[@N='NV01_SegID']/Visio:Cell", ns).get("V")
-            ) 
-        except:
-            SegID = -1
-        try: 
-            SubID = int(
-                Shape.find(".//Visio:Row[@N='NV01_Sub']/Visio:Cell", ns).get("V")
-            )
-        except:
-            SubID = 1
-        # Pull from data from SSA and SST dataframe
-        ses_airflow = get_df_values(data["SSA"], (simtime, SegID), "Airflow")
-        airflow = str(round(abs(ses_airflow), 1))
-        ses_velocity = get_df_values(data["SSA"], (simtime, SegID), "Air_Velocity")
-        velocity = str(round(abs(ses_velocity), 1))
-        ses_airtemp = get_df_values(data["SST"], (simtime, SegID, SubID), "Air_Temp")
-        airtemp = str(round(ses_airtemp, 1)) + "°"
-        ses_WallTemp = get_df_values(data["SST"], (simtime, SegID, SubID), "Wall_Temp")
-        walltemp = str(round(ses_WallTemp, 1)) + "°"
-        # Determines if airflow needs to be flipped for negative airflow
-        if (ses_airflow >= 0):  
-            flip = 0
-        else:
-            flip = 1
-        # Update shape with information {find_string: value}
-        shape_dict = {
-            ".//Visio:Shape[@Name='NV01_AirFlow']": airflow,
-            ".//Visio:Shape[@Name='NV01_Velocity']": velocity,
-            ".//Visio:Shape[@Name='NV01_AirTemp']": airtemp,
-            ".//Visio:Shape[@Name='NV01_WallTemp']": walltemp,
-        }
-        for find_string, value in shape_dict.items():
-            ShapeChild = Shape.find(find_string, ns)
-            if ShapeChild:
-                ShapeChild = NV01_text(ShapeChild, ns, value)
-        find_string = ".//Visio:Cell[@N='FlipX']"
-        Shape = NV01_arrow(Shape, find_string, ns, flip)  # Flip arrow as needed
-    # Update Damper Shapes
+                ShapeChild = NV02_text(value, ShapeChild)
+    
+    # Damper
     for Shape in P1root.findall(".//Visio:Row[@N='Damper_Segment']../..", ns):
         try:
-            Shape = update_damper(Shape, output_meta_data['damper_position'], ns)
+            update_damper(Shape, output_meta_data['damper_position'])
         except:
             NV_run.run_msg(gui, f'Error Updating Damper')
-    # Update Fan_NV01
+    
+    # Fan
     for Shape in P1root.findall(".//Visio:Row[@N='Fan_Segment']../..", ns):
         try:
-            Shape = update_fan(Shape, output_meta_data['form5_fan_data'], simtime, ns)
+            update_fan(Shape, output_meta_data['form5_fan_data'], simtime, ns)
         except:
             NV_run.run_msg(gui, f'Error Updating Fan')
+    
+    # Jet Fan Segments
     for Shape in P1root.findall(".//Visio:Row[@N='Jet_Fan_Segment']../..", ns):
         try:
-            Shape = update_jet_fan(Shape, output_meta_data['jet_fan_data'], simtime, ns)
+            update_jet_fan(Shape, output_meta_data['jet_fan_data'], simtime, ns)
         except:
             NV_run.run_msg(gui, f'Error Updating Jet Fan')
-    for Shape in P1root.findall(".//Visio:Row[@N='Jet_Fan_Segment']../..", ns):
-        try:
-            Shape = update_jet_fan(Shape, output_meta_data['jet_fan_data'], simtime, ns)
-        except:
-            NV_run.run_msg(gui, f'Error Updating Jet Fan')
+    
+    # Airflow_NV02
+    if P1root.find(".//Visio:Row[@N='Airflow_NV02']../..", ns) is not None:
+        for shape in P1root.findall(".//Visio:Row[@N='Airflow_NV02']../..", ns):
+            try:
+                update_airflow_NV02(simtime_df, shape)
+            except:
+                NV_run.run_msg(gui, f'Error updating airflow_NV02')
+    
+    # Velocity_NV02
+    if P1root.find(".//Visio:Row[@N='Velocity_NV02']../..", ns) is not None:
+        for shape in P1root.findall(".//Visio:Row[@N='Velocity_NV02']../..", ns):
+            try:
+                update_velocity_NV02(simtime_df, shape)
+            except:
+                NV_run.run_msg(gui, f'Error Updating velocity_NV02')
+    
+    # Temperature_NV02
+    if P1root.find(".//Visio:Row[@N='Temperature_seg_NV02']../..", ns) is not None:
+        #TODO Reduce time by moving SST_simtime outside of this script
+        SST_simtime = data['SST'].loc[simtime]
+        for shape in P1root.findall(".//Visio:Row[@N='Temperature_seg_NV02']../..", ns):
+            try:
+                update_temperature_NV02(simtime_df, SST_simtime, shape)
+            except:
+                NV_run.run_msg(gui, f'Error Updating velocity_NV02')
+    
+    # Update Tunnel Segments
     if P1root.find(".//Visio:Row[@N='Tunnel_Segment_NV01']../..", ns) is not None:
+        #TODO Reduce time by moving segment_time_df outside of this script
         segment_time_df = NV_Tunnel_Segment.create_segment_info(data, output_meta_data, simtime)
         for shape in P1root.findall(".//Visio:Row[@N='Tunnel_Segment_NV01']../..", ns):
             try:
@@ -146,6 +130,103 @@ def emod_visXML(vxml, data, ses_output_str="Not Available", simtime=0.00, output
             except:
                 NV_run.run_msg(gui, f'Error Updating Tunnel Segment')
     return P1root
+
+def update_temperature_NV02(simtime_df, SST_simtime, shape):
+    seg_id = int(shape.find(".//Visio:Row[@N='Temperature_seg_NV02']/Visio:Cell", ns).get("V", default =-1))
+    sub_id = int(shape.find(".//Visio:Row[@N='temperature_sub_NV02']/Visio:Cell", ns).get("V", default =-1))
+    #Default values 1 of 2
+    end_arrow = '5'
+    begin_arrow = '0'
+    if seg_id in simtime_df.index:
+        #Update for all values (see previous code)
+        ses_airflow = simtime_df.loc[seg_id]['Airflow']
+        airflow = str(round(abs(ses_airflow), 1))
+        if (ses_airflow < 0):  
+            end_arrow = '0'
+            begin_arrow = '5'
+    else:
+        airflow = 'Airflow?'  
+    if (seg_id,sub_id) in SST_simtime.index:
+        ses_airtemp = SST_simtime.loc[seg_id,sub_id]['Air_Temp']
+        airtemp = str(round(ses_airtemp, 1)) + "°"
+        if 'Wall_Temp' in SST_simtime.columns:
+            ses_WallTemp = SST_simtime.loc[seg_id,sub_id]['Wall_Temp']
+            walltemp = str(round(ses_WallTemp, 1)) + "°"
+        else:
+            walltemp = 'Wall Temp?'
+    else:
+        airtemp = 'Air Temp?'
+        walltemp = 'Wall Temp?'
+    # Update Arrow
+    name = 'Arrow_NV02'
+    cell_n_v_dictionary ={
+                'EndArrow': end_arrow,
+                'BeginArrow': begin_arrow
+            }
+    update_shape(shape, name, cell_n_v_dictionary)  
+    # Update text
+    shape_dict = {
+            ".//Visio:Shape[@Name='airflow_text_NV02']": airflow,
+            ".//Visio:Shape[@Name='air_temp_text_NV02']": airtemp,
+            ".//Visio:Shape[@Name='wall_temp_text_NV02']": walltemp
+        }
+    for find_string, value in shape_dict.items():
+        child = shape.find(find_string, ns)
+        NV02_text(value, child)
+
+def update_airflow_NV02(simtime_df, shape):
+    seg_id = int(shape.find(".//Visio:Row[@N='Airflow_NV02']/Visio:Cell", ns).get("V", default =-1))
+            #Default values 1 of 2
+    end_arrow = '5'
+    begin_arrow = '0'
+    if seg_id in simtime_df.index:
+        ses_airflow = simtime_df.loc[seg_id]['Airflow']
+        airflow = str(round(abs(ses_airflow), 1))
+        if (ses_airflow < 0):  
+            end_arrow = '0'
+            begin_arrow = '5'
+    else:
+        airflow = 'Airflow?'
+            #Update arrows
+    name = 'Arrow_NV02'
+    cell_n_v_dictionary ={
+                'EndArrow': end_arrow,
+                'BeginArrow': begin_arrow
+            }
+    update_shape(shape, name, cell_n_v_dictionary)    
+    child = shape.find(".//Visio:Shape[@Name='airflow_text_NV02']",ns)
+    NV02_text(airflow, child)
+
+def update_velocity_NV02(simtime_df, shape):
+    seg_id = int(shape.find(".//Visio:Row[@N='Velocity_NV02']/Visio:Cell", ns).get("V", default =-1))
+            #Default values 1 of 2
+    end_arrow = '5'
+    begin_arrow = '0'
+    if seg_id in simtime_df.index:
+        ses_airflow = simtime_df.loc[seg_id]['Air_Velocity']
+        airflow = str(round(abs(ses_airflow), 1))
+        if (ses_airflow < 0):  
+            end_arrow = '0'
+            begin_arrow = '5'
+    else:
+        airflow = 'Velocity?'
+            #Update arrows
+    name = 'Arrow_NV02'
+    cell_n_v_dictionary ={
+                'EndArrow': end_arrow,
+                'BeginArrow': begin_arrow
+            }
+    update_shape(shape, name, cell_n_v_dictionary)    
+    child = shape.find(".//Visio:Shape[@Name='velocity_text_NV02']",ns)
+    NV02_text(airflow, child)
+
+def NV02_text(value, child):
+    if ET.iselement(child):
+        babe = child.find(".//Visio:Text", ns)
+        if ET.iselement(babe):
+            babe.text = value
+        else:
+            ET.SubElement(child,"Text").text = value
 
 def update_tunnel_segment(shape, segment_time_df):
     # Look up values for segment values
@@ -189,19 +270,7 @@ def update_tunnel_segment(shape, segment_time_df):
     update_shape(shape, name, cell_n_v_dictionary)
     #Update Text
     child = shape.find(".//Visio:Shape[@Name='airflow_text_NV02']",ns)
-    babe = child.find(".//Visio:Text", ns)
-    if ET.iselement(babe):
-        babe.text = airflow
-    else:
-        ET.SubElement(child,"Text").text = airflow
-
-    #Old update text
-    #shape_babe = shape.find(".//Visio:Shape[@Name='airflow_text_NV02']/Visio:Text/Visio:cp",ns)
-    '''if ET.iselement(shape_babe):
-        shape_babe.tail = airflow
-    else:
-        #TODO update text when makin it default value
-        print('Text element does not exist and cannot be updated')'''
+    NV02_text(airflow, child)
 
 def update_shape(shape, child_name, cell_n_v_dictionary):
     child_string = ".//Visio:Shape[@Name='{}']"
@@ -215,19 +284,18 @@ def update_shape(shape, child_name, cell_n_v_dictionary):
             else:
                 ET.SubElement(child,"Cell",N=n_value,V=v_value)
 
-def update_damper(shape, damper_position_dict, ns):
+def update_damper(shape, damper_position_dict):
     SegID = int(shape.find(".//Visio:Row[@N='Damper_Segment']/Visio:Cell", ns).get("V", default=-1)) 
     status = damper_position_dict.get(SegID)
     if status is None:
         status = "STATUS?"
     shape_text = shape.find(".//Visio:Shape[@Name='NV01_Damper_Position']",ns)
-    shape_text = NV01_text(shape_text, ns, status)
+    shape_text = NV02_text(status, shape_text)
     shape_child = shape.find(".//Visio:Shape[@Name='Damper_Closed_Lines']", ns)
     line_shapes = shape_child.findall(".//Visio:Shape",ns)
     damper_settings = NV_settings.damper_settings.get(status)
     for line_shape in line_shapes:
         line_shape = update_shape_NV01(line_shape,damper_settings)
-    return shape
 
 def update_fan(shape, form5_fan_data, simtime, ns):
     seg_id = int(shape.find(".//Visio:Row[@N='Fan_Segment']/Visio:Cell", ns).get("V",default=-1)) 
@@ -256,7 +324,6 @@ def update_fan(shape, form5_fan_data, simtime, ns):
     fan_settings = NV_settings.fan_settings.get(fan_direction)
     shape_child = shape.find(".//Visio:Shape[@Name='Fan_center_line']", ns)
     shape_child = update_shape_NV01(shape_child,fan_settings)
-    return shape
 
 def update_jet_fan(shape, jet_fan_data, simtime, ns):
     seg_id = int(shape.find(".//Visio:Row[@N='Jet_Fan_Segment']/Visio:Cell", ns).get("V",default=-1))
@@ -284,7 +351,6 @@ def update_jet_fan(shape, jet_fan_data, simtime, ns):
         shape_child = update_shape_NV01(shape_child,NV_settings.line_white)
         shape_child = shape.find(".//Visio:Shape[@Name='Arrow_negative']", ns)
         shape_child = update_shape_NV01(shape_child,NV_settings.line_black)
-    return shape
 
 
 def update_shape_NV01(shape, settings_dict):
@@ -323,22 +389,6 @@ def NV01_arrow(Shape, find_string, ns, flip):
     except:
         print("Error with NV01_arrow")
         return ShapeTemp
-
-def NV01_text(ShapeChild, ns, value):
-    ShapeTemp = ShapeChild
-    try:
-        ShapeBabe = ShapeChild.find(".//Visio:Text", ns)
-        if ET.iselement(ShapeBabe):  # If element already exists, change the value
-            ShapeBabe.text = value  # Selects the NV01_Airflow ObjectShapeBabe=ShapeChild.find(".//Visio:Text",ns)
-        else:
-            ET.SubElement(
-                ShapeChild, "Text"
-            ).text = value  # Adds text element and value if elemnt doesn't exist
-        return ShapeChild
-    except:
-        print("Error with NV01_text")
-        return ShapeTemp
-
 
 def SimInfo_NV01(Shape, find_string, ns, value):
     ShapeTemp = Shape
@@ -446,9 +496,9 @@ def create_visio(settings, data, output_meta_data, gui=""):
             NV_run.run_msg(gui, msg)
 
 if __name__ == "__main__":
-    visio_template = "TS_042.vsdx"
-    file_path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Projects and Issues/2021-09-14 Tunnel Stencil/siinfern.out"
-    visio_template_folder = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Projects and Issues/2021-09-14 Tunnel Stencil"
+    visio_template = "A020.vsdx"
+    file_path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Projects and Issues/2021-09-21 Update NV01 Stencils/siinfern.out"
+    visio_template_folder = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Projects and Issues/2021-09-21 Update NV01 Stencils"
     results_folder_str = visio_template_folder
     
     #visio_template =     "C:/temp/test.vsdx"

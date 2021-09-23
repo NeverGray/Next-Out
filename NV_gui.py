@@ -1,5 +1,8 @@
 import datetime
 import os
+import queue
+import threading
+from multiprocessing import Queue
 from pathlib import Path
 from sys import exit as system_exit
 from tkinter import *
@@ -42,22 +45,24 @@ class start_screen:
             frm_pp, text="Visio", variable=self.cbo_visio, onvalue="Visio", offvalue=""
         )
         cb_average = ttk.Checkbutton(
-            frm_pp, text="Staggered\nheadways\nmean, max, min", variable=self.cbo_average, onvalue="Average", offvalue=""
+            frm_pp, text="Staggered\nheadways\nmean, max, min", variable=self.cbo_average, 
+            onvalue="Average", offvalue="", command=self.update_post_processing_options
         )
-        cb_compare = ttk.Checkbutton(
+        self.cb_compare = ttk.Checkbutton(
             frm_pp,
             text="Compare two\noutputs",
             variable=self.cbo_compare,
             onvalue="Compare",
             offvalue="",
+            command=self.update_post_processing_options
         )
         cb_route = ttk.Checkbutton(
-            frm_pp, text="Route Data", variable=self.cbo_route, onvalue="Route", offvalue=""
+            frm_pp, text="Route Data", variable=self.cbo_route, onvalue="Route", offvalue="", command=self.update_post_processing_options
         )
         # POST PROCESSING grid
         cb_excel.grid(column=0, row=0, sticky=W, pady=py)
         cb_visio.grid(column=0, row=1, sticky=W, pady=py)
-        cb_compare.grid(column=0, row=2, sticky=W, pady=py)
+        self.cb_compare.grid(column=0, row=2, sticky=W, pady=py)
         cb_average.grid(column=0, row=3, sticky=W, pady=py)
         cb_route.grid(column=0, row=4, sticky=W, pady=py)
         # SES OUTPUT Files to Process
@@ -65,9 +70,9 @@ class start_screen:
             self.ss, borderwidth=5, text="SES Output to Process", padding=p
         )
         self.ses = StringVar(value="file")
-        rb_file = ttk.Radiobutton(frm_ses, text="", variable=self.ses, value="File")
-        rb_files = ttk.Radiobutton(frm_ses, text="", variable=self.ses, value="Files")
-        rb_folder = ttk.Radiobutton(frm_ses, text="", variable=self.ses, value="Folder")
+        rb_file = ttk.Radiobutton(frm_ses, text="", variable=self.ses, value="File", command=self.update_output_options)
+        rb_files = ttk.Radiobutton(frm_ses, text="", variable=self.ses, value="Files", command=self.update_output_options)
+        rb_folder = ttk.Radiobutton(frm_ses, text="", variable=self.ses, value="Folder", command=self.update_output_options)
         self.btn_file = ttk.Button(frm_ses, text="One file", command=self.ses_file)
         self.btn_files = ttk.Button(frm_ses, text="Many files", command=self.ses_files)
         self.btn_folder = ttk.Button(frm_ses, text="Folder", command=self.ses_folder)
@@ -94,41 +99,41 @@ class start_screen:
         ent_folder.grid(column=2, row=r, sticky=[E, W], pady=py, padx=px)
         frm_ses.columnconfigure(2, weight=1)
         # VISIO Template - Row 1
-        frm_visio = ttk.LabelFrame(
+        self.frm_visio = ttk.LabelFrame(
             self.ss, borderwidth=5, text="Visio Template", padding=p
         )
-        btn_visio = ttk.Button(frm_visio, text="Select", command=self.get_visio_file)
+        btn_visio = ttk.Button(self.frm_visio, text="Select", command=self.get_visio_file)
         self.path_visio = StringVar()
-        ent_visio = ttk.Entry(frm_visio, textvariable=self.path_visio)
+        ent_visio = ttk.Entry(self.frm_visio, textvariable=self.path_visio)
         # Visio Template - Row 2
-        lbl_time = ttk.Label(frm_visio, text="Simulation Time: ")
+        lbl_time = ttk.Label(self.frm_visio, text="Simulation Time: ")
         self.rbo_time = StringVar(value="end")
         rb_end_time = ttk.Radiobutton(
-            frm_visio, text="End", variable=self.rbo_time, value="end"
+            self.frm_visio, text="End", variable=self.rbo_time, value="end"
         )
         rb_user_time = ttk.Radiobutton(
-            frm_visio, text="Specified", variable=self.rbo_time, value="user_time"
+            self.frm_visio, text="Specified", variable=self.rbo_time, value="user_time"
         )
         self.user_time = StringVar()
-        self.ent_user_time = ttk.Entry(frm_visio, textvariable=self.user_time)
+        self.ent_user_time = ttk.Entry(self.frm_visio, textvariable=self.user_time)
         # Visio Template - Row 3
-        lbl_image = ttk.Label(frm_visio, text="More Image Outputs: ")
+        self.cbo_visio_open = StringVar(value="")
+        self.cb_visio_open = ttk.Checkbutton(
+            self.frm_visio, text="Open in Visio", variable=self.cbo_visio_open, onvalue="visio_open", offvalue=""
+        )
+        # Visio Template - Row 4
+        lbl_image = ttk.Label(self.frm_visio, text="More Image Outputs: ")
         self.cbo_pdf = StringVar(value="")
         self.cbo_png = StringVar(value="")
         self.cbo_svg = StringVar(value="")
         cb_pdf = ttk.Checkbutton(
-            frm_visio, text="PDF", variable=self.cbo_pdf, onvalue="visio_2_pdf", offvalue=""
+            self.frm_visio, text="PDF", variable=self.cbo_pdf, onvalue="visio_2_pdf", offvalue=""
         )
         cb_png = ttk.Checkbutton(
-            frm_visio, text="PNG", variable=self.cbo_png, onvalue="visio_2_png", offvalue=""
+            self.frm_visio, text="PNG", variable=self.cbo_png, onvalue="visio_2_png", offvalue=""
         )
         cb_svg = ttk.Checkbutton(
-            frm_visio, text="SVG", variable=self.cbo_svg, onvalue="visio_2_svg", offvalue=""
-        )
-        # Visio Template - Row 4
-        self.cbo_visio_open = StringVar(value="")
-        cb_visio_open = ttk.Checkbutton(
-            frm_visio, text="Open in Visio", variable=self.cbo_visio_open, onvalue="visio_open", offvalue=""
+            self.frm_visio, text="SVG", variable=self.cbo_svg, onvalue="visio_2_svg", offvalue=""
         )
 
         # VISIO GRID
@@ -140,14 +145,14 @@ class start_screen:
         rb_end_time.grid(column=1, row=r, sticky=W, pady=py)
         rb_user_time.grid(column=2, row=r, sticky=W, pady=py)
         self.ent_user_time.grid(column=3, row=r, sticky=[W, E], pady=py)
-        frm_visio.columnconfigure(3, weight=1)
+        self.frm_visio.columnconfigure(3, weight=1)
         r = 4
         lbl_image.grid(column=0, row=r, sticky=W, pady=py)
         cb_pdf.grid(column=1, row=r, sticky=W, pady=py)
         cb_png.grid(column=2, row=r, sticky=W, pady=py)
         cb_svg.grid(column=3, row=r, sticky=W, pady=py)
         r = 3
-        cb_visio_open.grid(column=0, row=r, sticky=W, pady=py)
+        self.cb_visio_open.grid(column=0, row=r, sticky=W, pady=py)
         # Results Folder widgets
         frm_results_folder = ttk.LabelFrame(self.ss, borderwidth=5, text="Folder to write results", padding=p)
         self.results_folder = StringVar(value="ses output")
@@ -188,7 +193,7 @@ class start_screen:
         self.ss.rowconfigure(4, weight=1)
         frm_pp.grid(column=0, row=0, rowspan=4, sticky=[N, S], pady=py, padx=px)
         frm_results_folder.grid(column=1, row=2, sticky=[W, E], pady=py, padx=px)
-        frm_visio.grid(column=1, row=1, sticky=[W, E], pady=py, padx=px)
+        self.frm_visio.grid(column=1, row=1, sticky=[W, E], pady=py, padx=px)
         frm_ses.grid(column=1, row=0, sticky=[N, S, E, W], pady=py, padx=px)
         frm_run.grid(column=1, row=3, sticky=[W, E], pady=py, padx=px)
         frm_status.grid(
@@ -426,5 +431,30 @@ class start_screen:
             else:
                 return True
 
+    def update_output_options(self, *args):
+        option = self.ses.get()
+        if option == 'File':
+            self.cb_visio_open["state"] = NORMAL
+        else:
+            self.cb_visio_open["state"] = DISABLED
+
+    def update_post_processing_options(self, *args):
+        if self.cbo_average.get() == '' and self.cbo_route.get() == '':
+            visio_state = 'enable'
+        else:
+            visio_state = 'disable'
+        #Disable all items in a frame: https://www.tutorialspoint.com/how-to-gray-out-disable-a-tkinter-frame
+        for child in self.frm_visio.winfo_children():
+            child.configure(state=visio_state)
+
+    def send_message_to_ui(self, message):
+        self.message_queue.put(message)
+        self.tk.event_generate(self.message_event, when='tail')
+
+    def process_message_queue(self, event):
+        while self.message_queue.empty() is False:
+            message = self.message_queue.get(block=False)
+
+         
 if __name__ == "__main__":
     main.main(False)
