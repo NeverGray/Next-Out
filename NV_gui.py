@@ -1,7 +1,6 @@
+import base64
 import datetime
 import os
-import queue
-import threading
 from multiprocessing import Queue
 from pathlib import Path
 from sys import exit as system_exit
@@ -12,6 +11,7 @@ import keygen
 import main as main
 import NV_file_manager as nfm
 import NV_run as nvr
+from NV_icon5 import Icon
 from NV_parser import percentage_parser
 
 
@@ -23,8 +23,14 @@ class start_screen:
         py = "5"  # vertical padding
         px = "5"
         root.title("Next-Vis 1.01")
+        try:
+            with open('tmp.ico','wb') as tmp:
+                tmp.write(base64.b64decode(Icon().img))
+            root.iconbitmap('tmp.ico')
+            os.remove('tmp.ico')
+        except:
+            icon_value = False
         # root.iconbitmap('icon4.ico')
-        # Eliminate icon
         # TODO Replace Icon in title bar with NV icon (icon4.ico)
         # root.attributes('-toolwindow', 'True')
         self.ss = ttk.Frame(root, padding=p)  # start screen
