@@ -79,7 +79,7 @@ def multiple_sim(settings, gui=""):
     num_files = len(settings["ses_output_str"])
     if num_files == 0:
         run_msg(gui, "No output files found")
-    elif num_files == 1:  # Catch if there is onle file
+    elif num_files == 1:  # Catch if there is only file
         run_msg(gui, "Started multiple files processing with only one simulation")
         settings["ses_output_str"] = settings["ses_output_str"][0]
         single_sim(settings)

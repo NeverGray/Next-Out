@@ -8,11 +8,9 @@ from tkinter import *
 from tkinter import filedialog, messagebox, ttk
 
 import keygen
-import main as main
 import NV_file_manager as nfm
 import NV_run as nvr
 from NV_icon5 import Icon
-from NV_parser import percentage_parser
 
 
 # add requirement for program to be legit to run
@@ -22,7 +20,7 @@ class start_screen:
         p = "5"  # padding
         py = "5"  # vertical padding
         px = "5"
-        root.title("Next-Vis 1.01")
+        root.title("Next-Vis 1.10")
         try:
             with open('tmp.ico','wb') as tmp:
                 tmp.write(base64.b64decode(Icon().img))
@@ -48,7 +46,8 @@ class start_screen:
             frm_pp, text="Excel", variable=self.cbo_excel, onvalue="Excel", offvalue=""
         )
         cb_visio = ttk.Checkbutton(
-            frm_pp, text="Visio", variable=self.cbo_visio, onvalue="Visio", offvalue=""
+            frm_pp, text="Visio", variable=self.cbo_visio, onvalue="Visio", offvalue="",
+            command=self.update_post_processing_options
         )
         cb_average = ttk.Checkbutton(
             frm_pp, text="Staggered\nheadways\nmean, max, min", variable=self.cbo_average, 
@@ -206,6 +205,7 @@ class start_screen:
             column=0, row=4, columnspan=2, sticky=[W, E, S, N], pady=py, padx=px
         )
         root.minsize(550, 385)  # Measured using paint.net
+        self.update_post_processing_options()
         self.display_validation_info()
         # root.maxsize(1080,385) worried about scaling on other monitors
 
@@ -443,24 +443,17 @@ class start_screen:
             self.cb_visio_open["state"] = NORMAL
         else:
             self.cb_visio_open["state"] = DISABLED
-
+            self.cbo_visio_open = StringVar(value="")
+            
     def update_post_processing_options(self, *args):
-        if self.cbo_average.get() == '' and self.cbo_route.get() == '':
+        if self.cbo_average.get() == '' and self.cbo_route.get() == '' and self.cbo_visio.get() == "Visio":
             visio_state = 'enable'
         else:
             visio_state = 'disable'
         #Disable all items in a frame: https://www.tutorialspoint.com/how-to-gray-out-disable-a-tkinter-frame
         for child in self.frm_visio.winfo_children():
             child.configure(state=visio_state)
-
-    def send_message_to_ui(self, message):
-        self.message_queue.put(message)
-        self.tk.event_generate(self.message_event, when='tail')
-
-    def process_message_queue(self, event):
-        while self.message_queue.empty() is False:
-            message = self.message_queue.get(block=False)
-
          
 if __name__ == "__main__":
+    import main as main
     main.main(False)
