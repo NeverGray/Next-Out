@@ -19,7 +19,6 @@ from pathlib import Path
 
 ns = {"Visio": "http://schemas.microsoft.com/office/visio/2012/main"}
 
-
 def valid_simtime(simtime, df, gui=""):
     timeseries_index = df.index.unique(0)  # Creates a series of unique times
     timeseries_list = timeseries_index.tolist()
@@ -34,7 +33,6 @@ def valid_simtime(simtime, df, gui=""):
                 break
         NV_run.run_msg(gui, f"Could not find requested simulation time. Using {time}")
     return time
-
 
 def get_visXML(visio_template):
     VZip = zipfile.ZipFile(visio_template)
@@ -61,6 +59,12 @@ def emod_visXML(vxml, data, ses_output_str="Not Available", simtime=0.00, output
     # SimInfo-NV01 text fields
     file_path = Path(ses_output_str)
     sim_base_name = file_path.name
+    try:
+        if output_meta_data['ses_version'] == 'SI from IP':
+            sim_base_name = sim_base_name + '_SI'
+    except:
+        NV_run.run_msg(gui, f'Error checking SES version')   
+
     file_time = output_meta_data.get("file_time") 
     shape_dict = {
         ".//Visio:Shape[@Name='NV01_SimNam']": sim_base_name,

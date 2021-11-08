@@ -708,8 +708,11 @@ def get_form5(lines):
             if sum(head_loss_list) >= 1998:
                 form5_data[segment_number] = "CLOSED"
         i +=1
-    form5_fan_data_df = pd.DataFrame(form5_fan_data)
-    form5_fan_data_df.set_index("Segment", inplace=True)
+    if len(form5_fan_data) > 0:
+        form5_fan_data_df = pd.DataFrame(form5_fan_data)
+        form5_fan_data_df.set_index("Segment", inplace=True)
+    else:
+        form5_fan_data_df = None
     return form5_data, form5_fan_data_df  
 
 def get_form7c(lines):
@@ -774,9 +777,12 @@ def get_form8fs(lines):
             form8f_data.append(form_8f_dict)
         i +=1
     #Convert from list to dataframes
-    form8f_df = pd.DataFrame(form8f_data)
-    form8f_df = form8f_df.apply(pd.to_numeric, errors="coerce")
-    form8f_df.set_index(['Route_Number','Segment'], inplace=True)
+    if len(form8f_data)>0:
+        form8f_df = pd.DataFrame(form8f_data)
+        form8f_df = form8f_df.apply(pd.to_numeric, errors="coerce")
+        form8f_df.set_index(['Route_Number','Segment'], inplace=True)
+    else:
+        form8f_df= None
     return form8f_df 
 
 def get_form9(lines):
@@ -1087,7 +1093,7 @@ def delete_duplicate_pit(df_pit, df_train):
 
 if __name__ == "__main__":
     directory_string = "C:\\Users\\msn\\OneDrive - Never Gray\\Software Development\\Next-Vis\\Python2021\\"
-    file_name = "normal.prn"
+    file_name = "TestIP03.prn"
     path_string = directory_string + file_name
     file_path = Path(path_string)
     d, output_meta_data = parse_file(file_path, convert_df="IP_TO_SI")
