@@ -6,6 +6,9 @@ from pathlib import Path
 
 import pandas as pd
 
+import NV_ip_to_si
+import NV_run
+
 logging.basicConfig(
     level=logging.DEBUG, format=" %(asctime)s - %(levelname)s - %(message)s"
 )
@@ -62,10 +65,10 @@ PIT = {
 		(?P<Air_Drag>-?\d+\.\d*)\s+
 		(?P<Air_Drag_Coeff>-?\d+\.\d*)\s+
 		(?P<Tractive_Effort>-?\d+\.\d*)\s+
-		(?P<Motor_current>-?\d+\.\d*)\s+
+		(?P<Motor_Current>-?\d+\.\d*)\s+
 		(?P<Line_Current>-?\d+\.\d*)\s+
-		(?P<Fly_WHeel>-?\d+\.\d*)\s+
-		((?P<M_Eff>-?\d+\.\d*)\s+|\s+) #Motor efficiency or NOTHING in IP
+		(?P<Fly_Wheel>-?\d+\.\d*)\s+
+		((?P<Motor_Eff>-?\d+\.\d*)\s+|\s+) #Motor efficiency or NOTHING in IP
 		(?P<Grid_Temp_Accel>-?\d+\.\d*)\s+
 		(?P<Grid_Temp_Decel>-?\d+\.\d*)\s+	
 		(?P<Heat_Gen>-?\d+\.\d*)\s+
@@ -317,7 +320,7 @@ PERCENTAGE = {
 
 TES = {
     "es": re.compile(r"\s+ENERGY SECTOR\s*(?P<Energy_Sector>-?\d+)$"),
-    "et": re.compile(r"\s+PROPULSION ENERGY FROM THIRD RAIL\s+(?P<From_Third_rail>-?\d*\.\d*)\s+"),
+    "et": re.compile(r"\s+PROPULSION ENERGY FROM THIRD RAIL\s+(?P<From_Third_Rail>-?\d*\.\d*)\s+"),
     "ef": re.compile(
         r"\s+EQUIVALENT THIRD RAIL PROPULSION ENERGY FROM FLYWHEEL\s+(?P<From_Flywheel>-?\d*\.\d*)\s+"
     ),
@@ -366,7 +369,7 @@ HE = {
 }
 
 # TODO Eliminate NumExpr detected 16 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 8.
-def parse_file(file_path, gui=""):  # Parser
+def parse_file(file_path, gui="", convert_df=""):  # Parser
     # Variables for all referenced functions
     data_pit = []  # All Point in Time data
     data_train = []
@@ -404,7 +407,7 @@ def parse_file(file_path, gui=""):  # Parser
             output_meta_data.update({"form4_df": form4_df})
     except:
         msg = 'Error processing Form 4 position'
-        parser_msg(gui, msg)
+        NV_run.run_msg(gui, msg)
 
     # Read damper position and fan data from Form 5
     # TODO Update to get open or closed status for Form 3. Combine with get_titles_and_form3.
@@ -414,16 +417,17 @@ def parse_file(file_path, gui=""):  # Parser
         output_meta_data.update({"form5_fan_data": form5_fan_data_df})
     except:
         msg = 'Error processing Form 5 position'
-        parser_msg(gui, msg)
+        NV_run.run_msg(gui, msg)
     
     # Read jet fan data from Form 7C
     try:
         form7c_data = get_form7c(lines)
-        jet_fan_data = get_jet_fan_data(form7c_data, form3_type)
-        output_meta_data.update({"jet_fan_data": jet_fan_data})
+        if len(form7c_data) > 0:
+            jet_fan_data = get_jet_fan_data(form7c_data, form3_type)
+            output_meta_data.update({"jet_fan_data": jet_fan_data})
     except:
         msg = 'Error processing Form 7C, Jet Fan Data'
-        parser_msg(gui, msg)
+        NV_run.run_msg(gui, msg)
 
     # Read route data from Form 8F
     try:
@@ -431,7 +435,7 @@ def parse_file(file_path, gui=""):  # Parser
         output_meta_data.update({"form_8f": form8f_df})
     except:
         msg = 'Error Processing Form 8F'
-        parser_msg(gui, msg)
+        NV_run.run_msg(gui, msg)
 
     # Read route data from Form 9A
     try: 
@@ -439,7 +443,7 @@ def parse_file(file_path, gui=""):  # Parser
         output_meta_data.update({"form9_df": form9_df})
     except:
         msg = 'Error Processing Form 9'
-        parser_msg(gui, msg)
+        NV_run.run_msg(gui, msg)
 
     # Determine if there are abbreviated prints from Form 12.
     m = None  # Sets the value equal to none to start while loop
@@ -464,7 +468,7 @@ def parse_file(file_path, gui=""):  # Parser
                 summary = True
         i += 1
         if i > (len(lines) - 1):
-            parser_msg(
+            NV_run.run_msg(
                 gui,
                 "Error in reading output file "
                 + file_name
@@ -473,7 +477,7 @@ def parse_file(file_path, gui=""):  # Parser
             return []
         assert i < (len(lines)), "Cannot find first time! Line variable " + str(i)
     if abbreviated:  # First time an abbreviated print is read
-        parser_msg(
+        NV_run.run_msg(
             gui,
             "Warning - "
             + file_name
@@ -555,7 +559,7 @@ def parse_file(file_path, gui=""):  # Parser
             groupby=["Time", "Segment"],
         )
         df_segment.name = "SA"
-        if version == "ip":
+        if version == "IP":
             to_convert = ["Max_Airflow", "Min_Airflow", "Average_Positive_Airflow", "Average_Negative_Airflow"]
             for item in to_convert:
                 df_segment[item] = df_segment[item] / 1000
@@ -577,7 +581,7 @@ def parse_file(file_path, gui=""):  # Parser
             to_index=["Time", "ZN", "Segment", "Sub"],
         )
         df_ecs.name = "ECS"
-        parser_msg(gui, "Read data from " + file_name)
+        NV_run.run_msg(gui, "Read data from " + file_name)
         # Reduce memory requirements when multiple files are being processed.
         data_segment = []
         data_sub = []
@@ -596,16 +600,16 @@ def parse_file(file_path, gui=""):  # Parser
             df_hsa,
             df_ecs,
         ])
-        return data, output_meta_data
     elif len(data_train) > 0:
         data_train = []
-        parser_msg(gui, "Read data from " + file_name)
+        NV_run.run_msg(gui, "Read data from " + file_name)
         data = create_dictionary_from_list([df_ssa, df_sst, df_train])
-        return data, output_meta_data
     else:
-        parser_msg(gui, "Read data from " + file_name)
+        NV_run.run_msg(gui, "Read data from " + file_name)
         data = create_dictionary_from_list([df_ssa, df_sst])
-        return data, output_meta_data
+    if convert_df == "IP_TO_SI":
+        data, output_meta_data = NV_ip_to_si.convert_ip_to_si(data, output_meta_data, gui)
+    return data, output_meta_data
 
 def create_dictionary_from_list(df_list):
     df_dict = {}
@@ -801,7 +805,7 @@ def create_ss_dfs(
     if len(fluid_pit) > 0:  # If fluid tempature exists
         df_fluid_pit = to_dataframe2(fluid_pit)
         df_pit = df_pit.join(df_fluid_pit, how="outer")
-    if version == "ip":
+    if version == "IP":
         df_pit["Airflow"] = df_pit["Airflow"] / 1000
     df_pit.name = "PIT"
     df_train = to_dataframe2(data_train, ["Train_Number", "Route_Number", "Train_Type_Number"], ["Time","Train_Number"])
@@ -908,12 +912,12 @@ def to_dataframe2(
 
 
 def select_version(lines):
-    version = "si"
+    version = "SI"
     for item in IP_INDICATION:
         line_number = item[0]
         array_number = line_number - 1
         if item[1] in lines[array_number]:
-            version = "ip"
+            version = "IP"
     return version
 
 
@@ -1081,18 +1085,10 @@ def delete_duplicate_pit(df_pit, df_train):
     new_df_train.name = df_train.name
     return [new_df_pit, new_df_train]
 
-
-def parser_msg(gui, text):
-    if gui != "":
-        gui.gui_text(text)
-    else:
-        print("Parser msg: " + text)
-
-
 if __name__ == "__main__":
-    directory_string = "C:\\Users\\msn\\OneDrive - Never Gray\\Software Development\\Next-Vis\\Projects and Issues\\2021-09-14 Tunnel Stencil\\Parsing\\"
-    file_name = "Form4.prn"
+    directory_string = "C:\\Users\\msn\\OneDrive - Never Gray\\Software Development\\Next-Vis\\Python2021\\"
+    file_name = "normal.prn"
     path_string = directory_string + file_name
     file_path = Path(path_string)
-    d, output_meta_data = parse_file(file_path)
+    d, output_meta_data = parse_file(file_path, convert_df="IP_TO_SI")
     print(output_meta_data, "test finished", sep = '\n')

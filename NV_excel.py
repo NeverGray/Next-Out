@@ -2,8 +2,9 @@ from io import BytesIO
 from pathlib import Path
 
 import pandas as pd
-from openpyxl.styles import Alignment, Font
+from openpyxl.styles import Alignment, Font, PatternFill
 
+import NV_CONSTANTS
 import NV_run
 
 SHEET_NAMES ={
@@ -29,8 +30,14 @@ def create_excel(settings, data, output_meta_data, gui=""):
     TITLES = {
         "File Name:" : output_meta_data['file_path'].name,
         "File Time:" : output_meta_data['file_time'],
-        "Data:": "From worksheet name"
+        "Data:": "From worksheet name",
+        "Units:": output_meta_data['ses_version']
         }
+    #Select index for units in NV_CONSTANTS.COLUMN_UNITS value
+    if output_meta_data['ses_version'] == 'IP':
+        unit_index = 1
+    else:
+        unit_index = 0
     try:
         bio = BytesIO()
         with pd.ExcelWriter(bio, engine="openpyxl") as writer:
@@ -42,10 +49,10 @@ def create_excel(settings, data, output_meta_data, gui=""):
                 worksheet.insert_rows(0,df_startrow - 1)
                 i = 1
                 for x, y in TITLES.items():
-                    worksheet.cell(row=i,column = 1, value=x).font = Font(size=10)
+                    worksheet.cell(row=i,column = 1, value=x).font = Font(size=10, bold=True)
                     worksheet.cell(row=i,column = 2, value=y)
                     i +=1
-                worksheet.cell(row=df_startrow-1, column =2, value = SHEET_NAMES.get(item.name[:3]))
+                worksheet.cell(row=df_startrow-2, column =2, value = SHEET_NAMES.get(item.name[:3]))
                 # Create filters from https://stackoverflow.com/questions/51566349/openpyxl-how-to-add-filters-to-all-columns
                 df_dimensions = 'A'+ str(df_startrow) + worksheet.dimensions[2:]
                 worksheet.auto_filter.ref = df_dimensions
@@ -57,8 +64,28 @@ def create_excel(settings, data, output_meta_data, gui=""):
                 for col in worksheet.iter_cols(min_row=df_startrow, max_row=df_startrow, min_col=len(item.index.names)+1):
                     for cell in col:
                         cell.alignment = Alignment(textRotation= 45)
+                #Format top row
+                maximum_column_number =  len(item.index.names) + len(item.columns)
+                for row in worksheet.iter_rows(min_row=df_startrow, max_col=maximum_column_number, max_row=df_startrow):
+                    if settings['version'] == "IP_TO_SI":
+                        color_code = "4BACC6" #Blue
+                    else:
+                        color_code = "F79646" #Orange
+                    for cell in row:
+                        cell.fill = PatternFill("solid", fgColor=color_code)
+                #Add units to top row
+                unit_row = 4
+                name_row = 5
+                unit_column_start = freeze_column + 1
+                unit_column_end = unit_column_start + len(item.columns)
+                for col in range(unit_column_start, unit_column_end):
+                    column_name = worksheet.cell(row=name_row,column=col).value
+                    cell = worksheet.cell(row=unit_row, column=col)
+                    cell.alignment = Alignment(horizontal='center')
+                    if column_name in NV_CONSTANTS.COLUMN_UNITS:
+                        cell.value = NV_CONSTANTS.COLUMN_UNITS[column_name][unit_index]
             # Add properties to Excel File.  Following https://stackoverflow.com/questions/52120125/how-to-edit-core-properties-of-xlsx-file-with-python
-            writer.book.properties.creator = "Next Vis"
+            writer.book.properties.creator = ("Next Vis" + NV_CONSTANTS.VERSION_NUMBER)
             writer.book.properties.title = file_name
             writer.save()
             # From https://techoverflow.net/2019/07/24/how-to-write-bytesio-content-to-file-in-python/
@@ -72,20 +99,20 @@ def create_excel(settings, data, output_meta_data, gui=""):
                             + file_name
                             + ".xlsx. Try closing file and trying again."
                         )
-        NV_run.run_msg(gui, "Created Excel File " + base_name + ".xlsx")
+        NV_run.run_msg(gui, "Created Excel file " + excel_results_path.name)
     except:
-        NV_run.run_msg(gui, "ERROR creating Excel file "+ base_name + ".xlsx.  Try closing this file in excel and process again.")
+        NV_run.run_msg(gui, "ERROR creating Excel file "+ excel_results_path.name + ". Try closing file and process again.")
 
 if __name__ == "__main__":
-    file_path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/siinfern.out"
+    file_path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/normal.prn"
     visio_template = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/sample012.vsdx"
-    results_folder_str = "C:/Temp"
+    results_folder_str = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021"
     settings = {
-        "ses_output_str": file_path_string,
+        "ses_output_str": [file_path_string],
         "visio_template": visio_template,
         "results_folder_str": results_folder_str,
         "simtime": 9999.0,
-        "version": "tbd",
+        "version": "IP_TO_SI",
         "control": "First",
         "output": ["Excel"],
     }

@@ -23,7 +23,7 @@ def average_outputs(settings, gui=""):
     i = 1
     for ses_output in settings['ses_output_str']:
         ses_output_path = Path(ses_output)
-        data, output_meta_data = NV_parser.parse_file(ses_output_path)
+        data, output_meta_data = NV_parser.parse_file(ses_output_path, gui, settings['version'])
         if Excel:
             NV_excel.create_excel(settings, data, output_meta_data, gui)
         if first_iteration:

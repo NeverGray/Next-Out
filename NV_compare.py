@@ -1,4 +1,3 @@
-import datetime
 from io import BytesIO
 from pathlib import Path
 
@@ -6,7 +5,7 @@ import pandas as pd
 from openpyxl.styles import Font
 
 import NV_excel
-import NV_parser as nvp
+import NV_parser
 import NV_run
 
 
@@ -19,20 +18,23 @@ def compare_outputs(settings, gui=""):
     base_file_name = base_file.name
     second_file = Path(settings['ses_output_str'][1])
     second_file_name = second_file.name
-    base_df, base_output_meta_data = nvp.parse_file(base_file, gui)
+    base_df, base_output_meta_data = NV_parser.parse_file(base_file, gui, settings['version'])
+    second_df, second_output_meta_data = NV_parser.parse_file(second_file, gui, settings['version'])
     if Excel:
         NV_excel.create_excel(settings, base_df, base_output_meta_data, gui)
-    second_df, second_output_meta_data = nvp.parse_file(second_file, gui)
-    if Excel:
-        NV_excel.create_excel(settings, base_df, second_output_meta_data, gui)
+        NV_excel.create_excel(settings, second_df, second_output_meta_data, gui)   
     base_data = dictionary_to_list(base_df)
     second_data = dictionary_to_list(second_df)
     num_df = len(base_data)
+    suffix = base_output_meta_data['file_path'].suffix
+    base_path = NV_run.get_results_path2(settings, base_output_meta_data, suffix)
+    suffix = second_output_meta_data['file_path'].suffix
+    second_path = NV_run.get_results_path2(settings, second_output_meta_data, suffix)
     if num_df != len(second_data):
-        msg = "Error in Compare two inputs! " + base_file_name + "and" + second_file_name + "have different structures."
+        msg = "Error in Comparing two output files! " + base_path.name + "and" + second_path.name + "have different structures."
         NV_run.run_msg(gui, msg)
     else:
-        msg = f'Comparing {base_file_name} and {second_file_name}, then creating Excel sheet.'
+        msg = f'Comparing {base_path.name} and {second_path.name}.'
         NV_run.run_msg(gui, msg)
         diff = []
         diff_summary = []
@@ -55,21 +57,21 @@ def compare_outputs(settings, gui=""):
             p_e_summary.append(p_e_sum_data)
         try:
             # Description of Stem from https://automatetheboringstuff.com/2e/chapter9/
-            base_name = base_file.name 
-            second_name = second_file.name
-            file_name = base_file.stem + "_to_" + second_file.stem
+            file_name = base_path.stem + "_to_" + second_path.stem
             file_name = file_name[0:250] #make name isn't too long
             file_name_4_path = file_name + ".xlsx"
             ses_output_str = settings['ses_output_str'][0]
             parent = str(Path(ses_output_str).parent)
             base_output_meta_data['file_path'] = Path(parent + '/' + file_name_4_path)
-            compare_results_path = NV_run.get_results_path2(settings, base_output_meta_data, ".xlsx")
+            output_meta_data = base_output_meta_data.copy()
+            output_meta_data['ses_version'] = 'Unconfirmed'
+            compare_results_path = NV_run.get_results_path2(settings, output_meta_data, ".xlsx")
             p_e_text = (
                 "Percent Error = Absolute value of [(Difference) / ("
-                + base_name
+                + base_path.name
                 + ")]"
             )
-            diff_text = "Difference = (" + second_name + ") - (" + base_name + ")"
+            diff_text = "Difference = (" + second_path.name + ") - (" + base_path.name + ")"
             bio = BytesIO()
             # with pd.ExcelWriter(file_name + ".xlsx") as writer:
             with pd.ExcelWriter(bio, engine="openpyxl") as writer:
@@ -135,7 +137,7 @@ def compare_outputs(settings, gui=""):
                         startcol=startcol_num,
                     )
                     startcol_num = (data_col * n + n) + 1
-                    ws.cell(row=data_row, column=startcol_num, value=second_name)
+                    ws.cell(row=data_row, column=startcol_num, value=second_path.name)
                     n += 1
                     startcol_num = data_col * n + n
                     base_data[i].to_excel(
@@ -146,8 +148,11 @@ def compare_outputs(settings, gui=""):
                         startcol=startcol_num,
                     )
                     startcol_num = (data_col * n + n) + 1
-                    ws.cell(row=data_row, column=startcol_num, value=base_name)
-                writer.book.properties.creator = "Next Vis Beta 030"
+                    ws.cell(row=data_row, column=startcol_num, value=base_path.name)
+                    #Freeze Plane
+                    freeze_cell = ws.cell(row=data_row+2, column=len(p_e[i].index.names)+1)
+                    ws.freeze_panes = freeze_cell
+                writer.book.properties.creator = "Next Vis 1p11`"
                 writer.book.properties.title = file_name
                 writer.save()
                 # From https://techoverflow.net/2019/07/24/how-to-write-bytesio-content-to-file-in-python/
@@ -166,7 +171,7 @@ def compare_outputs(settings, gui=""):
             NV_run.run_msg(gui, msg)
         except:
             msg = (
-                "CRITICAL ERROR! Constructing (not saving) Excel File"
+                "CRITICAL ERROR! Constructing (not saving) Excel File "
                 + file_name
                 + ".xlsx. Close the file if opened."
             )
@@ -186,20 +191,21 @@ def remove_columns(df_list):
     return df_list
 
 if __name__ == "__main__":
-    directory_str = 'C:/Temp/Comparison/'
+    directory_str = 'C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/_Tasks/2021-11-03 SI to IP/Test02 Inferno/'
     ses_output_list = [
-        directory_str + 'NV-6p0-base.out', 
-        directory_str + 'NV-6p0-second.out'
+        directory_str + 'inferno_IP.prn', 
+        directory_str + 'inferno_SI_from_IP.out'
         ]
     settings = {
         "ses_output_str": ses_output_list,
-        "results_folder_str": 'C:/Temp',
+        "results_folder_str": directory_str,
         "visio_template": None,
         "simtime": 9999.0,
-        "version": "tbd",
+        "version": "IP_TO_SI",
         "control": "First",
         "output": ["Visio","Average","Excel"],
     }
+    import datetime
     now1 = datetime.datetime.now()
     print ("start date and time : ")
     print (now1.strftime("%Y-%m-%d %H:%M:%S"))

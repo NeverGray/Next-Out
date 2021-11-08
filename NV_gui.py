@@ -10,6 +10,7 @@ from tkinter import filedialog, messagebox, ttk
 import keygen
 import NV_file_manager as nfm
 import NV_run as nvr
+from NV_CONSTANTS import VERSION_NUMBER
 from NV_icon5 import Icon
 
 
@@ -20,7 +21,7 @@ class start_screen:
         p = "5"  # padding
         py = "5"  # vertical padding
         px = "5"
-        root.title("Next-Vis 1.10")
+        root.title("Next-Vis " + VERSION_NUMBER)
         try:
             with open('tmp.ico','wb') as tmp:
                 tmp.write(base64.b64decode(Icon().img))
@@ -39,6 +40,7 @@ class start_screen:
         )
         self.cbo_excel = StringVar(value="Excel")
         self.cbo_visio = StringVar(value="")
+        self.cbo_ip_to_si = StringVar(value="")
         self.cbo_compare = StringVar(value="")
         self.cbo_average = StringVar(value="")
         self.cbo_route = StringVar(value="")
@@ -48,6 +50,9 @@ class start_screen:
         cb_visio = ttk.Checkbutton(
             frm_pp, text="Visio", variable=self.cbo_visio, onvalue="Visio", offvalue="",
             command=self.update_post_processing_options
+        )
+        cb_ip_to_si = ttk.Checkbutton(
+            frm_pp, text="Convert\nIP to SI", variable=self.cbo_ip_to_si, onvalue="IP_TO_SI", offvalue=""
         )
         cb_average = ttk.Checkbutton(
             frm_pp, text="Staggered\nheadways\nmean, max, min", variable=self.cbo_average, 
@@ -66,10 +71,11 @@ class start_screen:
         )
         # POST PROCESSING grid
         cb_excel.grid(column=0, row=0, sticky=W, pady=py)
-        cb_visio.grid(column=0, row=1, sticky=W, pady=py)
-        self.cb_compare.grid(column=0, row=2, sticky=W, pady=py)
-        cb_average.grid(column=0, row=3, sticky=W, pady=py)
-        cb_route.grid(column=0, row=4, sticky=W, pady=py)
+        cb_visio.grid(column=0, row=10, sticky=W, pady=py)
+        cb_ip_to_si.grid(column=0, row=15, sticky=W, pady=py)
+        self.cb_compare.grid(column=0, row=20, sticky=W, pady=py)
+        cb_average.grid(column=0, row=30, sticky=W, pady=py)
+        cb_route.grid(column=0, row=40, sticky=W, pady=py)
         # SES OUTPUT Files to Process
         frm_ses = ttk.LabelFrame(
             self.ss, borderwidth=5, text="SES Output to Process", padding=p
@@ -332,7 +338,7 @@ class start_screen:
             "visio_template": self.path_visio.get(),
             "results_folder_str": self.results_folder_str,
             "simtime": -1, #Updated in validation
-            "version": "tbd",
+            "version": self.cbo_ip_to_si.get(),
             "control": "First",
             "output": pp_list,
         }

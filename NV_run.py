@@ -9,7 +9,7 @@ import NV_compare
 import NV_excel as nve
 import NV_file_manager as nfm
 # Import of scripts
-import NV_parser as nvp
+import NV_parser
 import NV_route
 import NV_visio as nvv
 
@@ -42,7 +42,7 @@ def single_sim(settings, gui=""):
             return
     #TODO Works on first file in the list
     file_path = Path(settings['ses_output_str'][0])
-    data, output_meta_data = nvp.parse_file(file_path, gui)
+    data, output_meta_data = NV_parser.parse_file(file_path, gui, settings['version'])
     file_name = file_path.name
     if len(data) == 0:
         run_msg(gui, "Error parsing data")
@@ -119,7 +119,10 @@ def run_msg(gui, text):
 def get_results_path2(settings, output_meta_data, suffix):
     output_file_path = Path(output_meta_data['file_path'])
     output_stem = output_file_path.stem
-    results_name_str = output_stem + suffix
+    if output_meta_data['ses_version'] == "SI from IP":
+        results_name_str = output_stem + '_SI' + suffix
+    else:
+        results_name_str = output_stem + suffix
     results_folder_str = settings.get("results_folder_str")
     if results_folder_str is None:
         results_parent = output_file_path.parent
@@ -129,7 +132,7 @@ def get_results_path2(settings, output_meta_data, suffix):
     return results_path
 
 if __name__ == "__main__":
-    directory_str = 'C:\\Simulations\\Next-Vis\\Samples'
+    directory_str = "C:\\Users\\msn\\OneDrive - Never Gray\\Software Development\\Next-Vis\\Python2021\\"
     ses_output_list = [
         directory_str + '\\normal.prn'
         ]
@@ -138,7 +141,7 @@ if __name__ == "__main__":
         "results_folder_str": None,
         "visio_template": None,
         "simtime": 9999.0,
-        "version": "tbd",
+        "version": "IP_TO_SI",
         "control": "First",
         "output": ["Excel","Route"]
     }
