@@ -1,4 +1,7 @@
 import pandas as pd
+#From https://stackoverflow.com/questions/20625582/how-to-deal-with-settingwithcopywarning-in-pandas
+pd.options.mode.chained_assignment = None  # default='warn'
+
 
 ''' Create truth table of fire in Segments (not sub-segments)'''
 def create_form4_truths(output_meta_data, simtime):
@@ -64,13 +67,11 @@ if __name__ == "__main__":
     from pathlib import Path
 
     import NV_parser
-    visio_template = "TS_005 Default.vsdx"
-    file_path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Projects and Issues/2021-09-14 Tunnel Stencil/sinorm-detailed.out"
-    visio_template_folder = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Projects and Issues/2021-09-14 Tunnel Stencil"
+    import NV_visio     
+    visio_template = "normal-template.vsdx"
+    file_path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/normal.prn"
+    visio_template_folder = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021"
     results_folder_str = visio_template_folder
-    
-    #visio_template =     "C:/temp/test.vsdx"
-    #results_folder_str = "C:/temp"
     settings = {
         "ses_output_str": [file_path_string],
         "visio_template": "/".join([visio_template_folder, visio_template]),
@@ -81,7 +82,7 @@ if __name__ == "__main__":
         "output": ["Visio"],
     }
     file_path = Path(settings['ses_output_str'][0])
-    simtime = settings['simtime']
     data, output_meta_data = NV_parser.parse_file(file_path, gui="")
+    simtime = NV_visio.valid_simtime(settings["simtime"], data["SSA"], gui="")
     segment_time_df = create_segment_info(data, output_meta_data, simtime)
     print('Finished')

@@ -25,7 +25,7 @@ def valid_simtime(simtime, df, gui=""):
     time = float(simtime)
     if time == -1 or time > timeseries_list[-1]:
         time = timeseries_list[-1]
-        NV_run.run_msg(gui, f'Using last simulation time {time}')
+        #NV_run.run_msg(gui, f'Using last simulation time {time}')
     elif not time in timeseries_list:
         for x in timeseries_list:
             if x - time > 0:
@@ -92,6 +92,8 @@ def emod_visXML(vxml, data, ses_output_str="Not Available", simtime=0.00, output
             NV_run.run_msg(gui, f'Error Updating Fan')
     
     # Jet Fan Segments
+    if not('jet_fan_data' in output_meta_data):
+        output_meta_data['jet_fan_data'] = None
     for Shape in P1root.findall(".//Visio:Row[@N='Jet_Fan_Segment']../..", ns):
         try:
             update_jet_fan(Shape, output_meta_data['jet_fan_data'], simtime, ns)
@@ -304,7 +306,10 @@ def update_damper(shape, damper_position_dict):
 def update_fan(shape, form5_fan_data, simtime, ns):
     seg_id = int(shape.find(".//Visio:Row[@N='Fan_Segment']/Visio:Cell", ns).get("V",default=-1)) 
     # Determine appropriate settings for seg_id: On, Off, or unknown
-    if seg_id in form5_fan_data.index:
+    if form5_fan_data is None:
+        fan_status = "unknown"
+        fan_direction = 1
+    elif seg_id in form5_fan_data.index:
         fan_on = float(form5_fan_data.at[seg_id,"fan_on"])
         fan_off = float(form5_fan_data.at[seg_id,"fan_off"])
         if fan_on < simtime < fan_off:
@@ -332,7 +337,9 @@ def update_fan(shape, form5_fan_data, simtime, ns):
 def update_jet_fan(shape, jet_fan_data, simtime, ns):
     seg_id = int(shape.find(".//Visio:Row[@N='Jet_Fan_Segment']/Visio:Cell", ns).get("V",default=-1))
     jet_fan_direction = 'positive'
-    if seg_id in jet_fan_data.index:
+    if jet_fan_data is None:
+        jet_fan_status = "off"
+    elif seg_id in jet_fan_data.index:
         fan_on = float(jet_fan_data.at[seg_id,"jet_fan_on"])
         fan_off = float(jet_fan_data.at[seg_id,"jet_fan_off"])
         if fan_on < simtime < fan_off:
@@ -434,7 +441,7 @@ def write_visio(vxmls, visio_template, new_visio ,gui=""):
             for name, vxml in vxmls.items():
                 temp_string = ET.tostring(vxml, encoding="utf-8", xml_declaration=True)
                 zappend.writestr(name, temp_string, compress_type=compression)
-        NV_run.run_msg(gui,f'Created Visio Diagram {new_visio.name}')
+        NV_run.run_msg(gui,f'Created Visio Diagram {new_visio.name}.')
     except:
         msg = "Error writing " + str(new_visio) + ". Try closing the file and process again."
         NV_run.run_msg(gui, msg)
@@ -478,11 +485,13 @@ def create_visio(settings, data, output_meta_data, gui=""):
     time_4_name = int(settings["simtime"])
     time_suffix = "-" + str(time_4_name) + ".vsdx"
     settings["new_visio"] = NV_run.get_results_path2(settings, output_meta_data, time_suffix)
+    msg = "Creating Visio diagram " + settings["new_visio"].name + " for simulation time " + str(settings["simtime"]) + "."
+    NV_run.run_msg(gui, msg)
     # Read in VISIO Template and update with SES OUtput
     vxmls = get_visXML(settings["visio_template"])  # gets the pages in the VISIO XML.
     for name, vxml in vxmls.items():
         vxmls[name] = emod_visXML(
-            vxmls[name], data, settings["ses_output_str"][0][:-4], settings["simtime"], output_meta_data
+            vxmls[name], data, settings["ses_output_str"][0][:-4], settings["simtime"], output_meta_data, gui
         )
     write_visio(vxmls, settings["visio_template"], settings["new_visio"],gui)
     for setting in settings["output"]:
@@ -491,6 +500,8 @@ def create_visio(settings, data, output_meta_data, gui=""):
             break
     if 'visio_open' in settings["output"]:
         try:
+            msg = f'Opening {settings["new_visio"].name} in Visio.'
+            NV_run.run_msg(gui, msg)
             visio = win32com.client.Dispatch("Visio.Application")
             doc = visio.Documents.Open(str(settings["new_visio"]))
         except:
@@ -500,9 +511,9 @@ def create_visio(settings, data, output_meta_data, gui=""):
             NV_run.run_msg(gui, msg)
 
 if __name__ == "__main__":
-    visio_template = "A020.vsdx"
-    file_path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Projects and Issues/2021-09-21 Update NV01 Stencils/siinfern.out"
-    visio_template_folder = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Projects and Issues/2021-09-21 Update NV01 Stencils"
+    visio_template = "normal-template.vsdx"
+    file_path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/normal.prn"
+    visio_template_folder = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021"
     results_folder_str = visio_template_folder
     
     #visio_template =     "C:/temp/test.vsdx"
@@ -512,9 +523,9 @@ if __name__ == "__main__":
         "visio_template": "/".join([visio_template_folder, visio_template]),
         "results_folder_str": results_folder_str,
         "simtime": 500.0,
-        "version": "IP",
+        "version": "IP_TO_SI",
         "control": "First",
-        "output": ["Visio"],
+        "output": ["Visio","visio_open"],
     }
     simtime = settings['simtime']
     NV_run.single_sim(settings)

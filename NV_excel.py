@@ -22,11 +22,10 @@ SHEET_NAMES ={
 }
 
 def create_excel(settings, data, output_meta_data, gui=""):
-    # TODO Add error checker if excel file is open
-    # TODO Write to memory first, then to file to speed up process (especially for multiple simulations)
-    base_name = str(output_meta_data['file_path'].stem)
     file_name = str(output_meta_data['file_path'].name)
     excel_results_path = NV_run.get_results_path2(settings, output_meta_data, ".xlsx")
+    # TODO Add error checker if excel file is open
+    NV_run.run_msg(gui, "Creating Excel file " + excel_results_path.name)
     TITLES = {
         "File Name:" : output_meta_data['file_path'].name,
         "File Time:" : output_meta_data['file_time'],
@@ -66,11 +65,11 @@ def create_excel(settings, data, output_meta_data, gui=""):
                         cell.alignment = Alignment(textRotation= 45)
                 #Format top row
                 maximum_column_number =  len(item.index.names) + len(item.columns)
+                if output_meta_data['ses_version'] == "IP_TO_SI":
+                    color_code = "4BACC6" #Blue
+                else:
+                    color_code = "F79646" #Orange
                 for row in worksheet.iter_rows(min_row=df_startrow, max_col=maximum_column_number, max_row=df_startrow):
-                    if settings['version'] == "IP_TO_SI":
-                        color_code = "4BACC6" #Blue
-                    else:
-                        color_code = "F79646" #Orange
                     for cell in row:
                         cell.fill = PatternFill("solid", fgColor=color_code)
                 #Add units to top row
@@ -104,7 +103,7 @@ def create_excel(settings, data, output_meta_data, gui=""):
         NV_run.run_msg(gui, "ERROR creating Excel file "+ excel_results_path.name + ". Try closing file and process again.")
 
 if __name__ == "__main__":
-    file_path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/normal.prn"
+    file_path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/sinorm-detailed.out"
     visio_template = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/sample012.vsdx"
     results_folder_str = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021"
     settings = {

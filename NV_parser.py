@@ -370,6 +370,8 @@ HE = {
 
 # TODO Eliminate NumExpr detected 16 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 8.
 def parse_file(file_path, gui="", convert_df=""):  # Parser
+    file_name = file_path.name
+    NV_run.run_msg(gui, "Importing data from " + file_name + ".")
     # Variables for all referenced functions
     data_pit = []  # All Point in Time data
     data_train = []
@@ -386,7 +388,6 @@ def parse_file(file_path, gui="", convert_df=""):  # Parser
     data_te = []
     data_esc = []
     data_hsa = []
-    file_name = file_path.name
     # Read output file into variable. OpenSES files require errors="replace" because of extended ASCII
     with open(file_path, "r", errors="replace") as file_object:
         lines = file_object.readlines()
@@ -581,7 +582,7 @@ def parse_file(file_path, gui="", convert_df=""):  # Parser
             to_index=["Time", "ZN", "Segment", "Sub"],
         )
         df_ecs.name = "ECS"
-        NV_run.run_msg(gui, "Read data from " + file_name)
+
         # Reduce memory requirements when multiple files are being processed.
         data_segment = []
         data_sub = []
@@ -602,13 +603,12 @@ def parse_file(file_path, gui="", convert_df=""):  # Parser
         ])
     elif len(data_train) > 0:
         data_train = []
-        NV_run.run_msg(gui, "Read data from " + file_name)
         data = create_dictionary_from_list([df_ssa, df_sst, df_train])
     else:
-        NV_run.run_msg(gui, "Read data from " + file_name)
         data = create_dictionary_from_list([df_ssa, df_sst])
     if convert_df == "IP_TO_SI":
         data, output_meta_data = NV_ip_to_si.convert_ip_to_si(data, output_meta_data, gui)
+    NV_run.run_msg(gui, "Finished importing data from " + file_name +".")
     return data, output_meta_data
 
 def create_dictionary_from_list(df_list):
