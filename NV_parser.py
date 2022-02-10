@@ -186,7 +186,7 @@ INPUT = {
 # Search pattern to determine if fill is in IP (instead of SI by default)
 # Format of list is [[Line Number of text output, "Search String"]]
 # Used in the function select_version
-IP_INDICATION = [[1, "SES VER 4"], [52, "VERSION 4."], [9, "4.2"], [61, "4.2"]]
+IP_INDICATION = ["SES VER 4.", "Version 4.10", "OpenSES"]
 
 SUM = {
     "sum_time": re.compile(
@@ -396,7 +396,7 @@ def parse_file(file_path, gui="", convert_df=""):  # Parser
         file_time_str = datetime.datetime.fromtimestamp(file_time_seconds).strftime('%Y-%m-%d, %H:%M:%S')
         output_meta_data.update({"file_time": file_time_str})
     
-    # Read input verification information form outputfile before Form 1
+    # Read input verification information from outputfile before Form 1
     version = select_version(lines)
     output_meta_data.update({"ses_version": version})
     
@@ -681,6 +681,8 @@ def get_form5(lines):
     form5_data = {}
     form5_fan_data = []
     segment_number = 0
+    # Default dictionary values if the Form 5C fan direction is 0, and not activated
+    fan_dict_off = {'fan_on': '0', 'fan_off': '0', 'fan_direction': '1'}
     while time_match is None and i < len(lines):
         title_match = title_rx.search(lines[i])
         head_loss_match = f5d_head_loss.search(lines[i])
@@ -696,12 +698,15 @@ def get_form5(lines):
             fan_dict = {'Segment': segment_number}
             fan_dict.update(fan_type_match.groupdict())
             i +=2
-            fan_dict.update(INPUT['f5c_fan_on'].search(lines[i]).groupdict())
-            i +=2
-            fan_dict.update(INPUT['f5c_fan_off'].search(lines[i]).groupdict())
-            i +=2
-            fan_dict.update(INPUT['f5c_fan_direction'].search(lines[i]).groupdict())
-            form5_fan_data.append(fan_dict) 
+            if INPUT['f5c_fan_on'].search(lines[i]) is not None:
+                fan_dict.update(INPUT['f5c_fan_on'].search(lines[i]).groupdict())
+                i +=2
+                fan_dict.update(INPUT['f5c_fan_off'].search(lines[i]).groupdict())
+                i +=2
+                fan_dict.update(INPUT['f5c_fan_direction'].search(lines[i]).groupdict())
+            else: #If DIRECTION OF FAN OPERATION is zero (off), there is no fan on and off
+                fan_dict.update(fan_dict_off)
+            form5_fan_data.append(fan_dict)
         elif head_loss_match is not None:
             head_loss_dict = head_loss_match.groupdict()
             head_loss_list = list(map(float,head_loss_dict.values()))
@@ -919,11 +924,14 @@ def to_dataframe2(
 
 def select_version(lines):
     version = "SI"
-    for item in IP_INDICATION:
-        line_number = item[0]
-        array_number = line_number - 1
-        if item[1] in lines[array_number]:
-            version = "IP"
+    for i in range(68):
+        for item in IP_INDICATION:
+            if item in lines[i]:
+                version = "IP"
+                return version
+            elif "VERSION 6" in lines[i]:
+                version = "SI"
+                return version
     return version
 
 
@@ -1092,8 +1100,9 @@ def delete_duplicate_pit(df_pit, df_train):
     return [new_df_pit, new_df_train]
 
 if __name__ == "__main__":
-    directory_string = "C:\\Users\\msn\\OneDrive - Never Gray\\Software Development\\Next-Vis\\Python2021\\"
-    file_name = "TestIP03.prn"
+    directory_string = "C:\\temp\\"
+    file_name = "sinorm.out"
+    #file_name = "normal.prn"
     path_string = directory_string + file_name
     file_path = Path(path_string)
     d, output_meta_data = parse_file(file_path, convert_df="IP_TO_SI")

@@ -1,4 +1,4 @@
-VERSION_NUMBER = '1.11'
+VERSION_NUMBER = '1.12'
 
 #Column name : [SI Unit, IP Unit]
 COLUMN_UNITS={
