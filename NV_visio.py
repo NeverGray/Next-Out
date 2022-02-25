@@ -337,19 +337,16 @@ def update_fan(shape, form5_fan_data, simtime, ns):
 def update_jet_fan(shape, jet_fan_data, simtime, ns):
     seg_id = int(shape.find(".//Visio:Row[@N='Jet_Fan_Segment']/Visio:Cell", ns).get("V",default=-1))
     jet_fan_direction = 'positive'
-    if jet_fan_data is None:
-        jet_fan_status = "off"
-    elif seg_id in jet_fan_data.index:
-        fan_on = float(jet_fan_data.at[seg_id,"jet_fan_on"])
-        fan_off = float(jet_fan_data.at[seg_id,"jet_fan_off"])
-        if fan_on < simtime < fan_off:
-            jet_fan_status = "on"
-        if jet_fan_status == "on":
-            velocity_discharge = float(jet_fan_data.at[seg_id,"discharge_velocity"])
-            if velocity_discharge < 0:
-                jet_fan_direction = 'negative'
-    else:
-        jet_fan_status = "off"
+    jet_fan_status = "off"
+    if jet_fan_data is not None:
+        if seg_id in jet_fan_data.index:
+            fan_on = float(jet_fan_data.at[seg_id,"jet_fan_on"])
+            fan_off = float(jet_fan_data.at[seg_id,"jet_fan_off"])
+            if fan_on < simtime < fan_off:
+                jet_fan_status = "on"
+                velocity_discharge = float(jet_fan_data.at[seg_id,"discharge_velocity"])
+                if velocity_discharge < 0:
+                    jet_fan_direction = 'negative'
     shape_child = shape.find(".//Visio:Shape[@Name='jet_fan_outter_shell']", ns)
     shape_child = update_shape_NV01(shape_child,NV_settings.jet_fan_power[jet_fan_status])
     if jet_fan_direction == 'positive':
@@ -511,21 +508,18 @@ def create_visio(settings, data, output_meta_data, gui=""):
             NV_run.run_msg(gui, msg)
 
 if __name__ == "__main__":
-    visio_template = "normal-template.vsdx"
-    file_path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/normal.prn"
-    visio_template_folder = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021"
+    visio_template = "SES-105 Results Diagram.vsdx"
+    file_path_string = "C:/simulations/Never Gray Way/NG01-E001-001.out"
+    visio_template_folder = "C:/simulations/Never Gray Way"
     results_folder_str = visio_template_folder
-    
-    #visio_template =     "C:/temp/test.vsdx"
-    #results_folder_str = "C:/temp"
     settings = {
         "ses_output_str": [file_path_string],
         "visio_template": "/".join([visio_template_folder, visio_template]),
         "results_folder_str": results_folder_str,
-        "simtime": 500.0,
+        "simtime": 3720,
         "version": "IP_TO_SI",
         "control": "First",
-        "output": ["Visio","visio_open"],
+        "output": ["Visio"],
     }
     simtime = settings['simtime']
     NV_run.single_sim(settings)

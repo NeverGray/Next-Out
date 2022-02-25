@@ -1,4 +1,5 @@
 import pandas as pd
+
 #From https://stackoverflow.com/questions/20625582/how-to-deal-with-settingwithcopywarning-in-pandas
 pd.options.mode.chained_assignment = None  # default='warn'
 
@@ -19,7 +20,8 @@ def create_form4_truths(output_meta_data, simtime):
     
 ''' Create Truth Table of trains in segments (not sub-segments)'''
 def create_train_truths(output_meta_data, data, simtime):
-    if ('TRA' in data) and ('form9_df' in output_meta_data):
+    #Next-In 1p13 Check if trains exist at the simtime
+    if ('TRA' in data) and ('form9_df' in output_meta_data) and simtime in data['TRA'].index:
         simtime_tra = data['TRA'].loc[simtime]
         # Create default empty series
         segments_with_trains_series = pd.Series(dtype='int64')
@@ -29,11 +31,12 @@ def create_train_truths(output_meta_data, data, simtime):
             train_front = row['Location']
             train_type_number = row['Train_Type_Number']
             length = output_meta_data['form9_df'].loc[train_type_number,'train_length']
-            train_back = train_front + length
+            train_back = train_front - length
             df = output_meta_data['form_8f'].loc[route]
-            criteria_train_front = (df['Start']<=train_front) & (df['End']>=train_front)
-            criteria_train_middle = (df['Start']>=train_front) & (df['End']<=train_back)
-            criteria_train_back = (df['Start']<=train_back) & (df['End']>=train_back)
+            #Logit for presence of train is explained in "Logic for selection Rev1.pdf"
+            criteria_train_front = (df['Forward'] >= train_front) & (train_front >= df['Backward'])
+            criteria_train_middle = (train_front >= df['Forward']) & (train_back <= df['Backward'])
+            criteria_train_back = (df['Forward'] >= train_back) & (train_back >= df['Backward'])
             new_segments_series = df[criteria_train_front | criteria_train_middle | criteria_train_back].index.to_series().abs()
             if new_segments_series is not None:
                 segments_with_trains_series= segments_with_trains_series.append(new_segments_series,ignore_index=True)
@@ -68,9 +71,9 @@ if __name__ == "__main__":
 
     import NV_parser
     import NV_visio     
-    visio_template = "normal-template.vsdx"
-    file_path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/normal.prn"
-    visio_template_folder = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021"
+    visio_template = "NG02-E001-001-3720.vsdx"
+    file_path_string = "C:/simulations/Never Gray Way/NG02-E001-001.OUT"
+    visio_template_folder = "C:/simulations/Never Gray Way"
     results_folder_str = visio_template_folder
     settings = {
         "ses_output_str": [file_path_string],

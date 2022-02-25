@@ -160,8 +160,8 @@ INPUT = {
         r"""(
         .{46}
         (?P<Segment>-?\d+)\s+
-        (?P<Start>\d+\.\d+)\s+TO\s+
-        (?P<End>\d+\.\d+)\n
+        (?P<Backward>\d+\.\d+)\s+TO\s+
+        (?P<Forward>\d+\.\d+)\n
         )""",
         re.VERBOSE
     ),
@@ -1100,8 +1100,8 @@ def delete_duplicate_pit(df_pit, df_train):
     return [new_df_pit, new_df_train]
 
 if __name__ == "__main__":
-    directory_string = "C:\\temp\\"
-    file_name = "sinorm.out"
+    directory_string = "C:\\simulations\\Never Gray Way\\"
+    file_name = "NG01-B001.out"
     #file_name = "normal.prn"
     path_string = directory_string + file_name
     file_path = Path(path_string)

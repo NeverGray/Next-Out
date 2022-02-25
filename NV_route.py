@@ -20,7 +20,7 @@ def create_route_data(settings, data, output_meta_data, gui=""):
     sub_count.reindex
     # Merge number of sub-segments with route data
     routes_df = sub_count.join(form8f_df, how="outer")
-    routes_df['Segement_Length'] = routes_df['End'] - routes_df['Start']
+    routes_df['Segement_Length'] = routes_df['Forward'] - routes_df['Backward']
     routes_df['Sub_Length'] = routes_df['Segement_Length']/routes_df['Sub_Count']
     #Create datafame with mid-points
     route_numbers = routes_df.index.unique(level=0).to_list()
@@ -39,7 +39,7 @@ def create_route_data(settings, data, output_meta_data, gui=""):
                 else:
                     sub_number = sub_count + 1 - i
                     segment = -index
-                mid_point = int(row['Start'] + sub_length * i - half_sub_length)
+                mid_point = int(row['Backward'] + sub_length * i - half_sub_length)
                 route_dict = {
                     'Route_Number': route_num,
                     'Segment': segment,
