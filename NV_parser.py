@@ -918,7 +918,7 @@ def to_dataframe2(
                 df.sort_index()
             )  # Speeds up future referencing and prevents errors with finding data
     else:
-        df = pd.DataFrame([{"No Data": "No Data"}])
+        df = pd.DataFrame()
     return df
 
 
@@ -979,6 +979,8 @@ def sum_parser(lines, time):  # Parser for summary portion of output, between ti
                                     i = end_line
                                     end_line -= 1
                             end_line += 1
+                            if end_line > len(lines)-1:
+                                end_found = True
                             assert i < (
                                 len(lines) - 1
                             ), "Error with Train Energny Summary, Line " + str(i)
@@ -1101,7 +1103,7 @@ def delete_duplicate_pit(df_pit, df_train):
 
 if __name__ == "__main__":
     directory_string = "C:\\simulations\\Never Gray Way\\"
-    file_name = "NG01-B001.out"
+    file_name = "NG03-N011.out"
     #file_name = "normal.prn"
     path_string = directory_string + file_name
     file_path = Path(path_string)

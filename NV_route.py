@@ -12,7 +12,7 @@ def create_route_data(settings, data, output_meta_data, gui=""):
     data['SST'].loc[(time)].index #Give index on last timestep
     sst_at_time = data['SST'].loc[(time)] #get last timestep
     sub_count = sst_at_time.groupby(level=0).size() #Count of sub-segements
-    # Create number of sub-segements per segement positive and nefative
+    # Create number of sub-segements per segement positive and negative
     sub_count_df_pos = sub_count.to_frame("Sub_Count")
     sub_count_df_neg = sub_count_df_pos.copy()
     sub_count_df_neg.index = -sub_count_df_neg.index
@@ -65,14 +65,24 @@ def create_route_data(settings, data, output_meta_data, gui=""):
             df = dfs.loc[route_num]
             df.name = df_name
             route_data.update({df.name: df})
+    if 'SA' in data.keys():
+        if len(data['SA']) > 0:
+            last_time = data['SA'].index.get_level_values("Time").max()
+            dfs = route_mid_points.join(data['SA'].loc[last_time], on=['Segment'])
+            for route_num in route_numbers:
+                df_name = ''.join(["SA-RT", str(route_num)])
+                df = dfs.loc[route_num]
+                df.name = df_name
+                route_data.update({df.name: df})
     if 'HSA' in data.keys():
-        last_time = data['HSA'].index.get_level_values("Time").max()
-        dfs = route_mid_points.join(data['HSA'].loc[last_time].reset_index(level=0), on=['Segment','Sub'])
-        for route_num in route_numbers:
-            df_name = ''.join(["HSA-RT", str(route_num)])
-            df = dfs.loc[route_num]
-            df.name = df_name
-            route_data.update({df.name: df})
+        if len(data['HSA']) > 0: #Sometimes HSA is empty if an environmental load is not performed
+            last_time = data['HSA'].index.get_level_values("Time").max()
+            dfs = route_mid_points.join(data['HSA'].loc[last_time].reset_index(level=0), on=['Segment','Sub'])
+            for route_num in route_numbers:
+                df_name = ''.join(["HSA-RT", str(route_num)])
+                df = dfs.loc[route_num]
+                df.name = df_name
+                route_data.update({df.name: df})
     return route_data
 
 def create_route_excel(settings, data, output_meta_data, gui=""):
@@ -82,14 +92,14 @@ def create_route_excel(settings, data, output_meta_data, gui=""):
     new_file_name = file_path.name[:-4] + "-Routes.out"
     new_file_path = file_path.parent/new_file_name
     output_meta_data['file_path'] = new_file_path
-    NV_excel.create_excel(settings, route_data, output_meta_data, gui="")
+    NV_excel.create_excel(settings, route_data, output_meta_data, gui)
     #Revert back to original output_meta_data name (incase needed elsewhere)
     output_meta_data['file_path'] = file_path
 
 if __name__ == "__main__":
     import NV_parser
-    directory_str = "C:\\Users\\msn\\OneDrive - Never Gray\\Software Development\\Next-Vis\\Projects and Issues\\2021-09-14 Tunnel Stencil\\Parsing\\"
-    file_name = "Form4.prn"
+    directory_str = "C:\\simulations\\Next-Vis\\"
+    file_name = "NG04-N021.out"
     ses_output_list = [directory_str + file_name]
     file_path = Path(directory_str)/ses_output_list[0]
     settings = {
@@ -103,6 +113,6 @@ if __name__ == "__main__":
     }
     data, output_meta_data = NV_parser.parse_file(file_path)
     create_route_excel(settings, data, output_meta_data)
-    print('finished')
+    print('Finished')
     
 

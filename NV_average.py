@@ -29,11 +29,13 @@ def average_outputs(settings, gui=""):
         if first_iteration:
             # Create empty lists to append values to
             for key, value in data.items():
-                df_by_type[key]=[]
+                if not value.empty: #Prevents errors calculating values with empty data frames
+                    df_by_type[key]=[]
             first_ses_output_str = ses_output #needed for Excel filename
             first_iteration = False
         for key, value in data.items():
-            df_by_type[key].append(value)
+                if not value.empty: #Prevents errors calculating values with empty data frames
+                    df_by_type[key].append(value)
         msg = f'Parsed {ses_output_path.name}, {i} of {num} output files'
         NV_run.run_msg(gui, msg)
         i +=1
@@ -76,12 +78,16 @@ def average_outputs(settings, gui=""):
 
 
 if __name__ == "__main__":
-    directory_str = 'C:/Temp/Staggered/'
+    directory_str = 'C:/Simulations/Never Gray Way/'
     ses_output_list = [
-        directory_str + 'sinorm-detailed.OUT', 
-        directory_str + 'sinorm-detailed018.OUT',
-        directory_str + 'sinorm-detailed062.OUT',
-        directory_str + 'sinorm-detailed080.OUT'
+        directory_str + 'NG03-N011.OUT', 
+        directory_str + 'NG03-N012.OUT',
+        directory_str + 'NG03-N013.OUT',
+        directory_str + 'NG03-N014.OUT',
+        directory_str + 'NG03-N015.OUT', 
+        directory_str + 'NG03-N016.OUT',
+        directory_str + 'NG03-N017.OUT',
+        directory_str + 'NG03-N018.OUT',
         ]
     settings = {
         "ses_output_str": ses_output_list,
@@ -90,6 +96,6 @@ if __name__ == "__main__":
         "simtime": 9999.0,
         "version": "tbd",
         "control": "First",
-        "output": ["Visio","Average","Excel"],
+        "output": ["Average"],
     }
     average_outputs(settings)

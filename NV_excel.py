@@ -88,6 +88,7 @@ def create_excel(settings, data, output_meta_data, gui=""):
             writer.book.properties.title = file_name
             writer.save()
             # From https://techoverflow.net/2019/07/24/how-to-write-bytesio-content-to-file-in-python/
+
             with open(excel_results_path, "wb") as outfile:  
                     # Copy the BytesIO stream to the output file
                     try:
@@ -103,9 +104,9 @@ def create_excel(settings, data, output_meta_data, gui=""):
         NV_run.run_msg(gui, "ERROR creating Excel file "+ excel_results_path.name + ". Try closing file and process again.")
 
 if __name__ == "__main__":
-    file_path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/sinorm-detailed.out"
+    file_path_string = "C:/Simulations/Next-Vis/Excel Speedup/sinorm-detailed.OUT"
     visio_template = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/sample012.vsdx"
-    results_folder_str = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021"
+    results_folder_str = "C:/Simulations/Next-Vis/Excel Speedup"
     settings = {
         "ses_output_str": [file_path_string],
         "visio_template": visio_template,
@@ -115,4 +116,7 @@ if __name__ == "__main__":
         "control": "First",
         "output": ["Excel"],
     }
-    NV_run.single_sim(settings)
+    import cProfile
+    import time
+    cProfile.run('NV_run.single_sim(settings)','02_xlsxwriter_noformatting.txt')
+    # NV_run.single_sim(settings)
