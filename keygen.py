@@ -32,6 +32,7 @@ def validate_license_key_with_fingerprint(license_key, machine_fingerprint):
     validation = requests.post(
         f"https://api.keygen.sh/v1/accounts/{KEYGN_ACCOUNT_ID}/licenses/actions/validate-key",
         headers={
+            # 'Authorization': f"License {license_key}",
             'Content-Type': 'application/vnd.api+json',
             'Accept': 'application/vnd.api+json'
         },
@@ -65,7 +66,7 @@ def validate_license_key_with_fingerprint(license_key, machine_fingerprint):
     return validation_code, license_id, validation
 
 
-def activate_machine_for_license(license_id, machine_fingerprint, floating_token):
+def activate_machine_for_license(license_id, machine_fingerprint, keygen_key):
     """
     Activates a machine for a license. Returns the activated machine's ID.
     """
@@ -73,7 +74,7 @@ def activate_machine_for_license(license_id, machine_fingerprint, floating_token
     activation = requests.post(
         f"https://api.keygen.sh/v1/accounts/{KEYGN_ACCOUNT_ID}/machines",
         headers={
-            'Authorization': f"Bearer {floating_token}",
+            'Authorization': f"License {keygen_key}",
             'Content-Type': 'application/vnd.api+json',
             'Accept': 'application/vnd.api+json'
         },
@@ -108,7 +109,7 @@ def activate_machine_for_license(license_id, machine_fingerprint, floating_token
     return machine_id
 
 
-def deactivate_machine(machine_id, activation_token):
+def deactivate_machine(machine_id, keygen_key):
     """
     Deactivates a machine. Returns a boolean indicating success or failure.
     """
@@ -116,7 +117,7 @@ def deactivate_machine(machine_id, activation_token):
     deactivation = requests.delete(
         f"https://api.keygen.sh/v1/accounts/{KEYGN_ACCOUNT_ID}/machines/{machine_id}",
         headers={
-            'Authorization': f"Bearer {activation_token}",
+            'Authorization': f"License {keygen_key}",
             'Accept': 'application/vnd.api+json'
         }
     )
@@ -135,20 +136,20 @@ def deactivate_machine(machine_id, activation_token):
     return True
 
 
-def deactivate_machine_on_exit(machine_id, activation_token):
+def deactivate_machine_on_exit(machine_id, keygen_key):
     """
     Deactivates a machine on exit signal. Exits program with exit code indicating deactivation success or failure.
     """
 
     # Previously used machine_fingerprint
-    ok = deactivate_machine(machine_id, activation_token)
+    ok = deactivate_machine(machine_id, keygen_key)
     if ok:
         sys.exit(0)
     else:
         sys.exit("License did not deactivate.")
 
 
-def ping_heartbeat_for_machine(machine_id, keygen_activation_token):
+def ping_heartbeat_for_machine(machine_id, keygen_key):
     """
     Performs a hearbeat ping for a machine. Returns a boolean indicating success or failure.
     """
@@ -156,7 +157,7 @@ def ping_heartbeat_for_machine(machine_id, keygen_activation_token):
     ping = requests.post(
         f"https://api.keygen.sh/v1/accounts/{KEYGN_ACCOUNT_ID}/machines/{machine_id}/actions/ping-heartbeat",
         headers={
-            'Authorization': f"Bearer {keygen_activation_token}",
+            'Authorization': f"License {keygen_key}",
             'Accept': 'application/vnd.api+json'
         }
     ).json()
@@ -174,15 +175,15 @@ def ping_heartbeat_for_machine(machine_id, keygen_activation_token):
     return True
 
 
-def maintain_hearbeat_for_machine(machine_id, keygen_activation_token):
+def maintain_hearbeat_for_machine(machine_id, keygen_key):
     """
     Performs minutely hearbeat pings for a machine on a loop.
     """
     timer = threading.Timer(59.0, lambda: maintain_hearbeat_for_machine(
-        machine_id, keygen_activation_token))
+        machine_id, keygen_key))
     # The thread is killed when all other (non Daemon) process end
     timer.setDaemon(True)
-    ok = ping_heartbeat_for_machine(machine_id, keygen_activation_token)
+    ok = ping_heartbeat_for_machine(machine_id, keygen_key)
     if not ok:
         sys.exit("Heart beat failed to ping.")
 

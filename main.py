@@ -79,7 +79,7 @@ def check_authorized_computer(license_info):
                 system_exit()
             else:
                 machine_id = keygen.activate_machine_for_license(
-                    license_id, machine_fingerprint, license_info["authorized_computer_token"])
+                    license_id, machine_fingerprint, license_info["authorized_computer_key"])
                 if machine_id == None:
                     messagebox.showinfo(
                         message="Could not Authorize this Computer. Contact Never Gray for help")
@@ -111,7 +111,7 @@ def checkout_floating_license(license_info):
         organization = validation_info['data']['attributes']['metadata']['organization']
         # TODO Add check for number of licenses available
         machine_id = keygen.activate_machine_for_license(
-            license_id, machine_fingerprint, license_info["floating_token"])
+            license_id, machine_fingerprint, license_info["floating_key"])
         if machine_id == None and available >= in_use:
             msg = (f"Currently, {organization} is using all {available} Floating Licenses.\n"
                     "Wait for a floating license to become free or purchase additional licenses.")
@@ -203,7 +203,7 @@ def main(testing=False):
         # FLOATING LICENSE. Validate the license key scoped to the current machine fingerprint
         floating_computer_status, floating_organization, expiry = checkout_floating_license(
             license_info)
-        if floating_organization != license_info['organization']:
+        if floating_organization != license_info['Authorized_Organization']:
             msg = "Organizations don't match between Authorized Computer and Floating License."
             messagebox.showinfo(message=msg)
             system_exit(msg)
@@ -213,7 +213,7 @@ def main(testing=False):
         if not floating_computer_status:
             system_exit("Error checking out Floating License")
         keygen.maintain_hearbeat_for_machine(
-            machine_fingerprint, license_info["floating_token"])
+            machine_fingerprint, license_info["floating_key"])
     else:
         system_exit("Error with license file (*.lic)")
     root = Tk()
@@ -222,7 +222,7 @@ def main(testing=False):
     root.mainloop()
     if license_info['type'] == 'Floating':
         keygen.deactivate_machine_on_exit(
-            machine_fingerprint, license_info["floating_token"])
+            machine_fingerprint, license_info["floating_key"])
 
 if __name__ == "__main__":
     multiprocessing.freeze_support() #TODO Experiement if this command is necessary

@@ -224,9 +224,9 @@ class start_screen:
                 self.license_info["floating_key"], self.license_info['machine_fingerprint'])
             floats_available = validation_info['data']['attributes']['maxMachines']
             floats_in_use = validation_info['data']['relationships']['machines']['meta']['count']
-            authorized_company = self.license_info["Authorized_Company"]
+            authorized_organization = self.license_info["Authorized_Organization"]
             expiry = validation_info['data']['attributes']['expiry'][:10]
-            msg_line.append(f"\n{floats_in_use} of {floats_available} floating licenses in use for {authorized_company}.")
+            msg_line.append(f"\n{floats_in_use} of {floats_available} floating licenses in use for {authorized_organization}.")
             msg_line.append(f'License Expires on {expiry}.')
         else:
             expiry = str(self.license_info['expiry'])
@@ -238,7 +238,7 @@ class start_screen:
 
     def check_floating_license(self, *args):
         active_license = keygen.ping_heartbeat_for_machine(
-        self.license_info["machine_fingerprint"], self.license_info["floating_token"])
+        self.license_info["machine_fingerprint"], self.license_info["floating_key"])
         if active_license:
             return True
         else:
