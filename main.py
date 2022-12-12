@@ -78,8 +78,10 @@ def check_authorized_computer(license_info):
                     message="Next-Vis only runs on Authorized Computers.")
                 system_exit()
             else:
+                from tkinter import simpledialog
+                user_email = simpledialog.askstring("User Email",f"Please enter your email address to help track authorized computer usage for {organization}")    
                 machine_id = keygen.activate_machine_for_license(
-                    license_id, machine_fingerprint, license_info["authorized_computer_key"])
+                    license_id, machine_fingerprint, license_info["authorized_computer_key"],user_email)
                 if machine_id == None:
                     messagebox.showinfo(
                         message="Could not Authorize this Computer. Contact Never Gray for help")

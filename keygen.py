@@ -66,12 +66,36 @@ def validate_license_key_with_fingerprint(license_key, machine_fingerprint):
     return validation_code, license_id, validation
 
 
-def activate_machine_for_license(license_id, machine_fingerprint, keygen_key):
+def activate_machine_for_license(license_id, machine_fingerprint, keygen_key,user_email=None):
     """
     Activates a machine for a license. Returns the activated machine's ID.
     """
-
-    activation = requests.post(
+    #Use the default activation if user_email is empty
+    if user_email is None:
+        activation = requests.post(
+            f"https://api.keygen.sh/v1/accounts/{KEYGN_ACCOUNT_ID}/machines",
+            headers={
+                'Authorization': f"License {keygen_key}",
+                'Content-Type': 'application/vnd.api+json',
+                'Accept': 'application/vnd.api+json'
+            },
+            data=json.dumps({
+                'data': {
+                    'type': 'machines',
+                    'attributes': {
+                        'fingerprint': machine_fingerprint,
+                    },
+                    'relationships': {
+                        'license': {
+                            'data': {'type': 'licenses', 'id': license_id}
+                        }
+                    }
+                }
+            })
+        ).json()
+    #Track the "user_email" in Keygen to help organization track authorized computers
+    else:
+        activation = requests.post(
         f"https://api.keygen.sh/v1/accounts/{KEYGN_ACCOUNT_ID}/machines",
         headers={
             'Authorization': f"License {keygen_key}",
@@ -82,7 +106,10 @@ def activate_machine_for_license(license_id, machine_fingerprint, keygen_key):
             'data': {
                 'type': 'machines',
                 'attributes': {
-                    'fingerprint': machine_fingerprint
+                    'fingerprint': machine_fingerprint,
+                    'metadata':{
+                        'userEmail': user_email
+                    }
                 },
                 'relationships': {
                     'license': {
@@ -91,7 +118,7 @@ def activate_machine_for_license(license_id, machine_fingerprint, keygen_key):
                 }
             }
         })
-    ).json()
+        ).json()       
 
     if 'errors' in activation:
         errs = activation['errors']
