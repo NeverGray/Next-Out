@@ -192,6 +192,11 @@ SUM = {
     "sum_time": re.compile(
         r"SUMMARY OF SIMULATION FROM\s+\d+\.\d+\sTO\s+(?P<Time>\d+.\d{2})\sSECONDS"
     ),  # Find the first time Simulation
+    "train_energy": re.compile(r"\s{50,}TRAIN ENERGY SUMMARY"),
+    "heat_sink": re.compile(r"\s{50,}SES HEAT SINK ANALYSIS")
+}
+
+SUMMARY_OF_SIMULATION = {
     "airflow": re.compile(
         r"""(
             AIR\sFLOW\sRATE.+
@@ -266,7 +271,7 @@ SUM = {
         r"EXCEEDS\s+(?P<Outflow_Velocity_Exceedance>-?\d+\.\d+).+(?:\d+)\s-\s*(?P<Segment>\d+)\s{57,}(?P<Percentage_of_Velocity_Exceedance>-?\d+\.\d*)$"
     ),
     "HTPB": re.compile(
-        r"TRAIN PROPULSION AND BRAKING SYSTEM HEAT\s+(?P<Train_Propulsion__and_Braking_Heat>-?\d+\.\d*)$"
+        r"TRAIN PROPULSION AND BRAKING SYSTEM HEAT\s+(?P<Train_Propulsion_and_Braking_Heat>-?\d+\.\d*)$"
     ),
     "HTA": re.compile(
         r"TRAIN AUXILIARY SYSTEM AND PASSENGER HEAT\s+(?P<Train_Aux_and_Passenger_Sensible>-?\d+\.\d*)\s+(?P<Train_Aux_and_Passenger_Latent>-?\d+\.\d*)$"
@@ -283,10 +288,11 @@ SUM = {
     "HC": re.compile(
         r"SEGMENT COOLING PIPES\s+(?P<Cooling_Pipes_Sensible>-?\d+\.\d?)\s+(?P<Cooling_Pipes_Latent>-?\d+\.\d*)$"
     ),
-    "HS": re.compile(r"HEAT SINK\s+(?P<Heat_Sink>-?\d+\.\d*)$"),
-    "train_energy": re.compile(r"\s{50,}TRAIN ENERGY SUMMARY"),
-    "heat_sink": re.compile(r"\s{50,}SES HEAT SINK ANALYSIS")
+    "HS": re.compile(r"HEAT SINK\s+(?P<Heat_Sink>-?\d+\.\d*)$")
 }
+
+
+
 
 PERCENTAGE = {
     "percent_temperature": re.compile(
@@ -950,20 +956,21 @@ def sum_parser(lines, time):  # Parser for summary portion of output, between ti
                     if key == "sum_time":  # sets time interval
                         time = float(m.group("Time"))
                         m_dict["Time"] = time
-                    # Found precentage of time temperature is above data
-                    elif (key == "percentage"):  
-                        start_line = i + 2
-                        end_line = start_line + 3
-                        # Find the lines containing the percentage of time data
-                        while (lines[end_line] != "\n"):  
-                            end_line += 1
-                            assert i < (len(lines) - 1), (
-                                "Error with precentage of time temperature is above, line "
-                                + str(i)
-                            )
-                        percentage = percentage_parser(lines[start_line:end_line], time)
-                        for item in percentage:
-                            data_percentage.append(item)
+                        start_line = i
+                        end_line = start_line
+                        end_found = False
+                        # Find the lines containing the Summary of Simulation From X to Y
+                        while (not end_found):  
+                            if "\f" in lines[end_line]:
+                                end_found = True
+                            elif end_line > len(lines)-1:
+                                end_found = True
+                            else:
+                                end_line +=1
+                            assert i < (
+                                len(lines) - 1
+                            ), "Error with Summary of Simulation, Line " + str(i)
+                        success = summary_of_simulation_parser(lines[start_line:end_line], time)
                         i = end_line
                     elif key == "train_energy":
                         start_line = i
@@ -998,6 +1005,33 @@ def sum_parser(lines, time):  # Parser for summary portion of output, between ti
                         for item in esc:
                             data_esc.append(item)
                         i = end_line
+        i += 1
+
+def summary_of_simulation_parser(p_lines, time):
+    last_segment = -1
+    i = 0
+    while i < len(p_lines):
+        if p_lines[i] != "\n":
+            for key, rx in SUMMARY_OF_SIMULATION.items():
+                m = rx.search(p_lines[i])
+                if m is not None:
+                    m_dict = m.groupdict()
+                    m_dict["Time"] = time
+                    # Found precentage of time temperature is above data
+                    if (key == "percentage"):  
+                        start_line = i + 2
+                        end_line = start_line + 3
+                        # Find the lines containing the percentage of time data
+                        while (p_lines[end_line] != "\n"):  
+                            end_line += 1
+                            assert i < (len(p_lines) - 1), (
+                                "Error with precentage of time temperature is above, line "
+                                + str(i)
+                            )
+                        percentage = percentage_parser(p_lines[start_line:end_line], time)
+                        for item in percentage:
+                            data_percentage.append(item)
+                        i = end_line
                     elif not "Segment" in m_dict:
                         m_dict["Segment"] = last_segment
                         data_segment.append(m_dict)
@@ -1009,7 +1043,7 @@ def sum_parser(lines, time):  # Parser for summary portion of output, between ti
                         last_segment = m_dict["Segment"]
                     break
         i += 1
-
+    return True
 
 def percentage_parser(p_lines, time):
     m = PERCENTAGE["percent_temperature"].search(p_lines[0])
@@ -1028,20 +1062,6 @@ def percentage_parser(p_lines, time):
 
 
 def te_parser(p_lines, time):
-    '''TES = {
-        "es": re.compile(r"\s+ENERGY SECTOR\s*(?P<ES>\d+)$"),
-        "et": re.compile(
-            r"\s+PROPULSION ENERGY FROM THIRD RAIL\s+(?P<ET>-?\d*\.\d*)\s+"
-        ),
-        "ef": re.compile(
-            r"\s+EQUIVALENT THIRD RAIL PROPULSION ENERGY FROM FLYWHEEL\s+(?P<EF>-?\d*\.\d*)\s+"
-        ),
-        "ea": re.compile(r"\s+AUXILIARY ENERGY\s+(?P<EA>-?\d*\.\d*)\s+"),
-        "er": re.compile(
-            r"\s+REGENERATED ENERGY ACCEPTED BY THIRD RAIL\s+(?P<ER>-?\d*\.\d*)\s+"
-        ),
-    }'''
-    # TODO write pseduo code
     i = 7
     te_list = []
     te_dict = {}
@@ -1102,10 +1122,14 @@ def delete_duplicate_pit(df_pit, df_train):
     return [new_df_pit, new_df_train]
 
 if __name__ == "__main__":
-    directory_string = "C:\\simulations\\Never Gray Way\\"
-    file_name = "NG03-N011.out"
-    #file_name = "normal.prn"
+    directory_string = "C:\\simulations\\Next-Vis Timing\\"
+    file_name = "NG02-N031.OUT"
     path_string = directory_string + file_name
     file_path = Path(path_string)
+    import cProfile
+    prof = cProfile.Profile()
+    prof.enable() 
     d, output_meta_data = parse_file(file_path, convert_df="IP_TO_SI")
+    prof.disable()
     print(output_meta_data, "test finished", sep = '\n')
+    prof.dump_stats("C:/Simulations/Next-Vis Timing/NV 1p16 Sum of Sim Parser01.prof")
