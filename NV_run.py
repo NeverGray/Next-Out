@@ -6,7 +6,7 @@ import pandas as pd
 
 import NV_average
 import NV_compare
-import NV_excel as nve
+import NV_excel_R01 as nve
 import NV_file_manager as nfm
 # Import of scripts
 import NV_parser

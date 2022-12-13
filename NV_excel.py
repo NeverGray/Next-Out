@@ -44,7 +44,7 @@ def create_excel(settings, data, output_meta_data, gui=""):
                 item.to_excel(writer, sheet_name=item.name, merge_cells=False)
                 worksheet = writer.sheets[item.name]
                 # Create title rows and format
-                df_startrow = len(TITLES) + 1
+                df_startrow = len(TITLES) + 1 #Determine number of rows needed for all TITLE information
                 worksheet.insert_rows(0,df_startrow - 1)
                 i = 1
                 for x, y in TITLES.items():
@@ -104,9 +104,9 @@ def create_excel(settings, data, output_meta_data, gui=""):
         NV_run.run_msg(gui, "ERROR creating Excel file "+ excel_results_path.name + ". Try closing file and process again.")
 
 if __name__ == "__main__":
-    file_path_string = "C:/Simulations/Next-Vis/Excel Speedup/sinorm-detailed.OUT"
+    file_path_string = "C:/Simulations/Next-Vis Timing/NG02-N031.out"
     visio_template = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/sample012.vsdx"
-    results_folder_str = "C:/Simulations/Next-Vis/Excel Speedup"
+    results_folder_str = "C:/Simulations/Next-Vis Timing"
     settings = {
         "ses_output_str": [file_path_string],
         "visio_template": visio_template,
@@ -124,8 +124,12 @@ if __name__ == "__main__":
     data, output_meta_data = NV_parser.parse_file(file_path)
     file_name = file_path.name
     start_create_excel = time.perf_counter()
+    prof = cProfile.Profile()
+    prof.enable()    
     create_excel(settings, data, output_meta_data)
-    # cProfile.run('create_excel(settings, data, output_meta_data)')
+    prof.disable()
     end_create_excel = time.perf_counter()
     print(f"Time for create_excel {end_create_excel - start_create_excel:0.4f} seconds")
     # NV_run.single_sim(settings)
+    prof.print_stats()
+    prof.dump_stats("C:/Simulations/Next-Vis Timing/NV 1p15.prof")

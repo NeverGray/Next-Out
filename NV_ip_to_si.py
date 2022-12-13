@@ -66,5 +66,5 @@ if __name__ == "__main__":
     data, output_meta_data = nvp.parse_file(file_path)
     #TODO Transfer new data created in function
     new_data, new_output_meta_data = convert_ip_to_si(data, output_meta_data, gui="")
-    import NV_excel
+    import NV_excel_R01 as NV_excel
     NV_excel.create_excel(settings, data, output_meta_data)

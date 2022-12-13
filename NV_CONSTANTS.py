@@ -1,8 +1,8 @@
-VERSION_NUMBER = '1.15'
+VERSION_NUMBER = '1.2'
 
 #Column name : [SI Unit, IP Unit]
 COLUMN_UNITS={
-    "Airflow":	["m3/s","kcfm"],
+    "Airflow":	["m^3/s","kcfm"],
     "Air_Velocity":["m/s","fpm"],
     "Segment":["#","#"],
     "Sub":["#","#"],
@@ -20,7 +20,7 @@ COLUMN_UNITS={
     "Train_Type_Number":["#","#"],
     "Location":["m","ft"],
     "Speed":["kph","mph"],
-    "Accel":["m/s2","mph/s"],
+    "Accel":["m/s^2","mph/s"],
     "Air_Drag":["kN","lbs"],
     "Air_Drag_Coeff":["#","#"],
     "Tractive_Effort":["N/motor","lbs/mo"],
@@ -32,12 +32,12 @@ COLUMN_UNITS={
     "Grid_Temp_Decel":["°C","°F"],
     "Heat_Gen":["W/m","Btu/s-ft"],
     "Heat_Reject":["W/m","Btu/s-ft"],
-    "Max_Airflow":["m3/s","kcfm"],
+    "Max_Airflow":["m^3/s","kcfm"],
     "Max_Airflow_Time":["seconds","second"],
-    "Min_Airflow":["m3/s","kcfm"],
+    "Min_Airflow":["m^3/s","kcfm"],
     "Min_Airflow_Time":["seconds","second"],
-    "Average_Positive_Airflow":["m3/s","kcfm"],
-    "Average_Negative_Airflow":["m3/s","kcfm"],
+    "Average_Positive_Airflow":["m^3/s","kcfm"],
+    "Average_Negative_Airflow":["m^3/s","kcfm"],
     "Max_Velocity":["m/s","fpm"],
     "Max_Velocity_Time":["seconds","second"],
     "Min_Velocity":["m/s","fpm"],
