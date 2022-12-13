@@ -491,63 +491,83 @@ def parse_file(file_path, gui="", convert_df=""):  # Parser
             + " has abbreviated prints. Use detailed prints for more thermal data.",
         )
     time = float(m.group("Time"))  # Finds first line with simulation output with Time.
+    # To reduce search times, eliminate items from search dictionaries
+    if summary == False:
+        PIT.pop("sum_time")
+    if abbreviated == False:
+        PIT.pop("abb_segment_1")
+    if version == "IP":
+        PIT.pop("fluid")
     # Post process Point in Time information
     while i < len(lines):
+        # Only search lines that are not blank
+        if lines[i] != "\n":
         # at each line check for a match with a regex
-        m = False
-        for key, rx in PIT.items():  # change dictionary as necessary
-            m = rx.search(lines[i])  # using .match searched the beginning of the line
-            if m is not None:
-                m_dict = m.groupdict()
-                m_dict["Time"] = time
-                if key == "time":  # sets time interval
-                    # Needed to delete duplicates created by Summary output option 4
-                    if float(m.group("Time")) == time:
-                        duplicate_pit = True
-                    time = float(m.group("Time"))
-                # If key is other than time
-                elif key == "detail_segment_1" or key == "abb_segment_1":
-                    if key == "abb_segment_1":
-                        # Code only includes information for segment 1 for abbreviated prints
-                        i += 1
-                        m_dict.update({"Sub": int(1.0)})
-                        s = lines[i]
-                        s = s[1:45].strip()  # HUmidity from one line below
-                        m_dict.update(
-                            {"Humidity": s}
-                        )  # Add humidity from one line below, only first segement
-                    data_pit.append(m_dict)
-                elif key == "wall":
-                    wall_pit.append(m_dict)
-                elif (
-                    key == "sum_time"
-                ):  # TODO - Create code to find where all summary data is located
-                    start_line = i
-                    end_line = start_line
-                    end_found = False
-                    while (
-                        not end_found
-                    ):  # Find the lines containing the percentage of time data
-                        assert end_line < (
-                            len(lines)
-                        ), "Error with Train Energy Summary, Line " + str(i)
-                        m_sum = PIT["time"].search(lines[end_line + 1])
-                        if (m_sum is not None) or (
-                            end_line > len(lines) - 3
-                        ):  # Train Energy does not continue
-                            end_found = True
-                            i = end_line
-                            end_line -= 1
-                        end_line += 1
-                    sum_parser(lines[start_line:end_line], time)
-                elif key == "train":  # Create worksheet for train information
-                    data_train.append(m_dict)
-                elif key == "fluid":
-                    fluid_pit.append(m_dict)
+            m = False
+            for key, rx in PIT.items():  # change dictionary as necessary
+                m = rx.search(lines[i])  # using .match searched the beginning of the line
+                if m is not None:
+                    m_dict = m.groupdict()
+                    m_dict["Time"] = time
+                    if key == "time":  # sets time interval
+                        # Needed to delete duplicates created by Summary output option 4
+                        if float(m.group("Time")) == time:
+                            duplicate_pit = True
+                        time = float(m.group("Time"))
+                    # If key is other than time
+                    elif key == "detail_segment_1" or key == "abb_segment_1":
+                        if key == "abb_segment_1":
+                            # Code only includes information for segment 1 for abbreviated prints
+                            i += 1
+                            m_dict.update({"Sub": int(1.0)})
+                            s = lines[i]
+                            s = s[1:45].strip()  # HUmidity from one line below
+                            m_dict.update(
+                                {"Humidity": s}
+                            )  # Add humidity from one line below, only first segement
+                        data_pit.append(m_dict)
+                    elif key == "wall":
+                        while (m != None):
+                            wall_pit.append(m_dict)
+                            i +=1
+                            m = rx.search(lines[i])
+                            if m is not None:
+                                m_dict = m.groupdict()
+                                m_dict["Time"] = time
+                    elif (
+                        key == "sum_time"
+                    ):  # TODO - Create code to find where all summary data is located
+                        start_line = i
+                        end_line = start_line
+                        end_found = False
+                        while (
+                            not end_found
+                        ):  # Find the lines containing the percentage of time data
+                            assert end_line < (
+                                len(lines)
+                            ), "Error with Train Energy Summary, Line " + str(i)
+                            m_sum = PIT["time"].search(lines[end_line + 1])
+                            if (m_sum is not None) or (
+                                end_line > len(lines) - 3
+                            ):  # Train Energy does not continue
+                                end_found = True
+                                i = end_line
+                                end_line -= 1
+                            end_line += 1
+                        sum_parser(lines[start_line:end_line], time)
+                    elif key == "train":  # Create worksheet for train information
+                        while (m != None):
+                            data_train.append(m_dict)
+                            i +=1
+                            m = rx.search(lines[i])
+                            if m is not None:
+                                m_dict = m.groupdict()
+                                m_dict["Time"] = time
+                    elif key == "fluid":
+                        fluid_pit.append(m_dict)
         i += 1
 
-
-
+    # Create Data Frames from dictionaries
     df_ssa, df_sst, df_train = create_ss_dfs(
         data_pit,
         data_train,
@@ -1123,7 +1143,7 @@ def delete_duplicate_pit(df_pit, df_train):
 
 if __name__ == "__main__":
     directory_string = "C:\\simulations\\Next-Vis Timing\\"
-    file_name = "NG02-N031.OUT"
+    file_name = "NG02-T005.out"
     path_string = directory_string + file_name
     file_path = Path(path_string)
     import cProfile
@@ -1132,4 +1152,4 @@ if __name__ == "__main__":
     d, output_meta_data = parse_file(file_path, convert_df="IP_TO_SI")
     prof.disable()
     print(output_meta_data, "test finished", sep = '\n')
-    prof.dump_stats("C:/Simulations/Next-Vis Timing/NV 1p16 Sum of Sim Parser01.prof")
+    prof.dump_stats("C:/Simulations/Next-Vis Timing/NV 1p16 NG02-T005 010.prof")
