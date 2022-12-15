@@ -1,5 +1,7 @@
 import pandas as pd
 
+from NV_CONSTANTS import IP_TO_SI as IP_TO_SI
+
 #From https://stackoverflow.com/questions/20625582/how-to-deal-with-settingwithcopywarning-in-pandas
 pd.options.mode.chained_assignment = None  # default='warn'
 
@@ -28,7 +30,11 @@ def create_train_truths(output_meta_data, data, simtime):
         for index, row in simtime_tra.iterrows():
             train_number = index
             route = row['Route_Number']
-            train_front = row['Location']
+            # Change train location from PIT back to IP if the file is converted from IP to SI
+            if output_meta_data['ses_version'] == "SI from IP":
+                train_front = row['Location']/IP_TO_SI['ft'] #Train front from PIT
+            else:
+                train_front = row['Location']
             train_type_number = row['Train_Type_Number']
             length = output_meta_data['form9_df'].loc[train_type_number,'train_length']
             train_back = train_front - length
@@ -71,21 +77,21 @@ if __name__ == "__main__":
 
     import NV_parser
     import NV_visio     
-    visio_template = "NG02-E001-001-3720.vsdx"
-    file_path_string = "C:/simulations/Never Gray Way/NG02-E001-001.OUT"
-    visio_template_folder = "C:/simulations/Never Gray Way"
+    visio_template = "Next Vis Samples1p11.vsdx"
+    file_path_string = "C:/simulations/Next-Vis Debug IP_TO_SI/inferno.PRN"
+    visio_template_folder = "C:/simulations/Next-Vis Debug IP_TO_SI"
     results_folder_str = visio_template_folder
     settings = {
         "ses_output_str": [file_path_string],
         "visio_template": "/".join([visio_template_folder, visio_template]),
         "results_folder_str": results_folder_str,
         "simtime": 500.0,
-        "version": "IP",
+        "version": "IP_TO_SI",
         "control": "First",
         "output": ["Visio"],
     }
     file_path = Path(settings['ses_output_str'][0])
-    data, output_meta_data = NV_parser.parse_file(file_path, gui="")
+    data, output_meta_data = NV_parser.parse_file(file_path, gui="",convert_df="IP_TO_SI")
     simtime = NV_visio.valid_simtime(settings["simtime"], data["SSA"], gui="")
     segment_time_df = create_segment_info(data, output_meta_data, simtime)
     print('Finished')

@@ -1,9 +1,4 @@
-<<<<<<< HEAD
-VERSION_NUMBER = '1.2'
-=======
-VERSION_NUMBER = '1.14'
->>>>>>> parent of 8646856 (1.15 Gets machine fingerprint to clipboard)
-
+VERSION_NUMBER = '1.20'
 #Column name : [SI Unit, IP Unit]
 COLUMN_UNITS={
     "Airflow":	["m^3/s","kcfm"],
