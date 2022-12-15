@@ -83,7 +83,7 @@ def create_excel(settings, data, output_meta_data, gui=""):
                     cell.alignment = Alignment(horizontal='center')
                     if column_name in NV_CONSTANTS.COLUMN_UNITS:
                         cell.value = NV_CONSTANTS.COLUMN_UNITS[column_name][unit_index]
-            # Add properties to Excel File.  Following https://stackoverflow.com/questions/52120125/how-to-edit-core-properties-of-xlsx-file-with-python'''
+            # Add properties to Excel File.  Following https://stackoverflow.com/questions/52120125/how-to-edit-core-properties-of-xlsx-file-with-python
             writer.book.properties.creator = ("Next Vis" + NV_CONSTANTS.VERSION_NUMBER)
             writer.book.properties.title = file_name
             writer.save()
@@ -118,6 +118,7 @@ if __name__ == "__main__":
     }
     import cProfile
     import time
+<<<<<<< HEAD
 
     import NV_parser
     file_path = Path(settings['ses_output_str'][0])
@@ -130,6 +131,9 @@ if __name__ == "__main__":
     prof.disable()
     end_create_excel = time.perf_counter()
     print(f"Time for create_excel {end_create_excel - start_create_excel:0.4f} seconds")
+=======
+    cProfile.run('NV_run.single_sim(settings)','02_xlsxwriter_noformatting.txt')
+>>>>>>> parent of 8646856 (1.15 Gets machine fingerprint to clipboard)
     # NV_run.single_sim(settings)
     prof.print_stats()
     prof.dump_stats("C:/Simulations/Next-Vis Timing/NV 1p15.prof")

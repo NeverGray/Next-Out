@@ -144,33 +144,11 @@ def create_offline_gatekeeper(license_info):
     with open("Gatekeeper.txt", "w") as outfile:
         outfile.write(text)
 
-def get_machine_fingerprint(machine_fingerprint):
-    try:
-        r = Tk()
-        r.withdraw()
-        r.clipboard_clear()
-        msg_01 = "Email the information below to Justin@NeverGray.biz"
-        msg_02 = 'Machine Fingerprint = ' + machine_fingerprint
-        msg = "\n".join([msg_01,msg_02])
-        r.clipboard_append(msg)
-        r.update() # now it stays on the clipboard after the window is closed
-        msg_0 = "Machine Fingerprint is copied to clipboard\n"
-        msg_1 = "Paste in email to Justin@NeverGray.biz for offline license."
-        msg = msg_0 + msg_1
-        messagebox.showinfo(message=msg)
-        system_exit("Need offline license")
-    except:
-        msg = "Error getting machine fingerprint."
-        messagebox.showinfo(message=msg)
-        system_exit(msg)
-
 def main(testing=False):
     machine_fingerprint = hashlib.sha256(
         str(get_mac()).encode('utf-8')).hexdigest()
     license_info = read_license_file()
     license_info['machine_fingerprint'] = machine_fingerprint
-    if 'get_fingerprint' in license_info:
-        get_machine_fingerprint(machine_fingerprint)
     if 'offline_key' in license_info:
         #TODO add code for offline license
         try:

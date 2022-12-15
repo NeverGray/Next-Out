@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pandas as pd
 
+import NV_CONSTANTS
 import NV_excel_R01 as NV_excel
 
 
@@ -22,7 +23,7 @@ def create_route_data(settings, data, output_meta_data, gui=""):
     routes_df = sub_count.join(form8f_df, how="outer")
     routes_df['Segement_Length'] = routes_df['Forward'] - routes_df['Backward']
     routes_df['Sub_Length'] = routes_df['Segement_Length']/routes_df['Sub_Count']
-    #Create datafame with mid-points
+    #Create datafame with mid-points, segment, and sub-segments
     route_numbers = routes_df.index.unique(level=0).to_list()
     route_list = []
     for route_num in route_numbers:
@@ -48,6 +49,12 @@ def create_route_data(settings, data, output_meta_data, gui=""):
                 }
                 route_list.append(route_dict)
     route_mid_points = pd.DataFrame(route_list)
+    
+    # Covert IP Mid_Points to SI Mid_Points if ip_to_si is selected.
+    if settings['version'] == 'IP_TO_SI':
+        route_mid_points['Mid_Point'] = route_mid_points['Mid_Point']*NV_CONSTANTS.IP_TO_SI['ft']
+    route_mid_points['Mid_Point'] = route_mid_points['Mid_Point'].round(1)
+    # Index the dataframes on route number and mid_point of route
     route_mid_points.set_index(['Route_Number','Mid_Point'], inplace=True)
     # Merge with Second-by-Second data
     route_data = {}
@@ -98,8 +105,8 @@ def create_route_excel(settings, data, output_meta_data, gui=""):
 
 if __name__ == "__main__":
     import NV_parser
-    directory_str = "C:\\simulations\\Next-Vis\\"
-    file_name = "NG04-N021.out"
+    directory_str = "C:\\simulations\\route\\"
+    file_name = "normal.prn"
     ses_output_list = [directory_str + file_name]
     file_path = Path(directory_str)/ses_output_list[0]
     settings = {
@@ -107,12 +114,10 @@ if __name__ == "__main__":
         "results_folder_str": None,
         "visio_template": None,
         "simtime": 990.0,
-        "version": "tbd",
+        "version": "IP_TO_SI",
         "control": "First",
         "output": ["Excel","Route"],
     }
     data, output_meta_data = NV_parser.parse_file(file_path)
     create_route_excel(settings, data, output_meta_data)
     print('Finished')
-    
-

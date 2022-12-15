@@ -492,19 +492,20 @@ def parse_file(file_path, gui="", convert_df=""):  # Parser
         )
     time = float(m.group("Time"))  # Finds first line with simulation output with Time.
     # To reduce search times, eliminate items from search dictionaries
+    PIT_for_search = PIT.copy()
     if summary == False:
-        PIT.pop("sum_time")
+        PIT_for_search.pop("sum_time")
     if abbreviated == False:
-        PIT.pop("abb_segment_1")
+        PIT_for_search.pop("abb_segment_1")
     if version == "IP":
-        PIT.pop("fluid")
+        PIT_for_search.pop("fluid")
     # Post process Point in Time information
     while i < len(lines):
         # Only search lines that are not blank
         if lines[i] != "\n":
         # at each line check for a match with a regex
             m = False
-            for key, rx in PIT.items():  # change dictionary as necessary
+            for key, rx in PIT_for_search.items():  # change dictionary as necessary
                 m = rx.search(lines[i])  # using .match searched the beginning of the line
                 if m is not None:
                     m_dict = m.groupdict()
