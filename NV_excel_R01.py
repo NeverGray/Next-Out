@@ -3,7 +3,6 @@ from pathlib import Path
 from tkinter import messagebox
 
 import pandas as pd
-from openpyxl.styles import Alignment, Font, PatternFill
 
 import NV_CONSTANTS
 import NV_run
@@ -79,7 +78,7 @@ def create_excel(settings, data, output_meta_data, gui=""):
                 worksheet.autofilter(df_startrow,0,worksheet.dim_rowmax,worksheet.dim_colmax)
                 # Freeze cells
                 freeze_column_max = len(item.index.names)
-                worksheet.freeze_panes(df_startrow,freeze_column_max)
+                worksheet.freeze_panes(df_startrow + 1,freeze_column_max)
                 # Format headers of index of dataframe
                 for i in range(len(item.index.names)):
                     worksheet.write(df_startrow, i, item.index.names[i], format_index_header)

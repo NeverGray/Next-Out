@@ -87,7 +87,10 @@ def check_authorized_computer(license_info):
                         message="Could not Authorize this Computer. Contact Never Gray for help")
                     system_exit("Cannot activate license")
                 else:
-                    return check_authorized_computer(license_info)
+                    msg = "Next-Vis will close. Restart to check if computer is authorized"
+                    messagebox.showinfo(
+                        message=msg)
+                    system_exit("Restart to use Next-Vis")
     else:
         msg = f'ERROR with Check of Authorized Computer: {validation_code}'
         messagebox.showinfo(message=msg)
@@ -114,11 +117,15 @@ def checkout_floating_license(license_info):
         # TODO Add check for number of licenses available
         machine_id = keygen.activate_machine_for_license(
             license_id, machine_fingerprint, license_info["floating_key"])
-        if machine_id == None and available >= in_use:
-            msg = (f"Currently, {organization} is using all {available} Floating Licenses.\n"
+        if machine_id == None and in_use >= available:
+            msg = (f"Currently, {organization} is using all Floating Licenses ({available}).\n"
                     "Wait for a floating license to become free or purchase additional licenses.")
             messagebox.showinfo(message=msg)
             system_exit("Maximum Floating Licenses in Use")
+        elif machine_id == None:
+            msg = (f"Issue checking out floating license. Check internet connection or contact Justin@NeverGray.biz")
+            messagebox.showinfo(message=msg)
+            system_exit("Issue with floating license.")
         else:
             return checkout_floating_license(license_info)
     else:
@@ -160,7 +167,7 @@ def get_machine_fingerprint(machine_fingerprint):
         messagebox.showinfo(message=msg)
         system_exit("Need offline license")
     except:
-        msg = "Error getting machine fingerprint."
+        msg = "Need offline license to continue."
         messagebox.showinfo(message=msg)
         system_exit(msg)
 
