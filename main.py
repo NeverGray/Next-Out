@@ -90,7 +90,7 @@ def check_authorized_computer(license_info):
                     msg = "Next-Vis will close. Restart to check if computer is authorized"
                     messagebox.showinfo(
                         message=msg)
-                    system_exit("Restart to use Next-Vis")
+                    system_exit("Restart Next-Vis to continue.")
     else:
         msg = f'ERROR with Check of Authorized Computer: {validation_code}'
         messagebox.showinfo(message=msg)
