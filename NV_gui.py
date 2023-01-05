@@ -1,6 +1,7 @@
 import base64
 import datetime
 import os
+import pickle
 from multiprocessing import Queue
 from pathlib import Path
 from sys import exit as system_exit
@@ -22,6 +23,7 @@ class start_screen:
         py = "5"  # vertical padding
         px = "5"
         root.title("Next-Vis " + VERSION_NUMBER)
+        #root.protocol("WM_DELETE_WINDOW", self.on_closing)
         try:
             with open('tmp.ico','wb') as tmp:
                 tmp.write(base64.b64decode(Icon().img))
@@ -39,11 +41,8 @@ class start_screen:
             self.ss, borderwidth=5, text="Post Processing", padding=p
         )
         self.cbo_excel = StringVar(value="Excel")
-        self.cbo_visio = StringVar(value="")
-        self.cbo_ip_to_si = StringVar(value="")
-        self.cbo_compare = StringVar(value="")
-        self.cbo_average = StringVar(value="")
-        self.cbo_route = StringVar(value="")
+        #Initialize all setting variables. This process makes saving, than loading settings easier.
+        self.load_settings()
         cb_excel = ttk.Checkbutton(
             frm_pp, text="Excel", variable=self.cbo_excel, onvalue="Excel", offvalue=""
         )
@@ -76,67 +75,74 @@ class start_screen:
         self.cb_compare.grid(column=0, row=20, sticky=W, pady=py)
         cb_average.grid(column=0, row=30, sticky=W, pady=py)
         cb_route.grid(column=0, row=40, sticky=W, pady=py)
-        # SES OUTPUT Files to Process
+        # SES Files to Process
         frm_ses = ttk.LabelFrame(
-            self.ss, borderwidth=5, text="SES Output to Process", padding=p
+            self.ss, borderwidth=5, text="SES Files to Process", padding=p
         )
-        self.ses = StringVar(value="file")
+        file_type = ttk.Label(frm_ses, text="Type:")
+        rb_input_files = ttk.Radiobutton(frm_ses, text="Input", variable=self.file_type, value="input_file", command=self.update_ses_exe)
+        rb_output_files = ttk.Radiobutton(frm_ses, text="Output", variable=self.file_type, value="output_file", command=self.update_ses_exe)
         rb_file = ttk.Radiobutton(frm_ses, text="", variable=self.ses, value="File", command=self.update_output_options)
         rb_files = ttk.Radiobutton(frm_ses, text="", variable=self.ses, value="Files", command=self.update_output_options)
         rb_folder = ttk.Radiobutton(frm_ses, text="", variable=self.ses, value="Folder", command=self.update_output_options)
-        self.btn_file = ttk.Button(frm_ses, text="One file", command=self.ses_file)
+        self.btn_file = ttk.Button(frm_ses, text="One file", command=self.single_file)
         self.btn_files = ttk.Button(frm_ses, text="Many files", command=self.ses_files)
         self.btn_folder = ttk.Button(frm_ses, text="Folder", command=self.ses_folder)
-        self.path_file = StringVar()
-        self.path_files = StringVar()
-        self.path_folder = StringVar()
         ent_file = ttk.Entry(frm_ses, textvariable=self.path_file)
         ent_files = ttk.Entry(frm_ses, textvariable=self.path_files)
         ent_folder = ttk.Entry(frm_ses, textvariable=self.path_folder)
-        # SES Output Frame creation
+        # SES Files Frame creation
         r = 0
         frm_ses.grid(column=0, row=r)
-        rb_file.grid(column=0, row=r, sticky=[E], pady=py, padx="0")
-        self.btn_file.grid(column=1, row=r, sticky=[E], pady=py, padx=px)
-        ent_file.grid(column=2, row=r, sticky=[E, W], pady=py, padx=px)
+        file_type.grid(column=0,row=r)
+        rb_input_files.grid(column=2, row=r, sticky=[W], pady=py, padx="0")
+        rb_output_files.grid(column=3, row=r, sticky=[W], pady=py, padx="0")
+        r = 9
+        rb_file.grid(column=0, row=r, sticky=[W], pady=py, padx="0")
+        self.btn_file.grid(column=1, row=r, sticky=[W], pady=py, padx=px)
+        ent_file.grid(column=2, row=r, columnspan=2, sticky=[E, W], pady=py, padx=px)
         r = 10
-        frm_ses.grid(column=0, row=r)
-        rb_files.grid(column=0, row=r, sticky=[E], pady=py, padx="0")
-        self.btn_files.grid(column=1, row=r, sticky=[E], pady=py, padx=px)
-        ent_files.grid(column=2, row=r, sticky=[E, W], pady=py, padx=px)
+        rb_files.grid(column=0, row=r, sticky=[W], pady=py, padx="0")
+        self.btn_files.grid(column=1, row=r, sticky=[W], pady=py, padx=px)
+        ent_files.grid(column=2, row=r, columnspan=2, sticky=[E, W], pady=py, padx=px)
         r = 20
-        rb_folder.grid(column=0, row=r, sticky=[E], pady=py, padx="0")
-        self.btn_folder.grid(column=1, row=r, sticky=[E], pady=py, padx=px)
-        ent_folder.grid(column=2, row=r, sticky=[E, W], pady=py, padx=px)
+        rb_folder.grid(column=0, row=r, sticky=[W], pady=py, padx="0")
+        self.btn_folder.grid(column=1, row=r, sticky=[W], pady=py, padx=px)
+        ent_folder.grid(column=2, row=r, columnspan=2, sticky=[E, W], pady=py, padx=px)
         frm_ses.columnconfigure(2, weight=1)
+        # SES Executable for input files
+        self.frm_ses_exe = ttk.LabelFrame(
+            self.ss, borderwidth=5, text="SES Executable (for input files)", padding=p
+        )
+        self.btn_exe = ttk.Button(self.frm_ses_exe, text="SES EXE", command=lambda: self.single_file('EXE'))
+        ent_file_exe = ttk.Entry(self.frm_ses_exe, textvariable=self.path_exe, )
+        # SES Executable Frame Creation
+        r = 0
+        self.btn_exe.grid(column=0, row=r, sticky=[W], pady=py, padx=px)
+        ent_file_exe.grid(column=1, row=r, sticky=[W,E], columnspan=2)
+        self.frm_ses_exe.columnconfigure(2,weight=1)
         # VISIO Template - Row 1
         self.frm_visio = ttk.LabelFrame(
             self.ss, borderwidth=5, text="Visio Template", padding=p
         )
         btn_visio = ttk.Button(self.frm_visio, text="Select", command=self.get_visio_file)
-        self.path_visio = StringVar()
         ent_visio = ttk.Entry(self.frm_visio, textvariable=self.path_visio)
         # Visio Template - Row 2
         lbl_time = ttk.Label(self.frm_visio, text="Simulation Time: ")
-        self.rbo_time = StringVar(value="end")
         rb_end_time = ttk.Radiobutton(
             self.frm_visio, text="End", variable=self.rbo_time, value="end"
         )
         rb_user_time = ttk.Radiobutton(
             self.frm_visio, text="Specified", variable=self.rbo_time, value="user_time"
         )
-        self.user_time = StringVar()
         self.ent_user_time = ttk.Entry(self.frm_visio, textvariable=self.user_time)
         # Visio Template - Row 3
-        self.cbo_visio_open = StringVar(value="")
         self.cb_visio_open = ttk.Checkbutton(
             self.frm_visio, text="Open in Visio", variable=self.cbo_visio_open, onvalue="visio_open", offvalue=""
         )
         # Visio Template - Row 4
         lbl_image = ttk.Label(self.frm_visio, text="More Image Outputs: ")
-        self.cbo_pdf = StringVar(value="")
-        self.cbo_png = StringVar(value="")
-        self.cbo_svg = StringVar(value="")
+
         cb_pdf = ttk.Checkbutton(
             self.frm_visio, text="PDF", variable=self.cbo_pdf, onvalue="visio_2_pdf", offvalue=""
         )
@@ -146,7 +152,6 @@ class start_screen:
         cb_svg = ttk.Checkbutton(
             self.frm_visio, text="SVG", variable=self.cbo_svg, onvalue="visio_2_svg", offvalue=""
         )
-
         # VISIO GRID
         r = 1  # Top Row
         btn_visio.grid(column=0, row=r, sticky=W, pady=py)
@@ -166,12 +171,11 @@ class start_screen:
         self.cb_visio_open.grid(column=0, row=r, sticky=W, pady=py)
         # Results Folder widgets
         frm_results_folder = ttk.LabelFrame(self.ss, borderwidth=5, text="Folder to write results", padding=p)
-        self.results_folder = StringVar(value="ses output")
         rb_ses = ttk.Radiobutton(frm_results_folder, text="Same as SES Output", variable=self.results_folder, value="ses output")
         rb_visio = ttk.Radiobutton(frm_results_folder,text="Same as Visio Template",variable=self.results_folder,value="visio template")
         rb_selected = ttk.Radiobutton(frm_results_folder,text="Selected",variable=self.results_folder, value="selected")
         btn_results_folder = ttk.Button(frm_results_folder, text="Select", command=self.get_results_folder)
-        self.path_results_folder = StringVar()
+
         ent_results_folder = ttk.Entry(frm_results_folder, textvariable=self.path_results_folder)
         # OUTPUT FILE LOCATION grid
         rb_ses.grid(column=0, row=0, sticky=W)
@@ -202,18 +206,59 @@ class start_screen:
         self.ss.grid(column=0, row=0, sticky=(E, W, N, S))
         self.ss.columnconfigure(1, weight=1)
         self.ss.rowconfigure(4, weight=1)
-        frm_pp.grid(column=0, row=0, rowspan=4, sticky=[N, S], pady=py, padx=px)
-        frm_results_folder.grid(column=1, row=2, sticky=[W, E], pady=py, padx=px)
-        self.frm_visio.grid(column=1, row=1, sticky=[W, E], pady=py, padx=px)
+        frm_pp.grid(column=0, row=0, rowspan=5, sticky=[N, S], pady=py, padx=px)
         frm_ses.grid(column=1, row=0, sticky=[N, S, E, W], pady=py, padx=px)
-        frm_run.grid(column=1, row=3, sticky=[W, E], pady=py, padx=px)
+        self.frm_ses_exe.grid(column=1,row=1, sticky=[N, S, E, W], pady=py, padx=px)
+        self.frm_visio.grid(column=1, row=2, sticky=[W, E], pady=py, padx=px)
+        frm_results_folder.grid(column=1, row=3, sticky=[W, E], pady=py, padx=px)
+        frm_run.grid(column=1, row=4, sticky=[W, E], pady=py, padx=px)
         frm_status.grid(
-            column=0, row=4, columnspan=2, sticky=[W, E, S, N], pady=py, padx=px
+            column=0, row=5, columnspan=2, sticky=[W, E, S, N], pady=py, padx=px
         )
         root.minsize(550, 385)  # Measured using paint.net
         self.update_post_processing_options()
         self.display_validation_info()
+        self.ss.update()
+        #TODO - Fix ses exe update? Giving Error
+        # self.update_ses_exe()
         # root.maxsize(1080,385) worried about scaling on other monitors
+
+    def load_settings(self, *args):
+        # Define all variable and default vvalues for  GUI
+        self.screen_settings = {
+            'self.cbo_visio': 'StringVar(value="")',
+            'self.cbo_excel':  'StringVar(value="Excel")',
+            'self.cbo_ip_to_si':  'StringVar(value="")',
+            'self.cbo_compare':  'StringVar(value="")',
+            'self.cbo_average':  'StringVar(value="")',
+            'self.cbo_route':  'StringVar(value="")',
+            'self.file_type':  'StringVar(value="output_file")',
+            'self.ses':  'StringVar(value="file")', #Radio button for file, files, or folders
+            'self.path_file':  'StringVar(value="")',
+            'self.path_files':  'StringVar(value="")',
+            'self.path_folder':  'StringVar(value="")',
+            'self.path_exe':  'StringVar(value="")', #Path for executable
+            'self.path_visio':  'StringVar(value="")',
+            'self.rbo_time':  'StringVar(value="end")',
+            'self.user_time':  'StringVar(value="")',
+            'self.cbo_visio_open':  'StringVar(value="")',
+            'self.cbo_pdf': 'StringVar(value="")',
+            'self.cbo_png':  'StringVar(value="")',
+            'self.cbo_svg':  'StringVar(value="")',
+            'self.results_folder':  'StringVar(value="ses output")',
+            'self.path_results_folder':  'StringVar(value="")'
+        }
+        for key, value in self.screen_settings.items():
+            exec(f'{key} = {value}') 
+        '''
+        try:
+            with open("nv_saved_settings.ini","rb") as f:
+                settings_2_load = pickle.load(f)
+        except:
+            for key, value in self.screen_settings.items():
+                exec(f'{key} = {value}') 
+        for key, value in self.screen_settings.items():
+                exec(f'{key} = {value}')'''
 
     def display_validation_info(self, *args):
         msg_line=[]
@@ -256,22 +301,41 @@ class start_screen:
         except ValueError:
             pass
 
-    def ses_file(self, *args):
+    # Function to return a path of a single file: input, output, or executable
+    def single_file(self, file_type='SES'):
+        if file_type == 'EXE':
+            filetypes_suffix = [("SES Executable", "*.EXE"),]
+            title_text = "Select SES Executable to process input files"
+        elif self.file_type.get() == 'input_file':
+            filetypes_suffix = [("SES Input", ("*.INP", "*.SES")),]
+            title_text = "Select one SES input File"
+        else:
+            filetypes_suffix = [("SES Output", ("*.PRN", "*.OUT")),]
+            title_text ="Select one SES Output File"
         try:
             filename = filedialog.askopenfilename(
-                title="Select one SES output Files",
-                filetypes=[("SES Output", ("*.PRN", "*.OUT")),],
+                title = title_text,
+                filetypes=filetypes_suffix,
             )
-            self.path_file.set(filename)
-            self.ses.set("File")
+            if file_type == 'EXE':
+                self.path_exe.set(filename)
+            else:
+                self.path_file.set(filename)
+                self.ses.set("File")
         except ValueError:
             pass
 
-    def ses_files(self, *args):
+    def ses_files(self, *args): #Multiple files, not singular
+        if self.file_type.get() == 'input_file':
+            filetypes_suffix=[("SES Input", ("*.INP", "*.SES")),]
+            title_text ="Select many SES input Files by holding Ctrl"
+        else:
+            filetypes_suffix=[("SES Output", ("*.PRN", "*.OUT")),]
+            title_text ="Select many SES output Files by holding Ctrl"
         try:
             files = filedialog.askopenfilenames(
-                title="Select many SES output Files by holding Ctrl",
-                filetypes=[("SES Output", ("*.PRN", "*.OUT")),],
+                title = title_text,
+                filetypes = filetypes_suffix,
             )
             files_string = '; '.join(files,)
             self.path_files.set(files_string)
@@ -324,7 +388,7 @@ class start_screen:
         pp_list.append(self.cbo_svg.get())
         pp_list.append(self.cbo_visio_open.get())
         try:
-            self.get_ses_output_str()
+            self.get_ses_file_str()
         except:
             error_msg = "ERROR finding output file locations"
             self.gui_text(error_msg)
@@ -341,6 +405,8 @@ class start_screen:
             "version": self.cbo_ip_to_si.get(),
             "control": "First",
             "output": pp_list,
+            "file_type": self.file_type.get(),
+            "path_exe": self.path_exe.get()
         }
         if self.validation(self.settings):
             # Check validity of license
@@ -385,6 +451,10 @@ class start_screen:
             if not results_folder_path.is_dir():
                 msg = msg + "Folder to write results does not exist\n"
                 valid = False
+        # If using input file, the executable field should exist
+        if self.file_type=="input_file" and self.path_exe == "":
+            msg = msg + "Select an SES executable to perform simulations"
+            valid = False
         if not valid:
             messagebox.showinfo(message=msg)
         return valid
@@ -394,16 +464,22 @@ class start_screen:
         self.txt_status.insert("end", status + "\n")
         self.txt_status.see(END)
         self.txt_status["state"] = DISABLED
-        self.ss.update()
+        
 
-    def get_ses_output_str(self, *args):
+    def get_ses_file_str(self, *args):
+        #TODO Add exception for input files
         if self.ses.get() == "File":
             self.ses_output_str = []
             self.ses_output_str.append(self.path_file.get())
         elif self.ses.get() == "Folder":
             self.ses_output_str = []
             folder_path = self.path_folder.get()
-            self.ses_output_str = nfm.find_all_files(pathway=folder_path, with_path=True)
+            #TODO Update to get all input files
+            if self.file_type.get() == "input_file":
+                suffix=[".INP", ".SES"]
+            else:
+                suffix=[".OUT", ".PRN"]
+            self.ses_output_str = nfm.find_all_files(extensions=suffix, pathway=folder_path, with_path=True)
         else:
             self.ses_output_str = []
             files_string = self.path_files.get() 
@@ -459,6 +535,29 @@ class start_screen:
         #Disable all items in a frame: https://www.tutorialspoint.com/how-to-gray-out-disable-a-tkinter-frame
         for child in self.frm_visio.winfo_children():
             child.configure(state=visio_state)
+
+    def update_ses_exe(self, *args):
+        if self.file_type.get() == "output_file":
+            ses_exe_state = 'disable'
+        else:
+            ses_exe_state = 'enable'
+        #Disable all items in a frame: https://www.tutorialspoint.com/how-to-gray-out-disable-a-tkinter-frame
+        for child in self.frm_ses_exe.winfo_children():
+            child.configure(state=ses_exe_state)
+
+    '''# Closing hint: https://stackoverflow.com/questions/49220464/passing-arguments-in-tkinters-protocolwm-delete-window-function-on-python 
+        def on_closing():
+        print('hello world')
+        
+        try:
+            settings_2_save = {}
+            for key, value in self.screen_settings.items():
+                exec(f'settings_2_save["{key}"]= {key}.get()')
+            with open("nv_saved_settkeyings.ini","wb") as f:
+                pickle.dump(settings_2_save, f)
+            self.destroy()
+        except:
+            self.destroy()'''
          
 if __name__ == "__main__":
     import main as main

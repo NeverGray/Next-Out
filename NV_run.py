@@ -1,5 +1,6 @@
 import copy
 import multiprocessing  # When trying to make a multiprocessing
+import subprocess
 from pathlib import Path
 
 import pandas as pd
@@ -14,8 +15,21 @@ import NV_route
 import NV_visio as nvv
 
 
+#Function to perform a single simulation
 def single_sim(settings, gui=""):
-    # Adjustement if multiple files are being processed, simultaneously
+    # If using input files, run SES simulation and change output string to a suffix.
+    if settings["file_type"] == "input_file":
+        msg = "Running SES Simulation for " + Path(settings["ses_output_str"][0]).name
+        run_msg(gui, msg)
+        success = run_SES(
+            settings["path_exe"], settings["ses_output_str"][0], gui
+            )
+        if success:
+            settings["ses_output_str"][0] = output_to_input(settings["ses_output_str"][0], settings["path_exe"], gui)
+        else:
+            msg = "Post-processing is stopped"
+            run_msg(gui, msg)
+            return
     if "Compare" in settings["output"]:
         try:
             NV_compare.compare_outputs(settings, gui)
@@ -27,7 +41,6 @@ def single_sim(settings, gui=""):
             return
         except:
             run_msg(gui, "ERROR! Could not compare files.")
-#            return
     if "Average" in settings["output"]:
         try:
             NV_average.average_outputs(settings, gui)
@@ -131,18 +144,52 @@ def get_results_path2(settings, output_meta_data, suffix):
     results_path = results_parent/Path(results_name_str)
     return results_path
 
+def run_SES(ses_exe_path, ses_input_file_path, gui =""):
+    try: 
+        # Check the proces is successful, see https://realpython.com/python-subprocess/ 
+        subprocess.run([ses_exe_path, ses_input_file_path], check=True) 
+        return True
+    except FileNotFoundError as exc: 
+        msg = (f"Process failed because the executable could not be found.\n{exc}")
+        run_msg(gui,msg)
+        return False
+    except subprocess.CalledProcessError as exc: 
+        if exc.returncode == 100:
+            return True
+        else:
+            msg = ( 
+                    f"SES Simulation failed." 
+                    f"Returned {exc.returncode}\n{exc}" 
+                )
+            run_msg(gui,msg)
+            return False 
+
+def output_to_input(ses_output_str, path_exe, gui=""):
+    #TODO Select suffix based on SES type
+    try:
+        if "SVSV6_32.exe".lower() in path_exe.lower():
+            extension = ".OUT"
+        else:
+            extension = ".PRN"
+        last_period_location = ses_output_str.rfind(".")
+        new_ses_output_str = ses_output_str[:last_period_location] + extension
+        return new_ses_output_str
+    except:
+        msg = "Error in 'output_to_input' when converting file strings"
+        run_msg(gui,msg)
+
 if __name__ == "__main__":
-    directory_str = "C:\\Users\\msn\\OneDrive - Never Gray\\Software Development\\Next-Vis\\Python2021\\"
-    ses_output_list = [
-        directory_str + '\\normal.prn'
-        ]
+    directory_str = "C:\\simulations\\Next-Vis 1p21\\SI Samples\\"
+    ses_output_list = directory_str + "sinorm.inp"
     settings = {
-        "ses_output_str": ses_output_list,
+        "ses_output_str": [ses_output_list],
         "results_folder_str": None,
         "visio_template": None,
         "simtime": 9999.0,
-        "version": "IP_TO_SI",
+        "version": "",
         "control": "First",
-        "output": ["Excel","Route"]
+        "output": ["Excel"],
+        "file_type": "input_file",
+        "path_exe": "C:\\simulations\\_EXE\\SVSV6_32.exe"
     }
     single_sim(settings)

@@ -227,7 +227,6 @@ def main(testing=False):
         system_exit("Error with license file (*.lic)")
     root = Tk()
     nvg.start_screen(root, license_info)
-    # Passing variable to closing function from https://stackoverflow.com/questions/49220464/passing-arguments-in-tkinters-protocolwm-delete-window-function-on-python
     root.mainloop()
     if license_info['type'] == 'Floating':
         keygen.deactivate_machine_on_exit(
