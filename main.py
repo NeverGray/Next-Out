@@ -87,7 +87,7 @@ def check_authorized_computer(license_info):
                         message="Could not Authorize this Computer. Contact Never Gray for help")
                     system_exit("Cannot activate license")
                 else:
-                    msg = "Next-Vis will close. Restart to check if computer is authorized"
+                    msg = "Next-Vis will close. Start again to check authorization."
                     messagebox.showinfo(
                         message=msg)
                     system_exit("Restart Next-Vis to continue.")
@@ -225,9 +225,7 @@ def main(testing=False):
             machine_fingerprint, license_info["floating_key"])
     else:
         system_exit("Error with license file (*.lic)")
-    root = Tk()
-    nvg.start_screen(root, license_info)
-    root.mainloop()
+    nvg.launch_window(license_info)
     if license_info['type'] == 'Floating':
         keygen.deactivate_machine_on_exit(
             machine_fingerprint, license_info["floating_key"])

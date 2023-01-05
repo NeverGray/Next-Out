@@ -23,7 +23,8 @@ class start_screen:
         py = "5"  # vertical padding
         px = "5"
         root.title("Next-Vis " + VERSION_NUMBER)
-        #root.protocol("WM_DELETE_WINDOW", self.on_closing)
+        # Call a function before closing the window.  See https://stackoverflow.com/questions/49220464/passing-arguments-in-tkinters-protocolwm-delete-window-function-on-python
+        root.protocol("WM_DELETE_WINDOW", lambda arg=root: self.on_closing(arg))
         try:
             with open('tmp.ico','wb') as tmp:
                 tmp.write(base64.b64decode(Icon().img))
@@ -142,7 +143,6 @@ class start_screen:
         )
         # Visio Template - Row 4
         lbl_image = ttk.Label(self.frm_visio, text="More Image Outputs: ")
-
         cb_pdf = ttk.Checkbutton(
             self.frm_visio, text="PDF", variable=self.cbo_pdf, onvalue="visio_2_pdf", offvalue=""
         )
@@ -175,7 +175,6 @@ class start_screen:
         rb_visio = ttk.Radiobutton(frm_results_folder,text="Same as Visio Template",variable=self.results_folder,value="visio template")
         rb_selected = ttk.Radiobutton(frm_results_folder,text="Selected",variable=self.results_folder, value="selected")
         btn_results_folder = ttk.Button(frm_results_folder, text="Select", command=self.get_results_folder)
-
         ent_results_folder = ttk.Entry(frm_results_folder, textvariable=self.path_results_folder)
         # OUTPUT FILE LOCATION grid
         rb_ses.grid(column=0, row=0, sticky=W)
@@ -250,15 +249,21 @@ class start_screen:
         }
         for key, value in self.screen_settings.items():
             exec(f'{key} = {value}') 
-        '''
         try:
-            with open("nv_saved_settings.ini","rb") as f:
-                settings_2_load = pickle.load(f)
+            settings_file_name = "nv_settings.ini"
+            path_of_file = Path(settings_file_name)
+            if path_of_file.is_file():
+                try:
+                    with open("nv_settings.ini","rb") as f:
+                        settings_2_load = pickle.load(f)
+                    for key, value in settings_2_load.items():
+                        if value != '':
+                            exec(f'{key} = StringVar(value="{value}")')
+                except:
+                    msg = f"Error loading {str(path_of_file)}."
         except:
-            for key, value in self.screen_settings.items():
-                exec(f'{key} = {value}') 
-        for key, value in self.screen_settings.items():
-                exec(f'{key} = {value}')'''
+            msg = "Error loading settings"
+            messagebox.showinfo(message=msg)
 
     def display_validation_info(self, *args):
         msg_line=[]
@@ -544,21 +549,28 @@ class start_screen:
         #Disable all items in a frame: https://www.tutorialspoint.com/how-to-gray-out-disable-a-tkinter-frame
         for child in self.frm_ses_exe.winfo_children():
             child.configure(state=ses_exe_state)
+        #Clear files selected so input and output files don't get switched by accident
+        self.path_file = ""
+        self.path_files = ""
 
-    '''# Closing hint: https://stackoverflow.com/questions/49220464/passing-arguments-in-tkinters-protocolwm-delete-window-function-on-python 
-        def on_closing():
-        print('hello world')
-        
-        try:
-            settings_2_save = {}
-            for key, value in self.screen_settings.items():
-                exec(f'settings_2_save["{key}"]= {key}.get()')
-            with open("nv_saved_settkeyings.ini","wb") as f:
-                pickle.dump(settings_2_save, f)
-            self.destroy()
-        except:
-            self.destroy()'''
-         
+    def on_closing(self, root):
+        answer = messagebox.askokcancel("Quit", "Do you want to quit Next-Vis?")
+        if answer:
+            try:
+                settings_2_save = {}
+                for key, value in self.screen_settings.items():
+                    exec(f'settings_2_save["{key}"]= {key}.get()')
+                with open("nv_settings.ini","wb") as f:
+                    pickle.dump(settings_2_save, f)
+                root.destroy()
+            except:
+                root.destroy() 
+
+def launch_window(license_info):
+    root = Tk()
+    start_screen(root, license_info)
+    root.mainloop()
+
 if __name__ == "__main__":
     import main as main
     main.main(False)
