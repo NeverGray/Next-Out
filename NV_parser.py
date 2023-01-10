@@ -291,9 +291,6 @@ SUMMARY_OF_SIMULATION = {
     "HS": re.compile(r"HEAT SINK\s+(?P<Heat_Sink>-?\d+\.\d*)$")
 }
 
-
-
-
 PERCENTAGE = {
     "percent_temperature": re.compile(
         r"""(
@@ -405,6 +402,7 @@ def parse_file(file_path, gui="", convert_df=""):  # Parser
     # Read input verification information from outputfile before Form 1
     version = select_version(lines)
     output_meta_data.update({"ses_version": version})
+    ambient_temperature = get_ambient_temperature(lines)
     
     # Read segment titles from Form 3 and Form 5 and types from form 3
     segment_titles, form3_type = get_titles_and_form3(lines)
@@ -568,7 +566,7 @@ def parse_file(file_path, gui="", convert_df=""):  # Parser
                         fluid_pit.append(m_dict)
         i += 1
 
-    # Create Data Frames from dictionaries
+    # Create Data Frames from dictionaries for second-by-second information
     df_ssa, df_sst, df_train = create_ss_dfs(
         data_pit,
         data_train,
@@ -578,7 +576,10 @@ def parse_file(file_path, gui="", convert_df=""):  # Parser
         segment_titles,
         version,
     )
-
+    #Add the actual airflow to the SST Dataframe
+    actual_airflow = calculate_actual_airflow(df_sst, df_ssa, ambient_temperature, version)
+    df_sst['Actual_Airflow_NV'] = actual_airflow
+    #Create the other dataframes if there the data exists.
     if summary:
         df_segment = to_dataframe2(
             data_segment,
@@ -593,6 +594,10 @@ def parse_file(file_path, gui="", convert_df=""):  # Parser
                 df_segment[item] = df_segment[item] / 1000
         df_sub = to_dataframe2(data_sub, groupby=["Time", "Segment", "Sub"])
         df_sub.name = "ST"
+        #Calculate the average dry bulb from the positive and nefative airflow directions
+        average_dry_bulb_nv = calculate_average_dry_bulb(df_sub, df_segment)
+        #Add the average to the ST dataframe
+        df_sub['Average_Dry_Bulb_NV'] = average_dry_bulb_nv
         df_percentage = to_dataframe2(data_percentage)
         df_percentage.name = "PER"
         df_te = to_dataframe2(data_te, to_integers=["Energy_Sector"], to_index=["Time", "Energy_Sector"])
@@ -831,7 +836,7 @@ def get_form9(lines):
         form9_df = None
     return form9_df
 
-
+# Create dataframes for second-by-second information (AKA PIT or Point in Time)
 def create_ss_dfs(
     data_pit, data_train, wall_pit, fluid_pit, duplicate_pit, segment_titles, version
 ):
@@ -948,7 +953,6 @@ def to_dataframe2(
         df = pd.DataFrame()
     return df
 
-
 def select_version(lines):
     version = "SI"
     for i in range(68):
@@ -961,6 +965,15 @@ def select_version(lines):
                 return version
     return version
 
+def get_ambient_temperature(lines):
+    rx = re.compile(r"AMBIENT AIR DRY-BULB TEMPERATURE\s+(?P<ambient_temperature>\d+.\d)\s+DEG")
+    for i in range(69,202):
+        if lines[i] != "":
+            match = rx.search(lines[i])
+            if match is not None:
+                value = float(match['ambient_temperature'])
+                return value
+    return None
 
 def sum_parser(lines, time):  # Parser for summary portion of output, between times
     i = 0  # start at line zero
@@ -1142,11 +1155,30 @@ def delete_duplicate_pit(df_pit, df_train):
     new_df_train.name = df_train.name
     return [new_df_pit, new_df_train]
 
+# From ST and SA data, calculate the average dry bulb temperature
+def calculate_average_dry_bulb(ST, SA):
+    positive_weighted = ST['Average_Positive_Dry_Bulb']*SA['Airflow_Direction_Positive']
+    negative_weighted = ST['Average_Negative_Dry_Bulb']*SA['Airflow_Direction_Negative']
+    average = (positive_weighted + negative_weighted)/100
+    return average
+
+def calculate_actual_airflow(SST, SSA, ambient_temperature, version):
+    add_temperature = 273.15 #Convert Celcius to Kelvin
+    if version == "IP": 
+        add_temperature = 459.69 #Convert Fahrenheit to Rankine
+    absolute_Air_Temp = SST['Air_Temp'] + add_temperature
+    absolute_ambient_temp = ambient_temperature + add_temperature
+    actual_airflow = absolute_Air_Temp*SSA['Airflow'] / absolute_ambient_temp
+    return actual_airflow
+    
 if __name__ == "__main__":
-    directory_string = "C:\\simulations\\Next-Vis Timing\\"
-    file_name = "NG02-T005.out"
+    directory_string = "C:\\simulations\\Next-Vis 1p21\\IP Samples\\"
+    file_name = "inferno.prn"
     path_string = directory_string + file_name
     file_path = Path(path_string)
+    d, output_meta_data = parse_file(file_path)
+    print('Finished')
+    '''instructions for timing program
     import cProfile
     prof = cProfile.Profile()
     prof.enable() 
@@ -1154,3 +1186,4 @@ if __name__ == "__main__":
     prof.disable()
     print(output_meta_data, "test finished", sep = '\n')
     prof.dump_stats("C:/Simulations/Next-Vis Timing/NV 1p16 NG02-T005 010.prof")
+    '''

@@ -1,19 +1,20 @@
-VERSION_NUMBER = '1.20'
+VERSION_NUMBER = '1.21'
 #Column name : [SI Unit, IP Unit]
 COLUMN_UNITS={
-    "Airflow":	["m^3/s","kcfm"],
+    "Airflow":	["m^3/s","kcfm"], #SSA Values
     "Air_Velocity":["m/s","fpm"],
     "Segment":["#","#"],
     "Sub":["#","#"],
     "Sensible":["W","Btu/s"],
     "Latent":["W","Btu/s"],
-    "Air_Temp":["°C","°F"],
+    "Air_Temp":["°C","°F"], #SST Values
     "Humidity":["kg/kg","lb/lb"],
     "Wall_Temp":["°C","°F"],
     "Convection_to_Wall":["W","Btu/h"],
     "Radiation_to_Wall":["W","Btu/h"],
     "Working_Fluid_Temp":["°C",""],
     "Heat_Absorbed_by_Pipe":["W",""],
+    "Actual_Airflow_NV":["°C","°F"],
     "Train_Number":["#","#"],          #Train Information
     "Route_Number":["#","#"],
     "Train_Type_Number":["#","#"],
@@ -31,7 +32,7 @@ COLUMN_UNITS={
     "Grid_Temp_Decel":["°C","°F"],
     "Heat_Gen":["W/m","Btu/s-ft"],
     "Heat_Reject":["W/m","Btu/s-ft"],
-    "Max_Airflow":["m^3/s","kcfm"],
+    "Max_Airflow":["m^3/s","kcfm"], #SA Values
     "Max_Airflow_Time":["seconds","second"],
     "Min_Airflow":["m^3/s","kcfm"],
     "Min_Airflow_Time":["seconds","second"],
@@ -59,7 +60,7 @@ COLUMN_UNITS={
     "Heat_Sink":["W","Btu/h"],
     "Outflow_Velocity_Exceedance":["m/s","fpm"],
     "Percentage_of_Velocity_Exceedance":["%","%"],
-    "Max_Dry_Bulb":["°C","°F"],
+    "Max_Dry_Bulb":["°C","°F"],  #Start of ST values
     "Max_Dry_Bulb_Time":["seconds","second"],
     "Min_Dry_Bulb":["°C","°F"],
     "Min_Dry_Bulb_Time":["seconds","second"],
@@ -70,7 +71,8 @@ COLUMN_UNITS={
     "Min_Humidity":["kg/kg","lb/lb"],
     "Min_Humidity_Time":["seconds","second"],
     "Average_Humidity":["kg/kg","lb/lb"],
-    "Percentage_Above_T1":["%","%"],	
+    "Average_Dry_Bulb_NV":["°C","°F"],
+    "Percentage_Above_T1":["%","%"], #Start of PER values	
     "Percentage_Above_T2":["%","%"],	
     "Percentage_Above_T3":["%","%"],	
     "Percentage_Above_T4":["%","%"],	
@@ -89,17 +91,17 @@ COLUMN_UNITS={
     "Percentage_Above_TA_5":["%","%"],
     "Percentage_Above_TA_6":["%","%"],
     "Energy_Sector":["#","#"],
-    "From_Third_Rail":["KWh","KWh"],
+    "From_Third_Rail":["KWh","KWh"], #TES Values
     "From_Flywheel":["KWh","KWh"],
     "Auxiliary_Energy":["KWh","KWh"],
     "Regenerated_Energy_to_Third_Rail":["KWh","KWh"],
-    "Morning_Wall_Temp":["°C","°F"],
+    "Morning_Wall_Temp":["°C","°F"], #HSA Values
     "Evening_Wall_Temp":["°C","°F"],
     "Morning_Air_Temp":["°C","°F"],
     "Evening_Air_Temp":["°C","°F"],
     "Morning_Humidity":["kg/kg","lb/lb"],
     "Evening_Humidity":["kg/kg","lb/lb"],
-    "Trains_and_Misc_Sensible":["W","Btu/h"],
+    "Trains_and_Misc_Sensible":["W","Btu/h"], #ECS Values
     "Trains_and_Misc_Latent":["W","Btu/h"],
     "Steady_State_Sensible":["W","Btu/h"],
     "Steady_State_Latent":["W","Btu/h"],

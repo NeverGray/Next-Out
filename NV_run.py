@@ -27,6 +27,7 @@ def single_sim(settings, gui=""):
         if success:
             settings["ses_output_str"][0] = output_to_input(settings["ses_output_str"][0], settings["path_exe"], gui)
         else:
+            #TODO add name of simulation to MSG with f' type command
             msg = "Post-processing is stopped"
             run_msg(gui, msg)
             return
