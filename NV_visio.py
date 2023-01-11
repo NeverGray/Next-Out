@@ -151,18 +151,25 @@ def update_temperature_NV02(simtime_df, SST_simtime, shape):
             end_arrow = '0'
             begin_arrow = '5'
     else:
-        airflow = 'Airflow?'  
+        airflow = 'Airflow?'
+    # Default values if actaul values aren't found
+    airtemp = 'Air Temp?'
+    walltemp = 'Wall Temp?'
+    actual_airflow = "Actual Flow?"  
+    # Lookup values from post-processed data
     if (seg_id,sub_id) in SST_simtime.index:
         ses_airtemp = SST_simtime.loc[seg_id,sub_id]['Air_Temp']
-        airtemp = str(round(ses_airtemp, 1)) + "°"
+        if not pd.isna(ses_airtemp):  
+            airtemp = str(round(ses_airtemp, 1)) + "°"
         if 'Wall_Temp' in SST_simtime.columns:
             ses_WallTemp = SST_simtime.loc[seg_id,sub_id]['Wall_Temp']
-            walltemp = str(round(ses_WallTemp, 1)) + "°"
-        else:
-            walltemp = 'Wall Temp?'
-    else:
-        airtemp = 'Air Temp?'
-        walltemp = 'Wall Temp?'
+            if not pd.isna(ses_WallTemp): 
+                walltemp = str(round(ses_WallTemp, 1)) + "°"
+        if 'Actual_Airflow_NV' in SST_simtime.columns:
+            Actual_Airflow_NV = SST_simtime.loc[seg_id,sub_id]['Actual_Airflow_NV']
+            if not pd.isna(Actual_Airflow_NV):
+                actual_airflow = str(round(abs(Actual_Airflow_NV), 1))
+
     # Update Arrow
     name = 'Arrow_NV02'
     cell_n_v_dictionary ={
@@ -174,7 +181,8 @@ def update_temperature_NV02(simtime_df, SST_simtime, shape):
     shape_dict = {
             ".//Visio:Shape[@Name='airflow_text_NV02']": airflow,
             ".//Visio:Shape[@Name='air_temp_text_NV02']": airtemp,
-            ".//Visio:Shape[@Name='wall_temp_text_NV02']": walltemp
+            ".//Visio:Shape[@Name='wall_temp_text_NV02']": walltemp,
+            ".//Visio:Shape[@Name='actual_airflow_text_NV02']": actual_airflow
         }
     for find_string, value in shape_dict.items():
         child = shape.find(find_string, ns)
@@ -508,18 +516,19 @@ def create_visio(settings, data, output_meta_data, gui=""):
             NV_run.run_msg(gui, msg)
 
 if __name__ == "__main__":
-    visio_template = "SES-105 Results Diagram.vsdx"
-    file_path_string = "C:/simulations/Never Gray Way/NG01-E001-001.out"
-    visio_template_folder = "C:/simulations/Never Gray Way"
+    visio_template = "sample.vsdx"
+    file_path_string = "C:/Simulations/Next-Vis 1p21/SI Samples/siinfern.out"
+    visio_template_folder = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/_Tasks/2023-01-04 Updates/Stencile - Actual Airflow"
     results_folder_str = visio_template_folder
     settings = {
         "ses_output_str": [file_path_string],
         "visio_template": "/".join([visio_template_folder, visio_template]),
         "results_folder_str": results_folder_str,
-        "simtime": 3720,
-        "version": "IP_TO_SI",
+        "simtime": 500,
+        "version": "",
         "control": "First",
         "output": ["Visio"],
+        "file_type": "output_file",
     }
     simtime = settings['simtime']
     NV_run.single_sim(settings)

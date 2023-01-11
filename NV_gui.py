@@ -139,7 +139,7 @@ class start_screen:
         self.ent_user_time = ttk.Entry(self.frm_visio, textvariable=self.user_time)
         # Visio Template - Row 3
         self.cb_visio_open = ttk.Checkbutton(
-            self.frm_visio, text="Open in Visio", variable=self.cbo_visio_open, onvalue="visio_open", offvalue=""
+            self.frm_visio, text="Open in Visio", variable=self.cbo_visio_open_option, onvalue="visio_open", offvalue=""
         )
         # Visio Template - Row 4
         lbl_image = ttk.Label(self.frm_visio, text="More Image Outputs: ")
@@ -240,7 +240,7 @@ class start_screen:
             'self.path_visio':  'StringVar(value="")',
             'self.rbo_time':  'StringVar(value="end")',
             'self.user_time':  'StringVar(value="")',
-            'self.cbo_visio_open':  'StringVar(value="")',
+            'self.cbo_visio_open_option':  'StringVar(value="")',
             'self.cbo_pdf': 'StringVar(value="")',
             'self.cbo_png':  'StringVar(value="")',
             'self.cbo_svg':  'StringVar(value="")',
@@ -391,7 +391,7 @@ class start_screen:
         pp_list.append(self.cbo_pdf.get())
         pp_list.append(self.cbo_png.get())
         pp_list.append(self.cbo_svg.get())
-        pp_list.append(self.cbo_visio_open.get())
+        pp_list.append(self.cbo_visio_open_option.get())
         try:
             self.get_ses_file_str()
         except:
