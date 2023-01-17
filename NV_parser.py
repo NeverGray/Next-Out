@@ -1170,6 +1170,8 @@ def calculate_actual_airflow(SST, SSA, ambient_temperature, version):
     absolute_ambient_temp = ambient_temperature + add_temperature
     actual_airflow = absolute_Air_Temp*SSA['Airflow'] / absolute_ambient_temp
     return actual_airflow
+
+
     
 if __name__ == "__main__":
     directory_string = "C:\\simulations\\Next-Vis 1p21\\IP Samples\\"

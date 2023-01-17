@@ -204,7 +204,7 @@ class start_screen:
         # root.rowconfigure(0, weight=1)
         self.ss.grid(column=0, row=0, sticky=(E, W, N, S))
         self.ss.columnconfigure(1, weight=1)
-        self.ss.rowconfigure(4, weight=1)
+        self.ss.rowconfigure(5, weight=1)
         frm_pp.grid(column=0, row=0, rowspan=5, sticky=[N, S], pady=py, padx=px)
         frm_ses.grid(column=1, row=0, sticky=[N, S, E, W], pady=py, padx=px)
         self.frm_ses_exe.grid(column=1,row=1, sticky=[N, S, E, W], pady=py, padx=px)
@@ -395,12 +395,12 @@ class start_screen:
         try:
             self.get_ses_file_str()
         except:
-            error_msg = "ERROR finding output file locations"
+            error_msg = "ERROR finding iput or output file locations"
             self.gui_text(error_msg)
         try:
             self.get_results_folder_str()
         except:
-            error_msg = "EEROR with getting result folder"
+            error_msg = "ERROR with selected result folder"
             self.gui_text(error_msg)
         self.settings = {
             "ses_output_str": self.ses_output_str,
@@ -469,7 +469,7 @@ class start_screen:
         self.txt_status.insert("end", status + "\n")
         self.txt_status.see(END)
         self.txt_status["state"] = DISABLED
-        
+        self.ss.update()
 
     def get_ses_file_str(self, *args):
         #TODO Add exception for input files
@@ -554,8 +554,16 @@ class start_screen:
         self.path_files = ""
 
     def on_closing(self, root):
-        answer = messagebox.askokcancel("Quit", "Do you want to quit Next-Vis?")
-        if answer:
+        title_on_closing = "Quite Next Vis?"
+        msg_1 = "Click 'Yes' to quit and save the most recent settings.\n"
+        msg_2 = "Click 'No' to exit without saving.\n"
+        msg_3 = "Click 'Cancel' to return back to Next-Vis\n"
+        msg_all = msg_1 + msg_2 + msg_3
+        #answer = messagebox.askokcancel("Quit", "Do you want to quit Next-Vis?")
+        answer = messagebox.askyesnocancel(title=title_on_closing, message = msg_all)
+        if answer is None:
+            return
+        elif answer:
             try:
                 settings_2_save = {}
                 for key, value in self.screen_settings.items():
@@ -564,7 +572,16 @@ class start_screen:
                     pickle.dump(settings_2_save, f)
                 root.destroy()
             except:
-                root.destroy() 
+                root.destroy()
+        else:
+            root.destroy()
+       
+
+    def text_update(self, text):
+        self.gui_text(text)
+        self.ss.update
+
+
 
 def launch_window(license_info):
     root = Tk()
