@@ -57,22 +57,22 @@ PIT = {
     "train": re.compile(
         r"""(
         \s(?P<Train_Number>\d+)\s+    #Number
-		(?P<Route_Number>\d+)\s?         #RTE
-		(?P<Train_Type_Number>\d+)\s+         #Train_Type_Number
-		(?P<Location>\d+\.\d*)\s+  #Location
-		(?P<Speed>-?\d+\.\d*)\s+     #Speed
-		(?P<Accel>-?\d+\.\d*)\s+     #Accel
-		(?P<Air_Drag>-?\d+\.\d*)\s+
-		(?P<Air_Drag_Coeff>-?\d+\.\d*)\s+
-		(?P<Tractive_Effort>-?\d+\.\d*)\s+
-		(?P<Motor_Current>-?\d+\.\d*)\s+
-		(?P<Line_Current>-?\d+\.\d*)\s+
-		(?P<Fly_Wheel>-?\d+\.\d*)\s+
-		((?P<Motor_Eff>-?\d+\.\d*)\s+|\s+) #Motor efficiency or NOTHING in IP
-		(?P<Grid_Temp_Accel>-?\d+\.\d*)\s+
-		(?P<Grid_Temp_Decel>-?\d+\.\d*)\s+	
-		(?P<Heat_Gen>-?\d+\.\d*)\s+
-		(?P<Heat_Reject>-?\d+\.\d*)
+        (?P<Route_Number>\d+)\s?         #RTE
+        (?P<Train_Type_Number>\d+)\s+         #Train_Type_Number
+        (?P<Location>\d+\.\d*)\s+  #Location
+        (?P<Speed>-?\d+\.\d*)\s+     #Speed
+        (?P<Accel>-?\d+\.\d*)\s+     #Accel
+        (?P<Air_Drag>-?\d+\.\d*)\s+
+        (?P<Air_Drag_Coeff>-?\d+\.\d*)\s+
+        (?P<Tractive_Effort>-?\d+\.\d*)\s+
+        (?P<Motor_Current>-?\d+\.\d*)\s+
+        (?P<Line_Current>-?\d+\.\d*)\s+
+        (?P<Fly_Wheel>-?\d+\.\d*)\s+
+        ((?P<Motor_Eff>-?\d+\.\d*)\s+|\s+) #Motor efficiency or NOTHING in IP
+        (?P<Grid_Temp_Accel>-?\d+\.\d*)\s+
+        (?P<Grid_Temp_Decel>-?\d+\.\d*)\s+
+        (?P<Heat_Gen>-?\d+\.\d*)\s+
+        (?P<Heat_Reject>-?\d+\.\d*)
         )""",
         re.VERBOSE,
     ),
@@ -170,6 +170,9 @@ INPUT = {
     ),
     "f9a_length":re.compile(
         r"TOTAL LENGTH OF TRAIN\s+(?P<train_length>\d+\.\d+)\s"
+    ),
+    "f12":re.compile(
+        r"INPUT VERIFICATION OF CONTROL GROUP INFORMATION"
     ),
     "sum_op": re.compile(
         r"""(
@@ -797,14 +800,14 @@ def get_jet_fan_data(form7c_data, form3_type):
 def get_form8fs(lines):
     title_rx = INPUT["f8a"]
     form_8f = INPUT["f8f"]
-    time_rx = PIT["time"] #signals start of simualtion and end of input
-    time_match = None
+    form_12_start = INPUT["f12"]
+    form_12_match = None 
     i = 0
     form8f_data = []
-    while time_match is None and i < len(lines):
+    while form_12_match is None and i < len(lines):
         title_match = title_rx.search(lines[i])
         form_8f_match = form_8f.search(lines[i])
-        time_match = time_rx.search(lines[i])
+        form_12_match = form_12_start.search(lines[i])
         if title_match is not None:
             title_dict = title_match.groupdict()
             route_number = int(title_dict['Route_Number'])
@@ -966,7 +969,7 @@ def select_version(lines):
     return version
 
 def get_ambient_temperature(lines):
-    rx = re.compile(r"AMBIENT AIR DRY-BULB TEMPERATURE\s+(?P<ambient_temperature>\d+.\d)\s+DEG")
+    rx = re.compile(r"AMBIENT AIR DRY-BULB TEMPERATURE\s+(?P<ambient_temperature>-?\d+.\d)\s+DEG")
     for i in range(69,202):
         if lines[i] != "":
             match = rx.search(lines[i])
@@ -1010,9 +1013,8 @@ def sum_parser(lines, time):  # Parser for summary portion of output, between ti
                         start_line = i
                         end_line = start_line
                         end_found = False
-                        while (
-                            not end_found
-                        ):  # Find the lines containing the percentage of time data
+                        # Find the lines containing the percentage of time data
+                        while (not end_found):  
                             if "\f" in lines[end_line]:
                                 m = SUM["train_energy"].search(lines[end_line + 1])
                                 if m is None:  # Train Energy does not continue
@@ -1029,17 +1031,21 @@ def sum_parser(lines, time):  # Parser for summary portion of output, between ti
                         for item in train_energy:
                             data_te.append(item)
                         i = end_line
-                        # TODO Heat_Sink post processing
                     elif key == "heat_sink":
                         start_line = i
                         end_line = len(lines)
-                        [hsu, esc] = he_parser(lines[start_line:end_line], time)
+                        #Using temp instead of [hsu, esc] because of obscuration
+                        temp = he_parser(lines[start_line:end_line], time)
+                        hsu = temp[0] #Couldn't 
+                        esc = temp[1]
                         for item in hsu:
                             data_hsa.append(item)
                         for item in esc:
                             data_esc.append(item)
                         i = end_line
+                        #This is the last line
         i += 1
+    return None
 
 def summary_of_simulation_parser(p_lines, time):
     last_segment = -1
@@ -1175,10 +1181,10 @@ def calculate_actual_airflow(SST, SSA, ambient_temperature, version):
     
 if __name__ == "__main__":
     directory_string = "C:\\simulations\\Next-Vis 1p21\\IP Samples\\"
-    file_name = "inferno.prn"
+    file_name = "TestIP02.prn"
     path_string = directory_string + file_name
     file_path = Path(path_string)
-    d, output_meta_data = parse_file(file_path)
+    d, output_meta_data = parse_file(file_path, convert_df="IP_TO_SI")
     print('Finished')
     '''instructions for timing program
     import cProfile

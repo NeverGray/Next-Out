@@ -433,6 +433,7 @@ class start_screen:
         self.btn_run["state"] = NORMAL
         self.btn_run["text"] = "Run"
 
+    #Function to check that settings allows a successful simulation and post-processing
     def validation(self, settings):
         valid = True
         msg = ""
@@ -449,19 +450,24 @@ class start_screen:
                     msg = msg + "Specify a number for Visio's Simulation Time\n"
                     valid = False
         if settings["ses_output_str"] == "":
-            msg = msg + "No SES output file or folders are specified."
+            msg = msg + "No SES output file or folders are specified.\n"
             valid = False
         if not self.settings["results_folder_str"] is None:
             results_folder_path = Path(self.settings["results_folder_str"])
             if not results_folder_path.is_dir():
-                msg = msg + "Folder to write results does not exist\n"
+                msg = msg + "Folder to write results does not exist.\n"
                 valid = False
-        # If using input file, the executable field should exist
-        if self.file_type=="input_file" and self.path_exe == "":
-            msg = msg + "Select an SES executable to perform simulations"
-            valid = False
+        # If using input file, check the executable exists
+        if self.file_type.get()=="input_file":
+            exe_path_string = self.path_exe.get()
+            if exe_path_string == '':
+                msg = msg + "Select an SES executable to perform simulations.\n"
+                valid = False
+            elif not os.path.exists(self.path_exe.get()):
+                msg = msg + "Select an SES executable to perform simulations.\n"
+                valid = False
         if not valid:
-            messagebox.showinfo(message=msg)
+            messagebox.showinfo(title="Error with settings", message=msg)
         return valid
 
     def gui_text(self, status):
@@ -472,14 +478,13 @@ class start_screen:
         self.ss.update()
 
     def get_ses_file_str(self, *args):
-        #TODO Add exception for input files
         if self.ses.get() == "File":
             self.ses_output_str = []
             self.ses_output_str.append(self.path_file.get())
         elif self.ses.get() == "Folder":
             self.ses_output_str = []
             folder_path = self.path_folder.get()
-            #TODO Update to get all input files
+            #Select all input files or output files
             if self.file_type.get() == "input_file":
                 suffix=[".INP", ".SES"]
             else:
@@ -549,9 +554,10 @@ class start_screen:
         #Disable all items in a frame: https://www.tutorialspoint.com/how-to-gray-out-disable-a-tkinter-frame
         for child in self.frm_ses_exe.winfo_children():
             child.configure(state=ses_exe_state)
-        #Clear files selected so input and output files don't get switched by accident
-        self.path_file = ""
-        self.path_files = ""
+        #Set value of variable to be empty if you switch between Input and Output files. 
+        #This prevents accidently running an output file as an input file or vice-versa
+        self.path_file.set("")
+        self.path_files.set("")
 
     def on_closing(self, root):
         title_on_closing = "Quite Next Vis?"
