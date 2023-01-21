@@ -24,7 +24,7 @@ def convert_ip_to_si(data, output_meta_data, gui=""):
                     units = NV_CONSTANTS.COLUMN_UNITS[column]
                     #If the two units are different, we may need to convert
                     if units[0] != units[1]:
-                        if units[1] == '°F':
+                        if units[1] == NV_CONSTANTS.DEGREE_SYMBOL + 'F':
                             dataframe[column] = (dataframe[column] - 32)/1.8 
                             if column in ST_temp_exception:
                                 average_to_zero(data, dataframe, column)
@@ -50,9 +50,9 @@ def average_to_zero(data, dataframe, column):
     dataframe[column] = dataframe[column] * df_one_or_zero
 
 if __name__ == "__main__":
-    file_path_string = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/normal.prn"
-    visio_template = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/sample012.vsdx"
-    results_folder_str = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021"
+    file_path_string = "C:/Simulations/2022-01-22/IP Samples/inferno.prn"
+    visio_template = "C:/Simulations/2022-01-22/Next Vis Samples1p21.vsdx"
+    results_folder_str = "C:/Simulations/2022-01-22/debug"
     settings = {
         "ses_output_str": [file_path_string],
         "visio_template": visio_template,

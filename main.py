@@ -1,6 +1,7 @@
 # Import of standard modules
 import datetime
 import hashlib
+import logging
 import multiprocessing
 import os
 from pathlib import Path
@@ -12,6 +13,10 @@ from uuid import getnode as get_mac
 import keygen
 import NV_gui as nvg
 
+#Turn off logging of internet messages
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("urllib3").propagate = False
 
 def read_license_file(folder_path=''):
     folder_path = Path(folder_path)
@@ -172,6 +177,7 @@ def get_machine_fingerprint(machine_fingerprint):
         system_exit(msg)
 
 def main(testing=False):
+     #Turn off logging of internet messages
     machine_fingerprint = hashlib.sha256(
         str(get_mac()).encode('utf-8')).hexdigest()
     license_info = read_license_file()

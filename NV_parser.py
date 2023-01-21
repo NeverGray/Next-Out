@@ -9,9 +9,9 @@ import pandas as pd
 import NV_ip_to_si
 import NV_run
 
-logging.basicConfig(
+'''logging.basicConfig(
     level=logging.DEBUG, format=" %(asctime)s - %(levelname)s - %(message)s"
-)
+)'''
 
 # Second by Second parser definitions
 PIT = {

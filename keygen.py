@@ -7,6 +7,8 @@ import threading
 import ed25519
 import requests
 
+print_message = False
+#Turn off logging from requests over the internet.
 #from cryptography.exceptions import InvalidSignature
 #from cryptography.hazmat.backends import default_backend
 #from cryptography.hazmat.primitives import hashes, serialization
@@ -53,15 +55,16 @@ def validate_license_key_with_fingerprint(license_key, machine_fingerprint):
     if 'errors' in validation:
         errs = validation['errors']
 
-        print(f'[keygen.validate_license_key_with_fingerprint] license_id={license_id} machine_fingerprint={machine_fingerprint} errors={to_error_message(errs)}',
-              file=sys.stderr)
+        if print_message:
+            print(f'[keygen.validate_license_key_with_fingerprint] license_id={license_id} machine_fingerprint={machine_fingerprint} errors={to_error_message(errs)}',
+                file=sys.stderr)
 
         return None, license_id
 
     validation_code = validation['meta']['constant']
-
-    print(
-        f'[keygen.validate_license_key_with_fingerprint] validation_code={validation_code} license_id={license_id} machine_fingerprint={machine_fingerprint}')
+    if print_message:
+        print(
+            f'[keygen.validate_license_key_with_fingerprint] validation_code={validation_code} license_id={license_id} machine_fingerprint={machine_fingerprint}')
 
     return validation_code, license_id, validation
 
@@ -130,8 +133,9 @@ def activate_machine_for_license(license_id, machine_fingerprint, keygen_key,use
 
     machine_id = activation['data']['id']
 
-    print(
-        f'[keygen.activate_machine_for_license] license_id={license_id} machine_id={machine_id} machine_fingerprint={machine_fingerprint}')
+    if print_message:
+        print(
+            f'[keygen.activate_machine_for_license] license_id={license_id} machine_id={machine_id} machine_fingerprint={machine_fingerprint}')
 
     return machine_id
 
@@ -157,8 +161,8 @@ def deactivate_machine(machine_id, keygen_key):
               file=sys.stderr)
 
         return False
-
-    print(f'[keygen.deactivate_machine] machine_id={machine_id}')
+    if print_message:
+        print(f'[keygen.deactivate_machine] machine_id={machine_id}')
 
     return True
 
@@ -197,7 +201,8 @@ def ping_heartbeat_for_machine(machine_id, keygen_key):
 
         return False
 
-    print(f'[keygen.ping_heartbeat_for_machine] machine_id={machine_id}')
+    if print_message:
+        print(f'[keygen.ping_heartbeat_for_machine] machine_id={machine_id}')
 
     return True
 

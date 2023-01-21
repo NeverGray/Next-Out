@@ -43,7 +43,7 @@ def create_excel(settings, data, output_meta_data, gui=""):
         bio = BytesIO()
         with pd.ExcelWriter(bio, engine="xlsxwriter") as writer:
             # Set color based on SES Version of IP or SI
-            if output_meta_data['ses_version'] == "IP_TO_SI":
+            if output_meta_data['ses_version'] == "SI from IP":
                 color_code = "#4BACC6" #Blue
             else:
                 color_code = "#F07F09" #Orange

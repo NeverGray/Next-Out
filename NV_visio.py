@@ -8,6 +8,7 @@ import win32com.client
 import NV_run
 import NV_settings
 import NV_Tunnel_Segment
+from NV_CONSTANTS import *
 
 try:
     import zlib
@@ -160,11 +161,11 @@ def update_temperature_NV02(simtime_df, SST_simtime, shape):
     if (seg_id,sub_id) in SST_simtime.index:
         ses_airtemp = SST_simtime.loc[seg_id,sub_id]['Air_Temp']
         if not pd.isna(ses_airtemp):  
-            airtemp = str(round(ses_airtemp, 1)) + "°"
+            airtemp = str(round(ses_airtemp, 1)) + DEGREE_SYMBOL
         if 'Wall_Temp' in SST_simtime.columns:
             ses_WallTemp = SST_simtime.loc[seg_id,sub_id]['Wall_Temp']
             if not pd.isna(ses_WallTemp): 
-                walltemp = str(round(ses_WallTemp, 1)) + "°"
+                walltemp = str(round(ses_WallTemp, 1)) + DEGREE_SYMBOL
         if 'Actual_Airflow_NV' in SST_simtime.columns:
             Actual_Airflow_NV = SST_simtime.loc[seg_id,sub_id]['Actual_Airflow_NV']
             if not pd.isna(Actual_Airflow_NV):
