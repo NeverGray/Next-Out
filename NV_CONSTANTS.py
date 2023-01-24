@@ -1,4 +1,4 @@
-VERSION_NUMBER = '1.21'
+VERSION_NUMBER = '1.22'
 #Column name : [SI Unit, IP Unit]
 COLUMN_UNITS={
     "Airflow":	["m^3/s","kcfm"], #SSA Values

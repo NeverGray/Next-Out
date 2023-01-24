@@ -5,7 +5,6 @@ import pandas as pd
 import NV_CONSTANTS
 import NV_excel_R01 as NV_excel
 
-
 def create_route_data(settings, data, output_meta_data, gui=""):
     # Get number of sub-segments per segement, from SST last timestep
     form8f_df = output_meta_data['form_8f']
@@ -51,46 +50,36 @@ def create_route_data(settings, data, output_meta_data, gui=""):
     route_mid_points = pd.DataFrame(route_list)
     
     # Covert IP Mid_Points to SI Mid_Points if ip_to_si is selected.
-    if settings['version'] == 'IP_TO_SI':
+    if output_meta_data['ses_version'] == 'SI from IP':
         route_mid_points['Mid_Point'] = route_mid_points['Mid_Point']*NV_CONSTANTS.IP_TO_SI['ft']
     route_mid_points['Mid_Point'] = route_mid_points['Mid_Point'].round(1)
     # Index the dataframes on route number and mid_point of route
-    route_mid_points.set_index(['Route_Number','Mid_Point'], inplace=True)
-    # Merge with Second-by-Second data
-    route_data = {}
-    dfs = route_mid_points.join(sst_at_time,on=['Segment','Sub'])
+    route_mid_points.set_index(['Route_Number','Segment','Sub'], inplace=True)
+    route_num_mid_points={}
+    #Create a dictionary of individual routes by numbers for each mid-points
     for route_num in route_numbers:
-        df_name = ''.join(["SST-RT", str(route_num)])
-        df = dfs.loc[route_num]
-        df.name = df_name
-        route_data.update({df.name: df})
-    if 'ST' in data.keys():
-        last_time = data['ST'].index.get_level_values("Time").max()
-        dfs = route_mid_points.join(data['ST'].loc[last_time], on=['Segment','Sub'])
-        for route_num in route_numbers:
-            df_name = ''.join(["ST-RT", str(route_num)])
-            df = dfs.loc[route_num]
-            df.name = df_name
-            route_data.update({df.name: df})
-    if 'SA' in data.keys():
-        if len(data['SA']) > 0:
-            last_time = data['SA'].index.get_level_values("Time").max()
-            dfs = route_mid_points.join(data['SA'].loc[last_time], on=['Segment'])
-            for route_num in route_numbers:
-                df_name = ''.join(["SA-RT", str(route_num)])
-                df = dfs.loc[route_num]
-                df.name = df_name
-                route_data.update({df.name: df})
-    if 'HSA' in data.keys():
-        if len(data['HSA']) > 0: #Sometimes HSA is empty if an environmental load is not performed
-            last_time = data['HSA'].index.get_level_values("Time").max()
-            dfs = route_mid_points.join(data['HSA'].loc[last_time].reset_index(level=0), on=['Segment','Sub'])
-            for route_num in route_numbers:
-                df_name = ''.join(["HSA-RT", str(route_num)])
-                df = dfs.loc[route_num]
-                df.name = df_name
-                route_data.update({df.name: df})
+        route_num_mid_points[route_num] = route_mid_points.loc[route_num]
+    df_key_2_route = ['SST','ST','SA','HSA'] #List of DFs to create for routes
+    route_data = {} #Empty dictionary to collect data
+    for key in df_key_2_route: #For every df type, perform the following
+        if key in data.keys(): 
+            if len(data[key]) > 0:
+                #For each DF type, export data for each route
+                for route_num in route_numbers: 
+                    if key == 'SA': #SA is a special case
+                        df = pd.merge(data[key],route_num_mid_points[route_num],left_index=True,right_index=True,how="inner")
+                    else: #All other DFs can be joined as follows.
+                        df = data[key].join(route_num_mid_points[route_num],on=['Segment','Sub'],how="inner")
+                    format_df(route_num, df,key) #Format and sort the DF
+                    route_data.update({df.name: df}) #Add it to the dictionary
     return route_data
+
+def format_df(route_num, df,df_key):
+    df.reset_index(inplace=True)
+    df.set_index(['Time','Mid_Point'], inplace=True)
+    df.sort_index(inplace=True)
+    df_name = ''.join([df_key,"-RT", str(route_num)])
+    df.name = df_name
 
 def create_route_excel(settings, data, output_meta_data, gui=""):
     route_data = create_route_data(settings, data, output_meta_data, gui)
@@ -106,7 +95,7 @@ def create_route_excel(settings, data, output_meta_data, gui=""):
 if __name__ == "__main__":
     import NV_parser
     directory_str = "C:\\simulations\\route\\"
-    file_name = "normal.prn"
+    file_name = "EBE01C__2_.PRN"
     ses_output_list = [directory_str + file_name]
     file_path = Path(directory_str)/ses_output_list[0]
     settings = {
