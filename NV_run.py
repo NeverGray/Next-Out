@@ -25,7 +25,7 @@ def single_sim(settings, gui=""):
             settings["path_exe"], settings["ses_output_str"][0], gui
             )
         if success:
-            settings["ses_output_str"][0] = output_to_input(settings["ses_output_str"][0], settings["path_exe"], gui)
+            settings["ses_output_str"][0] = output_from_input(settings["ses_output_str"][0], settings["path_exe"], gui)
         else:
             #TODO add name of simulation to MSG with f' type command
             msg = "Post-processing is stopped"
@@ -165,7 +165,7 @@ def run_SES(ses_exe_path, ses_input_file_path, gui =""):
             run_msg(gui,msg)
             return False 
 
-def output_to_input(ses_output_str, path_exe, gui=""):
+def output_from_input(ses_output_str, path_exe, gui=""):
     #TODO Select suffix based on SES type
     try:
         if "SVSV6_32.exe".lower() in path_exe.lower():
@@ -176,7 +176,7 @@ def output_to_input(ses_output_str, path_exe, gui=""):
         new_ses_output_str = ses_output_str[:last_period_location] + extension
         return new_ses_output_str
     except:
-        msg = "Error in 'output_to_input' when converting file strings"
+        msg = "Error in 'output_from_input' when converting file strings"
         run_msg(gui,msg)
 
 if __name__ == "__main__":

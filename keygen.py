@@ -4,7 +4,11 @@ import os
 import sys
 import threading
 
-import ed25519
+#TODO Need to fix or eliminate offline installations
+try:
+    import ed25519
+except:
+    pass
 import requests
 
 print_message = False
