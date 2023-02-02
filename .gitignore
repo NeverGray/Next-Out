@@ -12,6 +12,7 @@
 *.vsdx
 *.pdf
 *.bmp
+*.ini
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -37,11 +37,13 @@ class start_screen:
         # root.attributes('-toolwindow', 'True')
         self.ss = ttk.Frame(root, padding=p)  # start screen
         self.license_info = license_info
-        # POST PROCESSING widgets
+        # POST PROCESSING and Analysis Frames
         frm_pp = ttk.LabelFrame(
             self.ss, borderwidth=5, text="Post Processing", padding=p
         )
-        self.cbo_excel = StringVar(value="Excel")
+        frm_analysis = ttk.LabelFrame(
+            self.ss, borderwidth=5, text="Analysis", padding=p
+        )
         #Initialize all setting variables. This process makes saving, than loading settings easier.
         self.load_settings()
         cb_excel = ttk.Checkbutton(
@@ -54,28 +56,29 @@ class start_screen:
         cb_ip_to_si = ttk.Checkbutton(
             frm_pp, text="Convert\nIP to SI", variable=self.cbo_ip_to_si, onvalue="IP_TO_SI", offvalue=""
         )
+        cb_route = ttk.Checkbutton(
+            frm_pp, text="Route Data", variable=self.cbo_route, onvalue="Route", offvalue=""
+        )
         cb_average = ttk.Checkbutton(
-            frm_pp, text="Staggered\nheadways\nmean, max, min", variable=self.cbo_average, 
+            frm_analysis, text="Staggered\nheadways\nmean, max, min", variable=self.cbo_average, 
             onvalue="Average", offvalue="", command=self.update_post_processing_options
         )
         self.cb_compare = ttk.Checkbutton(
-            frm_pp,
+            frm_analysis,
             text="Compare two\noutputs",
             variable=self.cbo_compare,
             onvalue="Compare",
             offvalue="",
             command=self.update_post_processing_options
         )
-        cb_route = ttk.Checkbutton(
-            frm_pp, text="Route Data", variable=self.cbo_route, onvalue="Route", offvalue="", command=self.update_post_processing_options
-        )
         # POST PROCESSING grid
         cb_excel.grid(column=0, row=0, sticky=W, pady=py)
         cb_visio.grid(column=0, row=10, sticky=W, pady=py)
         cb_ip_to_si.grid(column=0, row=15, sticky=W, pady=py)
+        cb_route.grid(column=0, row=17, sticky=W, pady=py)
+        # Analysis grid
         self.cb_compare.grid(column=0, row=20, sticky=W, pady=py)
         cb_average.grid(column=0, row=30, sticky=W, pady=py)
-        cb_route.grid(column=0, row=40, sticky=W, pady=py)
         # SES Files to Process
         frm_ses = ttk.LabelFrame(
             self.ss, borderwidth=5, text="SES Files to Process", padding=p
@@ -205,7 +208,8 @@ class start_screen:
         self.ss.grid(column=0, row=0, sticky=(E, W, N, S))
         self.ss.columnconfigure(1, weight=1)
         self.ss.rowconfigure(5, weight=1)
-        frm_pp.grid(column=0, row=0, rowspan=5, sticky=[N, S], pady=py, padx=px)
+        frm_pp.grid(column=0, row=0, rowspan=2, sticky=[N,S,E,W], pady=py, padx=px)
+        frm_analysis.grid(column=0, row=2, rowspan=2, sticky=[N,E,W,S], pady=py, padx=px)
         frm_ses.grid(column=1, row=0, sticky=[N, S, E, W], pady=py, padx=px)
         self.frm_ses_exe.grid(column=1,row=1, sticky=[N, S, E, W], pady=py, padx=px)
         self.frm_visio.grid(column=1, row=2, sticky=[W, E], pady=py, padx=px)
@@ -538,7 +542,7 @@ class start_screen:
             self.cbo_visio_open = StringVar(value="")
             
     def update_post_processing_options(self, *args):
-        if self.cbo_average.get() == '' and self.cbo_route.get() == '' and self.cbo_visio.get() == "Visio":
+        if self.cbo_average.get() == '' and self.cbo_compare.get() == '' and self.cbo_visio.get() == "Visio":
             visio_state = 'enable'
         else:
             visio_state = 'disable'
