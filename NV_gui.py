@@ -15,28 +15,28 @@ import NV_run as nvr
 from NV_CONSTANTS import VERSION_NUMBER
 from NV_icon5 import Icon
 
-
 # add requirement for program to be legit to run
-class start_screen:
-    def __init__(self, root, license_info):
+class Start_Screen(tk.Tk):
+    def __init__(self, license_info):
+        super().__init__()
         # Initialization and settings
         p = "5"  # padding
         py = "5"  # vertical padding
         px = "5"
-        root.title("Next-Vis " + VERSION_NUMBER)
+        self.title("Next-Vis " + VERSION_NUMBER)
         # Call a function before closing the window.  See https://stackoverflow.com/questions/49220464/passing-arguments-in-tkinters-protocolwm-delete-window-function-on-python
-        root.protocol("WM_DELETE_WINDOW", lambda arg=root: self.on_closing(arg))
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
         try:
             with open('tmp.ico','wb') as tmp:
                 tmp.write(base64.b64decode(Icon().img))
-            root.iconbitmap('tmp.ico')
+            self.iconbitmap('tmp.ico')
             os.remove('tmp.ico')
         except:
             icon_value = False
         # root.iconbitmap('icon4.ico')
         # TODO Replace Icon in title bar with NV icon (icon4.ico)
         # root.attributes('-toolwindow', 'True')
-        self.ss = ttk.Frame(root, padding=p)  # start screen
+        self.ss = ttk.Frame(padding=p)  # start screen
         self.license_info = license_info
         # POST PROCESSING and Analysis Frames
         frm_pp = ttk.LabelFrame(
@@ -203,8 +203,8 @@ class start_screen:
         self.txt_status.pack(side=tk.LEFT, expand=tk.TRUE, fill=tk.BOTH)
         self.ys_status.pack(side=tk.RIGHT, fill='y')
         # START SCREEN grid
-        root.columnconfigure(0, weight=1)
-        root.rowconfigure(0, weight=1)
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1)
         # root.rowconfigure(0, weight=1)
         self.ss.grid(column=0, row=0, sticky="EWNS")
         self.ss.columnconfigure(1, weight=1)
@@ -219,7 +219,7 @@ class start_screen:
         frm_status.grid(
             column=0, row=5, columnspan=2, sticky=['WESN'], pady=py, padx=px
         )
-        root.minsize(550, 385)  # Measured using paint.net
+        self.minsize(550, 385)  # Measured using paint.net
         self.update_post_processing_options()
         self.display_validation_info()
         self.ss.update()
@@ -570,7 +570,7 @@ class start_screen:
         self.path_file.set("")
         self.path_files.set("")
 
-    def on_closing(self, root):
+    def on_closing(self):
         title_on_closing = "Quite Next Vis?"
         msg_1 = "Click 'Yes' to quit and save the most recent settings.\n"
         msg_2 = "Click 'No' to exit without saving.\n"
@@ -587,21 +587,19 @@ class start_screen:
                     exec(f'settings_2_save["{key}"]= {key}.get()')
                 with open("nv_settings.ini","wb") as f:
                     pickle.dump(settings_2_save, f)
-                root.destroy()
+                self.destroy()
             except:
-                root.destroy()
+                self.destroy()
         else:
-            root.destroy()
-       
+            self.destroy()
 
     def text_update(self, text):
         self.gui_text(text)
         self.ss.update
 
 def launch_window(license_info):
-    root = tk.Tk()
-    start_screen(root, license_info)
-    root.mainloop()
+    start_screen = Start_Screen(license_info)
+    start_screen.mainloop()
 
 if __name__ == "__main__":
     import main as main
