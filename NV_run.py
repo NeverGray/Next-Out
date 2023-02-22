@@ -178,6 +178,7 @@ def output_from_input(ses_output_str, path_exe, gui=""):
     except:
         msg = "Error in 'output_from_input' when converting file strings"
         run_msg(gui,msg)
+        return ses_output_str
 
 if __name__ == "__main__":
     directory_str = "C:\\simulations\\Next-Vis 1p21\\SI Samples\\"
