@@ -2,10 +2,10 @@ import base64
 import datetime
 import os
 import pickle
+import tkinter as tk
 from multiprocessing import Queue
 from pathlib import Path
 from sys import exit as system_exit
-from tkinter import *
 from tkinter import filedialog, messagebox, ttk
 
 import keygen
@@ -72,13 +72,13 @@ class start_screen:
             command=self.update_post_processing_options
         )
         # POST PROCESSING grid
-        cb_excel.grid(column=0, row=0, sticky=W, pady=py)
-        cb_visio.grid(column=0, row=10, sticky=W, pady=py)
-        cb_ip_to_si.grid(column=0, row=15, sticky=W, pady=py)
-        cb_route.grid(column=0, row=17, sticky=W, pady=py)
+        cb_excel.grid(column=0, row=0, sticky='W', pady=py)
+        cb_visio.grid(column=0, row=10, sticky='W', pady=py)
+        cb_ip_to_si.grid(column=0, row=15, sticky='W', pady=py)
+        cb_route.grid(column=0, row=17, sticky='W', pady=py)
         # Analysis grid
-        self.cb_compare.grid(column=0, row=20, sticky=W, pady=py)
-        cb_average.grid(column=0, row=30, sticky=W, pady=py)
+        self.cb_compare.grid(column=0, row=20, sticky='W', pady=py)
+        cb_average.grid(column=0, row=30, sticky='W', pady=py)
         # SES Files to Process
         frm_ses = ttk.LabelFrame(
             self.ss, borderwidth=5, text="SES Files to Process", padding=p
@@ -99,20 +99,20 @@ class start_screen:
         r = 0
         frm_ses.grid(column=0, row=r)
         file_type.grid(column=0,row=r)
-        rb_input_files.grid(column=2, row=r, sticky=[W], pady=py, padx="0")
-        rb_output_files.grid(column=3, row=r, sticky=[W], pady=py, padx="0")
+        rb_input_files.grid(column=2, row=r, sticky=['W'], pady=py, padx="0")
+        rb_output_files.grid(column=3, row=r, sticky=['W'], pady=py, padx="0")
         r = 9
-        rb_file.grid(column=0, row=r, sticky=[W], pady=py, padx="0")
-        self.btn_file.grid(column=1, row=r, sticky=[W], pady=py, padx=px)
-        ent_file.grid(column=2, row=r, columnspan=2, sticky=[E, W], pady=py, padx=px)
+        rb_file.grid(column=0, row=r, sticky=['W'], pady=py, padx="0")
+        self.btn_file.grid(column=1, row=r, sticky=['W'], pady=py, padx=px)
+        ent_file.grid(column=2, row=r, columnspan=2, sticky=['EW'], pady=py, padx=px)
         r = 10
-        rb_files.grid(column=0, row=r, sticky=[W], pady=py, padx="0")
-        self.btn_files.grid(column=1, row=r, sticky=[W], pady=py, padx=px)
-        ent_files.grid(column=2, row=r, columnspan=2, sticky=[E, W], pady=py, padx=px)
+        rb_files.grid(column=0, row=r, sticky=['W'], pady=py, padx="0")
+        self.btn_files.grid(column=1, row=r, sticky=['W'], pady=py, padx=px)
+        ent_files.grid(column=2, row=r, columnspan=2, sticky=['EW'], pady=py, padx=px)
         r = 20
-        rb_folder.grid(column=0, row=r, sticky=[W], pady=py, padx="0")
-        self.btn_folder.grid(column=1, row=r, sticky=[W], pady=py, padx=px)
-        ent_folder.grid(column=2, row=r, columnspan=2, sticky=[E, W], pady=py, padx=px)
+        rb_folder.grid(column=0, row=r, sticky=['W'], pady=py, padx="0")
+        self.btn_folder.grid(column=1, row=r, sticky=['W'], pady=py, padx=px)
+        ent_folder.grid(column=2, row=r, columnspan=2, sticky=['EW'], pady=py, padx=px)
         frm_ses.columnconfigure(2, weight=1)
         # SES Executable for input files
         self.frm_ses_exe = ttk.LabelFrame(
@@ -122,8 +122,8 @@ class start_screen:
         ent_file_exe = ttk.Entry(self.frm_ses_exe, textvariable=self.path_exe, )
         # SES Executable Frame Creation
         r = 0
-        self.btn_exe.grid(column=0, row=r, sticky=[W], pady=py, padx=px)
-        ent_file_exe.grid(column=1, row=r, sticky=[W,E], columnspan=2)
+        self.btn_exe.grid(column=0, row=r, sticky=['W'], pady=py, padx=px)
+        ent_file_exe.grid(column=1, row=r, sticky=['WE'], columnspan=2)
         self.frm_ses_exe.columnconfigure(2,weight=1)
         # VISIO Template - Row 1
         self.frm_visio = ttk.LabelFrame(
@@ -157,21 +157,21 @@ class start_screen:
         )
         # VISIO GRID
         r = 1  # Top Row
-        btn_visio.grid(column=0, row=r, sticky=W, pady=py)
-        ent_visio.grid(column=1, row=r, columnspan=3, sticky=[W, E], pady=py)
+        btn_visio.grid(column=0, row=r, sticky='W', pady=py)
+        ent_visio.grid(column=1, row=r, columnspan=3, sticky=['WE'], pady=py)
         r = 2
-        lbl_time.grid(column=0, row=r, sticky=W, pady=py)
-        rb_end_time.grid(column=1, row=r, sticky=W, pady=py)
-        rb_user_time.grid(column=2, row=r, sticky=W, pady=py)
-        self.ent_user_time.grid(column=3, row=r, sticky=[W, E], pady=py)
+        lbl_time.grid(column=0, row=r, sticky='W', pady=py)
+        rb_end_time.grid(column=1, row=r, sticky='W', pady=py)
+        rb_user_time.grid(column=2, row=r, sticky='W', pady=py)
+        self.ent_user_time.grid(column=3, row=r, sticky=['WE'], pady=py)
         self.frm_visio.columnconfigure(3, weight=1)
         r = 4
-        lbl_image.grid(column=0, row=r, sticky=W, pady=py)
-        cb_pdf.grid(column=1, row=r, sticky=W, pady=py)
-        cb_png.grid(column=2, row=r, sticky=W, pady=py)
-        cb_svg.grid(column=3, row=r, sticky=W, pady=py)
+        lbl_image.grid(column=0, row=r, sticky='W', pady=py)
+        cb_pdf.grid(column=1, row=r, sticky='W', pady=py)
+        cb_png.grid(column=2, row=r, sticky='W', pady=py)
+        cb_svg.grid(column=3, row=r, sticky='W', pady=py)
         r = 3
-        self.cb_visio_open.grid(column=0, row=r, sticky=W, pady=py)
+        self.cb_visio_open.grid(column=0, row=r, sticky='W', pady=py)
         # Results Folder widgets
         frm_results_folder = ttk.LabelFrame(self.ss, borderwidth=5, text="Folder to write results", padding=p)
         rb_ses = ttk.Radiobutton(frm_results_folder, text="Same as SES Output", variable=self.results_folder, value="ses output")
@@ -180,43 +180,43 @@ class start_screen:
         btn_results_folder = ttk.Button(frm_results_folder, text="Select", command=self.get_results_folder)
         ent_results_folder = ttk.Entry(frm_results_folder, textvariable=self.path_results_folder)
         # OUTPUT FILE LOCATION grid
-        rb_ses.grid(column=0, row=0, sticky=W)
-        rb_visio.grid(column=1, row=0, sticky=W)
-        rb_selected.grid(column=2, row=0, sticky=(E, W))
-        btn_results_folder.grid(column=0, row=1, sticky=W)
-        ent_results_folder.grid(column=1, row=1, sticky=[W, E], columnspan=2)
+        rb_ses.grid(column=0, row=0, sticky='W')
+        rb_visio.grid(column=1, row=0, sticky='W')
+        rb_selected.grid(column=2, row=0, sticky='EW')
+        btn_results_folder.grid(column=0, row=1, sticky='W')
+        ent_results_folder.grid(column=1, row=1, sticky='WE', columnspan=2)
         frm_results_folder.columnconfigure(2, weight=1)
         # RUN button
         frm_run = ttk.Frame(self.ss, padding=p, borderwidth=5)
         self.btn_run = ttk.Button(frm_run, text="Run", command=self.run)
-        self.btn_run.pack(expand=True, fill=BOTH)
+        self.btn_run.pack(expand=True, fill=tk.BOTH)
         # STATUS SCREEN
         frm_status = ttk.LabelFrame(self.ss, borderwidth=5, text="Status", padding=p)
-        self.txt_status = Text(
-            frm_status, width=30, height=5, state=DISABLED, wrap="none",
+        self.txt_status = tk.Text(
+            frm_status, width=30, height=5, state=tk.DISABLED, wrap="none",
         )
         self.ys_status = ttk.Scrollbar(
             frm_status, orient="vertical", command=self.txt_status.yview
         )
         self.txt_status["yscrollcommand"] = self.ys_status.set
-        self.txt_status.pack(side=LEFT, expand=TRUE, fill=BOTH)
-        self.ys_status.pack(side=RIGHT, fill=Y)
+        self.txt_status.pack(side=tk.LEFT, expand=tk.TRUE, fill=tk.BOTH)
+        self.ys_status.pack(side=tk.RIGHT, fill='y')
         # START SCREEN grid
         root.columnconfigure(0, weight=1)
         root.rowconfigure(0, weight=1)
         # root.rowconfigure(0, weight=1)
-        self.ss.grid(column=0, row=0, sticky=(E, W, N, S))
+        self.ss.grid(column=0, row=0, sticky="EWNS")
         self.ss.columnconfigure(1, weight=1)
         self.ss.rowconfigure(5, weight=1)
-        frm_pp.grid(column=0, row=0, rowspan=2, sticky=[N,S,E,W], pady=py, padx=px)
-        frm_analysis.grid(column=0, row=2, rowspan=2, sticky=[N,E,W,S], pady=py, padx=px)
-        frm_ses.grid(column=1, row=0, sticky=[N, S, E, W], pady=py, padx=px)
-        self.frm_ses_exe.grid(column=1,row=1, sticky=[N, S, E, W], pady=py, padx=px)
-        self.frm_visio.grid(column=1, row=2, sticky=[W, E], pady=py, padx=px)
-        frm_results_folder.grid(column=1, row=3, sticky=[W, E], pady=py, padx=px)
-        frm_run.grid(column=1, row=4, sticky=[W, E], pady=py, padx=px)
+        frm_pp.grid(column=0, row=0, rowspan=2, sticky=['NSEW'], pady=py, padx=px)
+        frm_analysis.grid(column=0, row=2, rowspan=2, sticky=['NSEW'], pady=py, padx=px)
+        frm_ses.grid(column=1, row=0, sticky=['NSEW'], pady=py, padx=px)
+        self.frm_ses_exe.grid(column=1,row=1, sticky=['NSEW'], pady=py, padx=px)
+        self.frm_visio.grid(column=1, row=2, sticky=['WE'], pady=py, padx=px)
+        frm_results_folder.grid(column=1, row=3, sticky=['WE'], pady=py, padx=px)
+        frm_run.grid(column=1, row=4, sticky=['WE'], pady=py, padx=px)
         frm_status.grid(
-            column=0, row=5, columnspan=2, sticky=[W, E, S, N], pady=py, padx=px
+            column=0, row=5, columnspan=2, sticky=['WESN'], pady=py, padx=px
         )
         root.minsize(550, 385)  # Measured using paint.net
         self.update_post_processing_options()
@@ -229,27 +229,27 @@ class start_screen:
     def load_settings(self, *args):
         # Define all variable and default vvalues for  GUI
         self.screen_settings = {
-            'self.cbo_visio': 'StringVar(value="")',
-            'self.cbo_excel':  'StringVar(value="Excel")',
-            'self.cbo_ip_to_si':  'StringVar(value="")',
-            'self.cbo_compare':  'StringVar(value="")',
-            'self.cbo_average':  'StringVar(value="")',
-            'self.cbo_route':  'StringVar(value="")',
-            'self.file_type':  'StringVar(value="output_file")',
-            'self.ses':  'StringVar(value="file")', #Radio button for file, files, or folders
-            'self.path_file':  'StringVar(value="")',
-            'self.path_files':  'StringVar(value="")',
-            'self.path_folder':  'StringVar(value="")',
-            'self.path_exe':  'StringVar(value="")', #Path for executable
-            'self.path_visio':  'StringVar(value="")',
-            'self.rbo_time':  'StringVar(value="end")',
-            'self.user_time':  'StringVar(value="")',
-            'self.cbo_visio_open_option':  'StringVar(value="")',
-            'self.cbo_pdf': 'StringVar(value="")',
-            'self.cbo_png':  'StringVar(value="")',
-            'self.cbo_svg':  'StringVar(value="")',
-            'self.results_folder':  'StringVar(value="ses output")',
-            'self.path_results_folder':  'StringVar(value="")'
+            'self.cbo_visio': 'tk.StringVar(value="")',
+            'self.cbo_excel':  'tk.StringVar(value="Excel")',
+            'self.cbo_ip_to_si':  'tk.StringVar(value="")',
+            'self.cbo_compare':  'tk.StringVar(value="")',
+            'self.cbo_average':  'tk.StringVar(value="")',
+            'self.cbo_route':  'tk.StringVar(value="")',
+            'self.file_type':  'tk.StringVar(value="output_file")',
+            'self.ses':  'tk.StringVar(value="file")', #Radio button for file, files, or folders
+            'self.path_file':  'tk.StringVar(value="")',
+            'self.path_files':  'tk.StringVar(value="")',
+            'self.path_folder':  'tk.StringVar(value="")',
+            'self.path_exe':  'tk.StringVar(value="")', #Path for executable
+            'self.path_visio':  'tk.StringVar(value="")',
+            'self.rbo_time':  'tk.StringVar(value="end")',
+            'self.user_time':  'tk.StringVar(value="")',
+            'self.cbo_visio_open_option':  'tk.StringVar(value="")',
+            'self.cbo_pdf': 'tk.StringVar(value="")',
+            'self.cbo_png':  'tk.StringVar(value="")',
+            'self.cbo_svg':  'tk.StringVar(value="")',
+            'self.results_folder':  'tk.StringVar(value="ses output")',
+            'self.path_results_folder':  'tk.StringVar(value="")'
         }
         for key, value in self.screen_settings.items():
             exec(f'{key} = {value}') 
@@ -262,7 +262,7 @@ class start_screen:
                         settings_2_load = pickle.load(f)
                     for key, value in settings_2_load.items():
                         if value != '':
-                            exec(f'{key} = StringVar(value="{value}")')
+                            exec(f'{key} = tk.StringVar(value="{value}")')
                 except:
                     msg = f"Error loading {str(path_of_file)}."
         except:
@@ -384,7 +384,7 @@ class start_screen:
 
     def run(self, *args):
         self.btn_run["text"] = "In-progress"
-        self.btn_run["state"] = DISABLED
+        self.btn_run["state"] = tk.DISABLED
         self.ss.update()
         pp_list = []
         pp_list.append(self.cbo_excel.get())
@@ -424,6 +424,9 @@ class start_screen:
                     if (self.ses.get() == "File") or ("Average" in pp_list) or ("Compare" in pp_list):
                         nvr.single_sim(self.settings, gui=self)
                     else:
+                        if 'visio_open' in self.settings['output']:
+                            self.settings['output'].remove('visio_open')
+                            self.cbo_visio_open_option.set("")
                         nvr.multiple_sim(self.settings, gui=self)
                     self.gui_text("Post processing completed.")
                 except:
@@ -434,7 +437,7 @@ class start_screen:
                 self.gui_text("Error Checking validity of license.")
         else:
             self.gui_text("Error with Validation of Settings")
-        self.btn_run["state"] = NORMAL
+        self.btn_run["state"] = tk.NORMAL
         self.btn_run["text"] = "Run"
 
     #Function to check that settings allows a successful simulation and post-processing
@@ -475,10 +478,10 @@ class start_screen:
         return valid
 
     def gui_text(self, status):
-        self.txt_status["state"] = NORMAL
+        self.txt_status["state"] = tk.NORMAL
         self.txt_status.insert("end", status + "\n")
-        self.txt_status.see(END)
-        self.txt_status["state"] = DISABLED
+        self.txt_status.see(tk.END)
+        self.txt_status["state"] = tk.DISABLED
         self.ss.update()
 
     def get_ses_file_str(self, *args):
@@ -536,10 +539,10 @@ class start_screen:
     def update_output_options(self, *args):
         option = self.ses.get()
         if option == 'File':
-            self.cb_visio_open["state"] = NORMAL
+            self.cb_visio_open["state"] = tk.NORMAL
         else:
-            self.cb_visio_open["state"] = DISABLED
-            self.cbo_visio_open = StringVar(value="")
+            self.cb_visio_open["state"] = tk.DISABLED
+            self.cbo_visio_open = tk.StringVar(value="")
             
     def update_post_processing_options(self, *args):
         if self.cbo_average.get() == '' and self.cbo_compare.get() == '' and self.cbo_visio.get() == "Visio":
@@ -591,10 +594,8 @@ class start_screen:
         self.gui_text(text)
         self.ss.update
 
-
-
 def launch_window(license_info):
-    root = Tk()
+    root = tk.Tk()
     start_screen(root, license_info)
     root.mainloop()
 
