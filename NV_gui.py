@@ -12,6 +12,7 @@ import keygen
 import NV_file_manager as nfm
 import NV_process_and_monitor_files
 import NV_run as nvr
+import NV_process_and_monitor_files as nvpm
 from NV_CONSTANTS import VERSION_NUMBER
 from NV_icon5 import Icon
 
@@ -400,7 +401,7 @@ class Start_Screen(tk.Tk):
         try:
             self.get_ses_file_str()
         except:
-            error_msg = "ERROR finding iput or output file locations"
+            error_msg = "ERROR finding input or output file locations"
             self.gui_text(error_msg)
         try:
             self.get_results_folder_str()
@@ -431,7 +432,8 @@ class Start_Screen(tk.Tk):
                         if 'visio_open' in self.settings['output']:
                             self.settings['output'].remove('visio_open')
                             self.cbo_visio_open_option.set("")
-                        NV_process_and_monitor_files.process_and_monitor()
+                        print('opening monitor')
+                        self.open_monitor_gui()
                     self.gui_text("Post processing completed.")
                 except:
                     self.gui_text(
@@ -596,6 +598,12 @@ class Start_Screen(tk.Tk):
     def text_update(self, text):
         self.gui_text(text)
         self.ss.update
+
+    def open_monitor_gui(self):
+        manager = nvpm.Manager_Class()
+        window = nvpm.Monitor_GUI(self, manager)
+        window.focus_force()
+        window.grab_set()
 
 def launch_window(license_info):
     start_screen = Start_Screen(license_info)
