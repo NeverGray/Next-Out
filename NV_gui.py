@@ -10,7 +10,6 @@ from tkinter import filedialog, messagebox, ttk
 
 import keygen
 import NV_file_manager as nfm
-import NV_process_and_monitor_files
 import NV_run as nvr
 import NV_process_and_monitor_files as nvpm
 from NV_CONSTANTS import VERSION_NUMBER
@@ -429,6 +428,7 @@ class Start_Screen(tk.Tk):
                         # Launch process and monitor files when using multiple files
                         # nvr.multiple_sim(self.settings, gui=self)
                         self.gui_text("Processing multiple files, opening monitor window.")
+                        # Turn off opening visio for multiple files
                         if 'visio_open' in self.settings['output']:
                             self.settings['output'].remove('visio_open')
                             self.cbo_visio_open_option.set("")
@@ -601,7 +601,7 @@ class Start_Screen(tk.Tk):
 
     def open_monitor_gui(self):
         manager = nvpm.Manager_Class()
-        window = nvpm.Monitor_GUI(self, manager)
+        window = nvpm.Monitor_GUI(self, manager,self.settings)
         window.focus_force()
         window.grab_set()
 

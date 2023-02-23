@@ -1,28 +1,57 @@
 '''This code processes and monitor multiple files'''
 
-import tkinter as tk
-from tkinter import ttk, messagebox
-import multiprocessing
-import time
-import os
-import threading
-import random
 import copy
+import logging
+import multiprocessing
+import os
+import random
+import threading
+import time
+import tkinter as tk
+from pathlib import Path
+from tkinter import messagebox, ttk
+
+import NV_excel_R01 as nve
+import NV_parser
+
+#logging.disable(logging.CRITICAL)
+logging.basicConfig(level=logging.DEBUG, format=' %(asctime)s -  %(levelname)s -  %(message)s')
 
 VERSION_NUMBER = "1"
 UPDATE_FREQUENCY = 1000 #vALUE IN MILLISECONDS
 DELAY = 2 #Seconds for delay
+COLUMN_HEADERS = ("PID", "File", "Simulation", "Read Output", "Visio", "Excel", "Route")
 
-def fake_processing_9(queued_list, processing_dictionary, done_list, pause_value, name):
-    pid = os.getpid()
-    queued_list.remove(name)
-    processing_dictionary[pid] = (name, "Processing", "Processing", "Processing", "Processing")
+def single_process(file_path, process_settings, settings, queued_list, processing_dictionary, done_list, pause_value,):
     pause_check(pause_value)
-    delay = DELAY * random.random()
-    time.sleep(delay)
-    processing_dictionary[pid] = (name, "Done", "Done", "Done", "Done")
+    name = file_path.stem
+    queued_list.remove(name)
+    pid = os.getpid()
+    #Get starting status of Queued or - (blank) for monitor
+    value_index = process_settings['process_status_value_index']
+    process_status = process_settings['process_status_start_values']
+    process_status[value_index['name']] = name
+    processing_dictionary[pid] = process_status
+    logging.info(f"Parsing {name}")
+    #TODO Pass proper convert_df value to parser
+    process_status[value_index['Read Output']] = "Processing"
+    processing_dictionary[pid] = process_status
+    data, output_meta_data = NV_parser.parse_file(file_path, gui="",convert_df=settings['version'])
+    process_status[value_index['Read Output']] = "Done"
+    processing_dictionary[pid] = process_status
+    logging.info(f"Finished Parsing {name}")
+    #TODO add check if excel file is necessary
+    if process_settings['Excel']:
+        pause_check(pause_value)
+        process_status[value_index['Excel']] = "Processing"
+        processing_dictionary[pid] = process_status
+        logging.info(f"Staring to create Excel file for {name}")
+        nve.create_excel(settings, data, output_meta_data, gui="")
+        logging.info(f"Finished writing Excel file for {name}")
+        process_status[value_index['Excel']] = "Done"
+        processing_dictionary[pid] = process_status
     done_list.append(name)
-    print(f"Finished {name}")
+    logging.info(f"Finished processing {name}")
 
 def pause_check(pause_value):
     while pause_value.get() == 1:
@@ -31,6 +60,7 @@ def pause_check(pause_value):
 
 class Manager_Class:
     def __init__(self):
+        logging.debug('Start of manager class')
         self.manager = multiprocessing.Manager()
         self.shared_dict = self.manager.dict()
         self.processing_dictionary = self.manager.dict()
@@ -39,33 +69,12 @@ class Manager_Class:
         self.pause_value = self.manager.Value("i",0)
         self.finished = self.manager.Value("i",0)
         self.file_names = self.manager.list()
-        #Initially create file names
-        for i in range(1, 100):
-            self.file_names.append("file_"+str(i))
-            self.queued_files.append("file_"+str(i))
-        print('finished initalizing variables')
-
-class App(tk.Tk):
-    def __init__(self):
-        super().__init__()
-        #self.manager = Manager_Class()
-        self.geometry('300x200')
-        self.title('Main Window')
-        # place a button on the root window
-        ttk.Button(self,
-                text='Open a window',
-                command=self.open_window).pack(expand=True)
-
-    def open_window(self):
-        manager = Manager_Class()
-        window = Monitor_GUI(self, manager)
-        window.focus_force()
-        window.grab_set()
 
 class Monitor_GUI(tk.Toplevel):
-    def __init__(self, parent, manager):
+    def __init__(self, parent, manager, start_screen_settings):
         super().__init__(parent)
         self.manager = manager
+        self.settings = start_screen_settings
         p = "5"  # padding
         self.title("Next-Vis " + VERSION_NUMBER + " Monitor")
         self.c_width = 15
@@ -87,7 +96,7 @@ class Monitor_GUI(tk.Toplevel):
         self.processing_frame = ttk.LabelFrame(
             self.monitor_window, borderwidth=5, text="Processing", padding=p
         )
-        headers = ("PID", "File", "Simulation", "Read Output", "Excel", "Visio")
+        headers = COLUMN_HEADERS
         column_number = 10
         for header in headers:
             self.entry = tk.Entry(
@@ -177,24 +186,61 @@ class Monitor_GUI(tk.Toplevel):
     
     def seperate_thread(self):
         print('Starting a single thread to control the processing pool')
-        self.t1=threading.Thread(target=self.processing_pool_3, daemon=True)
+        self.t1=threading.Thread(target=self.processing_pool, daemon=True)
         self.t1.start()
 
-    def processing_pool_3(self):
-        #TODO Need to adjust. It runs after other processes are finished :(
-        print('Getting ready to start the pool')
-        local_file_names = copy.copy(list(self.manager.file_names))
-        num_of_processes = max(multiprocessing.cpu_count() - 1, 1)
-        num_of_processes = min(num_of_processes, len(local_file_names))
-        num_of_processes = 2 #TEMP override during code creation
-        self.pool = multiprocessing.Pool(num_of_processes)
-        print('about to do the loop')
-        with multiprocessing.Pool(num_of_processes) as pool:
-            for name in local_file_names:
-                self.pool.apply_async(fake_processing_9, args=(self.manager.queued_files, self.manager.processing_dictionary, self.manager.done_files, self.manager.pause_value, name, ))
+    def processing_pool(self):
+        logging.info('Getting ready to start the pool')
+        self.create_process_settings()
+        num_files = len(self.settings["ses_output_str"])
+        # Use all processors except 1
+        num_of_processes = max(multiprocessing.cpu_count() - 1, 1)  
+        num_of_processes = min(num_of_processes, num_files)
+        logging.info('Stating loop for multiprocesing')
+        with multiprocessing.Pool(num_of_processes) as self.pool:
+            self.results = []
+            for file_path in self.file_paths:
+                result = self.pool.apply_async(single_process, args=(file_path, self.process_settings, self.settings, self.manager.queued_files, self.manager.processing_dictionary, self.manager.done_files, self.manager.pause_value,))
+                self.results.append(result)
             self.pool.close()
             self.pool.join()
-        print('Processing pool finished')
+        logging.info('Processing Pool finished')
+
+    def create_process_settings(self):
+        settings = self.settings
+        self.process_settings = {}
+        #Determine if an SES Simulation needs to be performed
+        self.process_settings['Simulation'] = settings['file_type']=='input_file'
+        #All processes require the read_output to be performed
+        self.process_settings['Read Output'] = True
+        #Determine what processes are needed after parsing the file
+        post_read_processes = ['Visio','Excel','Route']
+        for process_name in post_read_processes:
+            setting_selected = process_name in settings['output']
+            self.process_settings[process_name] = setting_selected
+        #Determine staring values for process_dictionary
+        process_status_start_values = []
+        process_status_value_index = {}
+        process_status_start_values.append('name') #holding spot for name
+        i = 0 #starting value for index
+        process_status_value_index['name'] = i
+        for key, value in self. process_settings.items():
+            i +=1
+            if value:
+                status = "Queued"
+            else:
+                status = "-"
+            process_status_start_values.append(status)
+            process_status_value_index[key] = i
+
+        self.process_settings['process_status_start_values'] = process_status_start_values
+        self.process_settings['process_status_value_index'] = process_status_value_index
+        # Create list of file paths and start queue with names
+        self.file_paths = []
+        for value in self.settings['ses_output_str']:
+            path = Path(value)
+            self.file_paths.append(path)
+            self.manager.queued_files.append(path.stem)
 
     def on_closing(self):
         # Try to pause ongoing processes
@@ -202,22 +248,59 @@ class Monitor_GUI(tk.Toplevel):
         self.pause_text.set("Continue")
         # Create window
         title_on_closing = "Stop processing immediately?"
-        msg_1 = "Click 'Yes' to quit immediately (could).\n"
+        msg_1 = "Click 'Yes' to quit immediately.\n"
         msg_2 = "Click 'No' to continue.\n"
         #msg_3 = "Click 'Cancel' to continue processing.\n"
         msg_all = msg_1 + msg_2 #+ msg_3
         #answer = messagebox.askokcancel("Quit", "Do you want to quit Next-Vis?")
         answer = messagebox.askyesno(title=title_on_closing, message = msg_all)
+        #TODO Exit if pool is already.
         if answer: #Yes
-            self.pool.terminate()
-            self.pool.join()
+            #Check if any results are still pending
+            if any(not result.ready() for result in self.results):
+                self.pool.terminate()
+                self.pool.join()
             self.destroy()
         else:
             self.manager.pause_value.value = 0
             self.pause_text.set("Pause")
             return
 
+class App(tk.Tk):
+    def __init__(self, settings):
+        super().__init__()
+        self.settings = settings
+        self.geometry('300x200')
+        self.title('Main Window')
+        # place a button on the root window
+        ttk.Button(self,
+                text='Open a window',
+                command=self.open_window).pack(expand=True)
+
+    def open_window(self):
+        manager = Manager_Class()
+        window = Monitor_GUI(self, manager, self.settings)
+        window.focus_force()
+        window.grab_set()
+
 if __name__ == "__main__":
-    app = App()
+    one_output_file = ['C:/Simulations/Demonstration/SI Samples/siinfern-detailed.out']
+    two_output_files = ['C:/Simulations/Demonstration/SI Samples/siinfern-detailed.out', 'C:/Simulations/Demonstration/SI Samples/sinorm-detailed.out']
+    many_output_files = ['C:/Simulations/Demonstration/SI Samples\\coolpipe.out', 'C:/Simulations/Demonstration/SI Samples\\siinfern-detailed.out', 'C:/Simulations/Demonstration/SI Samples\\siinfern.out', 'C:/Simulations/Demonstration/SI Samples\\sinorm-detailed.out', 'C:/Simulations/Demonstration/SI Samples\\sinorm.out', 'C:/Simulations/Demonstration/SI Samples\\Test02R01.out', 'C:/Simulations/Demonstration/SI Samples\\Test06.out']
+    #If using input file, change 'file_type' value to 'input_file
+    two_input_files = ['C:/Simulations/Demonstration/SI Samples/siinfern-detailed.inp', 'C:/Simulations/Demonstration/SI Samples/sinorm-detailed.inp']
+    many_input_files = ['C:/Simulations/Demonstration/SI Samples\\coolpipe.inp', 'C:/Simulations/Demonstration/SI Samples\\siinfern-detailed.inp', 'C:/Simulations/Demonstration/SI Samples\\siinfern.inp', 'C:/Simulations/Demonstration/SI Samples\\sinorm-detailed.inp', 'C:/Simulations/Demonstration/SI Samples\\sinorm.inp', 'C:/Simulations/Demonstration/SI Samples\\Test02R01.inp', 'C:/Simulations/Demonstration/SI Samples\\Test06.inp']
+    settings = {
+        'ses_output_str': many_output_files, 
+        'visio_template': 'C:/Simulations/Demonstration/Next Vis Samples1p21.vsdx', 
+        'results_folder_str': 'C:/Simulations/1p30 Testing', 
+        'simtime': -1, 
+        'version': '', 
+        'control': 'First', 
+        'output': ['Excel', 'Visio', '', '', 'Route', '', '', '', ''], 
+        'file_type':'', #'input_file', 
+        'path_exe': 'C:/Simulations/_Exe/SVSV6_32.exe'}
+
+    app = App(settings)
     app.mainloop()
     print('app.mainloop finished')
