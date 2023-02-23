@@ -1,13 +1,11 @@
 '''This code processes and monitor multiple files'''
-
-import copy
 import logging
 import multiprocessing
 import os
-import random
 import threading
 import time
 import tkinter as tk
+import subprocess
 from pathlib import Path
 from tkinter import messagebox, ttk
 
@@ -37,6 +35,24 @@ def single_process(file_path, process_settings, settings, queued_list, processin
     processing_dictionary[pid] = process_status
     
     # Start processing files
+    # Perform simulation if necessary
+    if process_settings['Simulation']:
+        pause_check(pause_value)
+        process_status[value_index['Simulation']] = "Processing"
+        processing_dictionary[pid] = process_status
+        logging.info(f"Staring SES simlaution of {name}")
+        successful_simulation = run_SES(settings["path_exe"], file_path.__str__())
+        if successful_simulation:
+            # Change file path to work on the output file
+            file_path = output_from_input(file_path, settings["path_exe"])
+        else:
+            logging.info(f"SES simulation failed for {name}")
+            process_status[value_index['Simulation']] = "Failed"
+            processing_dictionary[pid] = process_status
+            return
+        logging.info(f"Finished writing Visio file for {name}")
+        process_status[value_index['Simulation']] = "Done"
+        processing_dictionary[pid] = process_status
     # Parse output file
     logging.info(f"Parsing {name}")
     process_status[value_index['Read Output']] = "Processing"
@@ -68,12 +84,44 @@ def single_process(file_path, process_settings, settings, queued_list, processin
         process_status[value_index['Route']] = "Processing"
         processing_dictionary[pid] = process_status
         logging.info(f"Staring to create Route file for {name}")
-        NV_route.create_route_excel(settings,data,output_meta_data,gui="")
+        NV_route.create_route_excel(settings, data, output_meta_data, gui="")
         logging.info(f"Finished writing Excel file for {name}")
         process_status[value_index['Route']] = "Done"
         processing_dictionary[pid] = process_status
     done_list.append(name)
     logging.info(f"Finished processing {name}")
+
+def run_SES(ses_exe_path, ses_input_file_path, gui =""):
+    try: 
+        # Check the proces is successful, see https://realpython.com/python-subprocess/ 
+        subprocess.run([ses_exe_path, ses_input_file_path], check=True) 
+        return True
+    except FileNotFoundError as exc: 
+        logging.info(f"Process failed because the executable could not be found.\n{exc}")
+        return False
+    except subprocess.CalledProcessError as exc: 
+        if exc.returncode == 100:
+            return True
+        else:
+            msg = ( 
+                    f"SES Simulation failed." 
+                    f"Returned {exc.returncode}\n{exc}" 
+                )
+            logging.info(msg)
+            return False 
+
+def output_from_input(file_path, path_exe):
+    #TODO Select suffix based on SES type
+    try:
+        if "SVSV6_32.exe".lower() in path_exe.lower():
+            new_extension = ".OUT"
+        else:
+            new_extension = ".PRN"
+        new_file_path = file_path.with_suffix(new_extension)
+        return new_file_path
+    except:
+        logging.debug("Error in 'output_from_input' when converting file strings")
+        return file_path
 
 def pause_check(pause_value):
     while pause_value.get() == 1:
@@ -309,18 +357,21 @@ if __name__ == "__main__":
     one_output_file = ['C:/Simulations/Demonstration/SI Samples/siinfern-detailed.out']
     two_output_files = ['C:/Simulations/Demonstration/SI Samples/siinfern-detailed.out', 'C:/Simulations/Demonstration/SI Samples/sinorm-detailed.out']
     many_output_files = ['C:/Simulations/Demonstration/SI Samples\\coolpipe.out', 'C:/Simulations/Demonstration/SI Samples\\siinfern-detailed.out', 'C:/Simulations/Demonstration/SI Samples\\siinfern.out', 'C:/Simulations/Demonstration/SI Samples\\sinorm-detailed.out', 'C:/Simulations/Demonstration/SI Samples\\sinorm.out', 'C:/Simulations/Demonstration/SI Samples\\Test02R01.out', 'C:/Simulations/Demonstration/SI Samples\\Test06.out']
+    many_output_files.remove('C:/Simulations/Demonstration/SI Samples\\Test02R01.out') #Takes too long to compute
     #If using input file, change 'file_type' value to 'input_file
+    one_input_file = ['C:/Simulations/Demonstration/SI Samples/siinfern-detailed.inp']
     two_input_files = ['C:/Simulations/Demonstration/SI Samples/siinfern-detailed.inp', 'C:/Simulations/Demonstration/SI Samples/sinorm-detailed.inp']
     many_input_files = ['C:/Simulations/Demonstration/SI Samples\\coolpipe.inp', 'C:/Simulations/Demonstration/SI Samples\\siinfern-detailed.inp', 'C:/Simulations/Demonstration/SI Samples\\siinfern.inp', 'C:/Simulations/Demonstration/SI Samples\\sinorm-detailed.inp', 'C:/Simulations/Demonstration/SI Samples\\sinorm.inp', 'C:/Simulations/Demonstration/SI Samples\\Test02R01.inp', 'C:/Simulations/Demonstration/SI Samples\\Test06.inp']
+    many_input_files.remove('C:/Simulations/Demonstration/SI Samples\\Test02R01.inp') #Takes too long to compute
     settings = {
-        'ses_output_str': many_output_files, 
+        'ses_output_str': many_input_files, 
         'visio_template': 'C:/Simulations/Demonstration/Next Vis Samples1p21.vsdx', 
         'results_folder_str': 'C:/Simulations/1p30 Testing', 
         'simtime': -1, 
         'version': '', 
         'control': 'First', 
         'output': ['Excel', 'Visio', '', '', 'Route', '', '', '', ''], 
-        'file_type':'', #'input_file', 
+        'file_type': 'input_file', 
         'path_exe': 'C:/Simulations/_Exe/SVSV6_32.exe'}
 
     app = App(settings)
