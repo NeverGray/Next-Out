@@ -11,8 +11,11 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import messagebox, ttk
 
-import NV_excel_R01 as nve
 import NV_parser
+import NV_excel_R01 as nve
+import NV_route
+import NV_visio
+
 
 #logging.disable(logging.CRITICAL)
 logging.basicConfig(level=logging.DEBUG, format=' %(asctime)s -  %(levelname)s -  %(message)s')
@@ -24,23 +27,33 @@ COLUMN_HEADERS = ("PID", "File", "Simulation", "Read Output", "Visio", "Excel", 
 
 def single_process(file_path, process_settings, settings, queued_list, processing_dictionary, done_list, pause_value,):
     pause_check(pause_value)
+    # Prepare to monitor process status
     name = file_path.stem
     queued_list.remove(name)
     pid = os.getpid()
-    #Get starting status of Queued or - (blank) for monitor
     value_index = process_settings['process_status_value_index']
     process_status = process_settings['process_status_start_values']
     process_status[value_index['name']] = name
     processing_dictionary[pid] = process_status
+    
+    # Start processing files
+    # Parse output file
     logging.info(f"Parsing {name}")
-    #TODO Pass proper convert_df value to parser
     process_status[value_index['Read Output']] = "Processing"
     processing_dictionary[pid] = process_status
     data, output_meta_data = NV_parser.parse_file(file_path, gui="",convert_df=settings['version'])
     process_status[value_index['Read Output']] = "Done"
     processing_dictionary[pid] = process_status
     logging.info(f"Finished Parsing {name}")
-    #TODO add check if excel file is necessary
+    if process_settings['Visio']:
+        pause_check(pause_value)
+        process_status[value_index['Visio']] = "Processing"
+        processing_dictionary[pid] = process_status
+        logging.info(f"Staring to create Visio file for {name}")
+        NV_visio.create_visio(settings, data, output_meta_data, gui="")
+        logging.info(f"Finished writing Visio file for {name}")
+        process_status[value_index['Visio']] = "Done"
+        processing_dictionary[pid] = process_status
     if process_settings['Excel']:
         pause_check(pause_value)
         process_status[value_index['Excel']] = "Processing"
@@ -49,6 +62,15 @@ def single_process(file_path, process_settings, settings, queued_list, processin
         nve.create_excel(settings, data, output_meta_data, gui="")
         logging.info(f"Finished writing Excel file for {name}")
         process_status[value_index['Excel']] = "Done"
+        processing_dictionary[pid] = process_status
+    if process_settings['Route']:
+        pause_check(pause_value)
+        process_status[value_index['Route']] = "Processing"
+        processing_dictionary[pid] = process_status
+        logging.info(f"Staring to create Route file for {name}")
+        NV_route.create_route_excel(settings,data,output_meta_data,gui="")
+        logging.info(f"Finished writing Excel file for {name}")
+        process_status[value_index['Route']] = "Done"
         processing_dictionary[pid] = process_status
     done_list.append(name)
     logging.info(f"Finished processing {name}")
