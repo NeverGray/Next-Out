@@ -85,10 +85,9 @@ def create_route_excel(settings, data, output_meta_data, gui=""):
     # Create route data only if route data exists
     if not (output_meta_data['form_8f'] is None):
         route_data = create_route_data(data, output_meta_data)
-        #Create Excel Files
+        #Create Excel Files. First, adjust output_meta_data['file_path'] for new name ending of -Routes
         file_path_original = output_meta_data['file_path']
-        new_file_name = file_path.name[:-4] + "-Routes.out"
-        route_file_path = file_path.parent/new_file_name
+        route_file_path = file_path_original.with_stem(file_path_original.stem + '-Routes')
         output_meta_data['file_path'] = route_file_path
         NV_excel.create_excel(settings, route_data, output_meta_data, gui)
         #Revert back to original output_meta_data name (incase needed elsewhere)
@@ -100,7 +99,7 @@ def create_route_excel(settings, data, output_meta_data, gui=""):
 if __name__ == "__main__":
     import NV_parser
     from pathlib import Path
-    one_output_file = ['C:/Simulations/Demonstration/SI Samples/sinorm-detailed.out']
+    one_output_file = ['C:/Simulations/Demonstration/SI Samples/siinfern-detailed.out']
     settings = {
         'ses_output_str': one_output_file, 
         'visio_template': 'C:/Simulations/Demonstration/Next Vis Samples1p21.vsdx', 
