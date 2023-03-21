@@ -168,16 +168,17 @@ def run_SES(ses_exe_path, ses_input_file_path, gui =""):
 def output_from_input(ses_output_str, path_exe, gui=""):
     #TODO Select suffix based on SES type
     try:
-        if "SVSV6_32.exe".lower() in path_exe.lower():
-            extension = ".OUT"
-        else:
+        if "SES41.exe".lower() in path_exe.lower():
             extension = ".PRN"
+        else:
+            extension = ".OUT"
         last_period_location = ses_output_str.rfind(".")
         new_ses_output_str = ses_output_str[:last_period_location] + extension
         return new_ses_output_str
     except:
         msg = "Error in 'output_from_input' when converting file strings"
         run_msg(gui,msg)
+        return new_ses_output_str
 
 if __name__ == "__main__":
     directory_str = "C:\\simulations\\Next-Vis 1p21\\SI Samples\\"
