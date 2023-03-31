@@ -14,7 +14,6 @@ import NV_run as nvr
 from NV_CONSTANTS import VERSION_NUMBER
 from NV_icon5 import Icon
 
-
 # add requirement for program to be legit to run
 class start_screen:
     def __init__(self, root, license_info):
@@ -214,7 +213,7 @@ class start_screen:
         self.frm_ses_exe.grid(column=1,row=1, sticky=['NSEW'], pady=py, padx=px)
         self.frm_visio.grid(column=1, row=2, sticky=['WE'], pady=py, padx=px)
         frm_results_folder.grid(column=1, row=3, sticky=['WE'], pady=py, padx=px)
-        frm_run.grid(column=1, row=4, sticky=['WE'], pady=py, padx=px)
+        frm_run.grid(column=0, columnspan=2, row=4, sticky=['WE'], pady=py, padx=px)
         frm_status.grid(
             column=0, row=5, columnspan=2, sticky=['WESN'], pady=py, padx=px
         )
@@ -222,9 +221,6 @@ class start_screen:
         self.update_post_processing_options()
         self.display_validation_info()
         self.ss.update()
-        #TODO - Fix ses exe update? Giving Error
-        # self.update_ses_exe()
-        # root.maxsize(1080,385) worried about scaling on other monitors
 
     def load_settings(self, *args):
         # Define all variable and default vvalues for  GUI

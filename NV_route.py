@@ -82,20 +82,30 @@ def format_df(route_num, df,df_key):
     df.name = df_name
 
 def create_route_excel(settings, data, output_meta_data, gui=""):
-    route_data = create_route_data(settings, data, output_meta_data, gui)
-    #Create Excel Files
-    file_path = output_meta_data['file_path']
-    new_file_name = file_path.name[:-4] + "-Routes.out"
-    new_file_path = file_path.parent/new_file_name
-    output_meta_data['file_path'] = new_file_path
-    NV_excel.create_excel(settings, route_data, output_meta_data, gui)
-    #Revert back to original output_meta_data name (incase needed elsewhere)
-    output_meta_data['file_path'] = file_path
+    if not data['TRA'].empty: #Only perform analysis if train data is present.
+        route_data = create_route_data(settings, data, output_meta_data, gui)
+        #Create Excel Files
+        file_path = output_meta_data['file_path']
+        new_file_name = file_path.name[:-4] + "-Routes.out"
+        new_file_path = file_path.parent/new_file_name
+        output_meta_data['file_path'] = new_file_path
+        NV_excel.create_excel(settings, route_data, output_meta_data, gui)
+        #Revert back to original output_meta_data name (incase needed elsewhere)
+        output_meta_data['file_path'] = file_path
+    else: #Create an info message if trains are not simulated.
+        msg = "INFO: Route Data is skipped because trains are not operating in the output file."
+        run_msg(gui, msg)
+
+def run_msg(gui, text):
+    if gui != "":
+        gui.gui_text(text)
+    else:
+        print("Run msg: " + text)
 
 if __name__ == "__main__":
     import NV_parser
-    directory_str = "C:\\simulations\\route\\"
-    file_name = "EBE01C__2_.PRN"
+    directory_str = "C:\\Simulations\\2023-03-21\\SI Samples\\" #Include \\ at end of directory
+    file_name = "coolpipe.out"
     ses_output_list = [directory_str + file_name]
     file_path = Path(directory_str)/ses_output_list[0]
     settings = {
