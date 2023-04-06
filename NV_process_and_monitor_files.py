@@ -20,8 +20,15 @@ logging.basicConfig(level=logging.DEBUG, format=' %(asctime)s -  %(levelname)s -
 
 VERSION_NUMBER = "1"
 UPDATE_FREQUENCY = 1000 #vALUE IN MILLISECONDS
-DELAY = 2 #Seconds for delay
 COLUMN_HEADERS = ("PID", "File", "Simulation", "Read Output", "Visio", "Excel", "Route")
+STATUS_FONT_COLOR = {
+    '-': 'black',
+    'Queued': 'blue',
+    'Processing':'orange',
+    'Done':'green',
+    'Failed':'red'
+}
+
 
 def single_process(file_path, process_settings, settings, queued_list, processing_dictionary, done_list, pause_value,):
     pause_check(pause_value)
@@ -33,7 +40,7 @@ def single_process(file_path, process_settings, settings, queued_list, processin
     process_status = process_settings['process_status_start_values']
     process_status[value_index['name']] = name
     processing_dictionary[pid] = process_status
-    
+
     # Start processing files
     # Perform simulation if necessary
     if process_settings['Simulation']:
@@ -215,7 +222,7 @@ class Monitor_GUI(tk.Toplevel):
         button_frame.grid(column=10, row=100)
         self.after(UPDATE_FREQUENCY, self.update_monitor_window)
 
-    def update_processing(self):
+    def update_monitor_table(self):
         row_number = 20
         for key, values in self.manager.processing_dictionary.items():
             column_number = 10
@@ -223,12 +230,14 @@ class Monitor_GUI(tk.Toplevel):
                 self.processing_frame, width=self.c_width, fg="blue", font=("Arial", self.font_size, "")
             )
             self.entry.grid(row=row_number, column=column_number)
+            #First entry is the PID for the process
             self.entry.insert(tk.END, key)
             column_number += 10
-            #TODO Update color and fonts based on status
+            #Update the status of the process for the PID
             for value in values:
+                font_color_text = STATUS_FONT_COLOR.get(value, "black")
                 self.entry = tk.Entry(
-                    self.processing_frame, width=self.c_width, fg="blue", font=("Arial", self.font_size, "")
+                    self.processing_frame, width=self.c_width, fg=font_color_text, font=("Arial", self.font_size, "")
                 )
                 self.entry.grid(row=row_number, column=column_number)
                 self.entry.insert(tk.END, value)
@@ -240,7 +249,7 @@ class Monitor_GUI(tk.Toplevel):
         self.queued_list_var.set(list(self.manager.queued_files))
         self.done_list_var.set(list(self.manager.done_files))
         #Update the processing dictionary
-        self.update_processing()
+        self.update_monitor_table()
         #app.update()
         self.update()
         self.after(UPDATE_FREQUENCY, self.update_monitor_window)
