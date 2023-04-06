@@ -427,12 +427,11 @@ class Start_Screen(tk.Tk):
                     else:
                         # Launch process and monitor files when using multiple files
                         # nvr.multiple_sim(self.settings, gui=self)
-                        self.gui_text("Processing multiple files, opening monitor window.")
+                        self.gui_text("Processing multiple files, openning monitor window.")
                         # Turn off opening visio for multiple files
                         if 'visio_open' in self.settings['output']:
                             self.settings['output'].remove('visio_open')
                             self.cbo_visio_open_option.set("")
-                        print('opening monitor')
                         self.open_monitor_gui()
                     self.gui_text("Post processing completed.")
                 except:
@@ -601,7 +600,7 @@ class Start_Screen(tk.Tk):
 
     def open_monitor_gui(self):
         manager = nvpm.Manager_Class()
-        window = nvpm.Monitor_GUI(self, manager,self.settings)
+        window = nvpm.Monitor_GUI(self, manager, self.settings)
         window.focus_force()
         window.grab_set()
 

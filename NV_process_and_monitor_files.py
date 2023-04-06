@@ -115,7 +115,9 @@ def run_SES(ses_exe_path, ses_input_file_path, gui =""):
                     f"Returned {exc.returncode}\n{exc}" 
                 )
             logging.info(msg)
-            return False 
+            return False
+    except:
+        return False
 
 def output_from_input(file_path, path_exe):
     #TODO Select suffix based on SES type
@@ -152,6 +154,8 @@ class Monitor_GUI(tk.Toplevel):
         super().__init__(parent)
         self.manager = manager
         self.settings = start_screen_settings
+        self.create_process_settings() #Create settings for processing
+        self.in_progress = True
         p = "5"  # padding
         self.title("Next-Vis " + VERSION_NUMBER + " Monitor")
         self.c_width = 15
@@ -166,6 +170,9 @@ class Monitor_GUI(tk.Toplevel):
         self.queued_scrollbar = ttk.Scrollbar(self.queue_frame)
         self.queued_scrollbar.pack(side='right', fill='y')
         self.queued_list_var = tk.Variable(value=[]) #Start with blank value
+        #Trying to start queue with a list of files. 
+        #self.queued_list_var.set(['hello world'])
+        self.queued_list_var.set(list(self.manager.queued_files))
         self.queued_list = tk.Listbox(self.queue_frame, yscrollcommand=self.queued_scrollbar.set, listvariable=self.queued_list_var)
         self.queued_scrollbar.config(command = self.queued_list.yview)
         self.queued_list.pack(side='left', fill='both')
@@ -206,20 +213,22 @@ class Monitor_GUI(tk.Toplevel):
         self.btn_pause = ttk.Button(
             button_frame, textvariable=self.pause_text, command=self.pause_press, width=20
         )
+        ''' Previous code for a start button
         self.start_text = tk.StringVar()
         self.start_text.set("Start")
         self.btn_start = ttk.Button(
             button_frame, textvariable=self.start_text, command=self.seperate_thread, width=20
         )
+        self.btn_start.grid(column=3, row=1)'''
         #Draw Item
         self.btn_pause.grid(column=2, row=1)
-        self.btn_start.grid(column=3, row=1)
         # Draw grid
         self.monitor_window.grid(column=1, row=1, sticky="EWNS")
         self.queue_frame.grid(column=5,row=10, sticky='NS')
         self.processing_frame.grid(column=10, row=10, sticky='N')
         self.done_frame.grid(column=15,row=10, sticky='NS')
         button_frame.grid(column=10, row=100)
+        self.seperate_thread()
         self.after(UPDATE_FREQUENCY, self.update_monitor_window)
 
     def update_monitor_table(self):
@@ -245,14 +254,16 @@ class Monitor_GUI(tk.Toplevel):
             row_number += 10
 
     def update_monitor_window(self):
-        #Update the queued and done list in the tkinter application
-        self.queued_list_var.set(list(self.manager.queued_files))
-        self.done_list_var.set(list(self.manager.done_files))
-        #Update the processing dictionary
-        self.update_monitor_table()
-        #app.update()
-        self.update()
-        self.after(UPDATE_FREQUENCY, self.update_monitor_window)
+        if self.in_progress:
+            #Update the queued and done list in the tkinter application, manager
+            self.queued_list_var.set(list(self.manager.queued_files))
+            self.done_list_var.set(list(self.manager.done_files))
+            #Update the processing dictionary
+            self.update_monitor_table()
+            self.update()
+            self.after(UPDATE_FREQUENCY, self.update_monitor_window)
+        else:
+            return
 
     def pause_press(self):
         print('Clicked Pause')
@@ -270,7 +281,6 @@ class Monitor_GUI(tk.Toplevel):
 
     def processing_pool(self):
         logging.info('Getting ready to start the pool')
-        self.create_process_settings()
         num_files = len(self.settings["ses_output_str"])
         # Use all processors except 1
         num_of_processes = max(multiprocessing.cpu_count() - 1, 1)  
@@ -284,6 +294,13 @@ class Monitor_GUI(tk.Toplevel):
             self.pool.close()
             self.pool.join()
         logging.info('Processing Pool finished')
+        self.in_progress = False
+        #TODO Add message that this finished.
+        title_msg = "Post-processing complete."
+        msg_1 = "Click 'Okay' to return to main screen."
+        msg_all = msg_1
+        messagebox.showinfo(title=title_msg, message = msg_all)
+        self.destroy()
 
     def create_process_settings(self):
         settings = self.settings
@@ -297,7 +314,7 @@ class Monitor_GUI(tk.Toplevel):
         for process_name in post_read_processes:
             setting_selected = process_name in settings['output']
             self.process_settings[process_name] = setting_selected
-        #Determine staring values for process_dictionary
+        #Determine staring values for process_dictionary. A list and index is used because this assumed to be faster than a dictionary
         process_status_start_values = []
         process_status_value_index = {}
         process_status_start_values.append('name') #holding spot for name
@@ -331,15 +348,17 @@ class Monitor_GUI(tk.Toplevel):
         msg_2 = "Click 'No' to continue.\n"
         #msg_3 = "Click 'Cancel' to continue processing.\n"
         msg_all = msg_1 + msg_2 #+ msg_3
-        #answer = messagebox.askokcancel("Quit", "Do you want to quit Next-Vis?")
         answer = messagebox.askyesno(title=title_on_closing, message = msg_all)
         #TODO Exit if pool is already.
         if answer: #Yes
             #Check if any results are still pending
-            if any(not result.ready() for result in self.results):
-                self.pool.terminate()
-                self.pool.join()
-            self.destroy()
+            try:
+                if any(not result.ready() for result in self.results):
+                    self.pool.terminate()
+                    self.pool.join()
+                self.destroy()
+            except:
+                self.destroy()
         else:
             self.manager.pause_value.value = 0
             self.pause_text.set("Pause")
@@ -373,7 +392,7 @@ if __name__ == "__main__":
     many_input_files = ['C:/Simulations/Demonstration/SI Samples\\coolpipe.inp', 'C:/Simulations/Demonstration/SI Samples\\siinfern-detailed.inp', 'C:/Simulations/Demonstration/SI Samples\\siinfern.inp', 'C:/Simulations/Demonstration/SI Samples\\sinorm-detailed.inp', 'C:/Simulations/Demonstration/SI Samples\\sinorm.inp', 'C:/Simulations/Demonstration/SI Samples\\Test02R01.inp', 'C:/Simulations/Demonstration/SI Samples\\Test06.inp']
     many_input_files.remove('C:/Simulations/Demonstration/SI Samples\\Test02R01.inp') #Takes too long to compute
     settings = {
-        'ses_output_str': many_input_files, 
+        'ses_output_str': one_input_file, 
         'visio_template': 'C:/Simulations/Demonstration/Next Vis Samples1p21.vsdx', 
         'results_folder_str': 'C:/Simulations/1p30 Testing', 
         'simtime': -1, 

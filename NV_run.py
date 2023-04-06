@@ -89,6 +89,9 @@ def single_sim(settings, gui=""):
                 + ". Try closing the and process again",
             )
 
+#Multiple_Sim is an older code for concurrent processing before the process monitor was added in 2023-04, 1.30
+#Function is kept for reference if errors occur with newer concurrent process
+
 def multiple_sim(settings, gui=""):
     num_files = len(settings["ses_output_str"])
     if num_files == 0:
