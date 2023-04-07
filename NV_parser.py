@@ -860,16 +860,18 @@ def create_ss_dfs(
         [df_pit, df_train] = delete_duplicate_pit(df_pit, df_train)
     # Add title to segments in df_pit
     # TODO Add title name to PIT from segment_data to Segment number
-    # Create df_ssa
-    df_ssa = df_pit.query("Sub == 1")
-    df_ssa = df_ssa.loc[:, {"Airflow", "Air_Velocity"}]
-    df_ssa.reset_index(level=2, inplace=True)
+    # Create df_ssa from a sub-set of the df_pit, which includes all sub-segments
+    df_ssa = df_pit.query("Sub == 1") #Take data first sub-segment from df_pit
+    df_ssa = df_ssa[['Airflow','Air_Velocity']] #Eliminate all columns except Airflow and Air_Velocity
     # Create Unique ID with code from https://stackoverflow.com/questions/19377969/combine-two-columns-of-text-in-pandas-dataframe
+    df_ssa.reset_index(level=2, inplace=True) #Reset the index
+    # Create unique ID for each segment
     df_ssa["ID"] = (
         df_ssa.index.get_level_values(0).astype(str)
         + "_"
         + df_ssa.index.get_level_values(1).astype(str)
     )
+    # Get the titles parsed from Form 3 and 5
     df_segment_titles = pd.DataFrame.from_dict(
         segment_titles, orient="index", columns=["Title"]
     )
@@ -878,7 +880,7 @@ def create_ss_dfs(
     df_ssa = df_ssa.join(df_segment_titles, on="Segment")
     df_ssa = df_ssa[
         ["ID", "Title", "Airflow", "Air_Velocity"]
-    ]  # Reorders and Drops Sub column
+    ]  # Reorders and eliminates Sub column
     df_ssa.name = "SSA"
     # Create df_sst
     df_sst = df_pit.drop(["Airflow", "Air_Velocity"], axis=1)
@@ -948,7 +950,7 @@ def to_dataframe2(
         df.set_index(to_index, inplace=True)
         if len(groupby) > 0:
             df = df.groupby(groupby).sum()
-        if not df.index.is_lexsorted():
+        if not df.index.is_monotonic_increasing:
             df = (
                 df.sort_index()
             )  # Speeds up future referencing and prevents errors with finding data
@@ -1180,8 +1182,8 @@ def calculate_actual_airflow(SST, SSA, ambient_temperature, version):
 
     
 if __name__ == "__main__":
-    directory_string = "C:\\simulations\\Next-Vis 1p21\\IP Samples\\"
-    file_name = "TestIP02.prn"
+    directory_string = "C:\\simulations\\demonstration\\SI Samples\\"
+    file_name = "sinorm-detailed.out"
     path_string = directory_string + file_name
     file_path = Path(path_string)
     d, output_meta_data = parse_file(file_path, convert_df="IP_TO_SI")

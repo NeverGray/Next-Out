@@ -428,10 +428,10 @@ class Start_Screen(tk.Tk):
                             self.settings['output'].remove('visio_open')
                             self.cbo_visio_open_option.set("")
                         self.open_monitor_gui()
-                    self.gui_text("Post processing completed.")
+                    self.gui_text("Post processing completed.\n")
                 except:
                     self.gui_text(
-                        "Error after validation, before single_sim or multiple_sim"
+                        "Error after validation, before single_sim or multiple_sim. \n"
                     )
             else:
                 self.gui_text("Error Checking validity of license.")
@@ -456,8 +456,8 @@ class Start_Screen(tk.Tk):
                 else:
                     msg = msg + "Specify a number for Visio's Simulation Time\n"
                     valid = False
-        if settings["ses_output_str"] == "":
-            msg = msg + "No SES output file or folders are specified.\n"
+        if len(settings["ses_output_str"]) == 0:
+            msg = msg + "Files to process. Check if input or output files are present.\n"
             valid = False
         if not self.settings["results_folder_str"] is None:
             results_folder_path = Path(self.settings["results_folder_str"])

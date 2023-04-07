@@ -39,17 +39,19 @@ def create_train_truths(output_meta_data, data, simtime):
             length = output_meta_data['form9_df'].loc[train_type_number,'train_length']
             train_back = train_front - length
             df = output_meta_data['form_8f'].loc[route]
-            #Logit for presence of train is explained in "Logic for selection Rev1.pdf"
+            #Logic for presence of train is explained in "Logic for selection Rev1.pdf"
             criteria_train_front = (df['Forward'] >= train_front) & (train_front >= df['Backward'])
             criteria_train_middle = (train_front >= df['Forward']) & (train_back <= df['Backward'])
             criteria_train_back = (df['Forward'] >= train_back) & (train_back >= df['Backward'])
             new_segments_series = df[criteria_train_front | criteria_train_middle | criteria_train_back].index.to_series().abs()
             if new_segments_series is not None:
-                segments_with_trains_series= segments_with_trains_series.append(new_segments_series,ignore_index=True)
+                # segments_with_trains_series= segments_with_trains_series.append(new_segments_series,ignore_index=True)
+                segments_with_trains_series = pd.concat([segments_with_trains_series,new_segments_series])
         segments_with_trains = segments_with_trains_series.unique().tolist()
         if len(segments_with_trains) > 0:
-            train_false_table_segment = pd.Series(index = segments_with_trains, dtype = bool, name="train_present").fillna(value=True)
-            train_truth_table_segment = ~train_false_table_segment
+            #train_false_table_segment = pd.Series(index = segments_with_trains, dtype = bool, name="train_present").fillna(value=True)
+            #train_truth_table_segment = ~train_false_table_segment
+            train_truth_table_segment = pd.Series(index = segments_with_trains, dtype = bool, name="train_present").fillna(value=True)
         else:
             train_truth_table_segment = None
     else:
@@ -77,21 +79,21 @@ if __name__ == "__main__":
 
     import NV_parser
     import NV_visio     
-    visio_template = "Next Vis Samples1p11.vsdx"
-    file_path_string = "C:/simulations/Next-Vis Debug IP_TO_SI/inferno.PRN"
-    visio_template_folder = "C:/simulations/Next-Vis Debug IP_TO_SI"
+    visio_template = "Next Vis Samples1p21.vsdx"
+    file_path_string = "C:/simulations/NV_Tunnel_Fix/siinfern-detailed.out"
+    visio_template_folder = "C:/simulations/NV_Tunnel_Fix"
     results_folder_str = visio_template_folder
     settings = {
         "ses_output_str": [file_path_string],
         "visio_template": "/".join([visio_template_folder, visio_template]),
         "results_folder_str": results_folder_str,
         "simtime": 500.0,
-        "version": "IP_TO_SI",
+        "version": "",
         "control": "First",
         "output": ["Visio"],
     }
     file_path = Path(settings['ses_output_str'][0])
-    data, output_meta_data = NV_parser.parse_file(file_path, gui="",convert_df="IP_TO_SI")
+    data, output_meta_data = NV_parser.parse_file(file_path, gui="",convert_df=settings["version"])
     simtime = NV_visio.valid_simtime(settings["simtime"], data["SSA"], gui="")
     segment_time_df = create_segment_info(data, output_meta_data, simtime)
     print('Finished')

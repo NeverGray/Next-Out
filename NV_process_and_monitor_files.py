@@ -357,6 +357,7 @@ class Monitor_GUI(tk.Toplevel):
         answer = messagebox.askyesno(title=title_on_closing, message = msg_all)
         #TODO Exit if pool is already.
         if answer: #Yes
+            self.in_progress = False
             #Check if any results are still pending
             try:
                 if any(not result.ready() for result in self.results):
