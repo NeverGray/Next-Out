@@ -89,6 +89,9 @@ def single_sim(settings, gui=""):
                 + ". Try closing the and process again",
             )
 
+#Multiple_Sim is an older code for concurrent processing before the process monitor was added in 2023-04, 1.30
+#Function is kept for reference if errors occur with newer concurrent process
+
 def multiple_sim(settings, gui=""):
     num_files = len(settings["ses_output_str"])
     if num_files == 0:
@@ -118,7 +121,7 @@ def multiple_sim(settings, gui=""):
         for name in settings["ses_output_str"]:
             # Reference2 code for multiprocess https://pymotw.com/2/multiprocessing/basics.html
             # Another code for multiprocessing https://stackoverflow.com/questions/20886565/using-multiprocessing-process-with-a-maximum-number-of-simultaneous-processes
-            single_settings = copy.copy(settings)
+            single_settings = copy.copy(settings) #May not be needed after updates to NV_Visio uses file.stem instead of ses_output_str
             single_settings["ses_output_str"] = [name]
             pool.apply_async(single_sim, args=(single_settings,))
         pool.close()

@@ -47,7 +47,7 @@ def get_visXML(visio_template):
 
 
 # code to modify XML file for emergency (or PIT) simualtions
-def emod_visXML(vxml, data, ses_output_str="Not Available", simtime=0.00, output_meta_data={},gui=""):
+def emod_visXML(vxml, data, file_stem, simtime=0.00, output_meta_data={},gui=""):
     P1root = ET.fromstring(vxml)  # create XML element from the string
     ET.register_namespace(
         "", "http://schemas.microsoft.com/office/visio/2012/main"
@@ -58,8 +58,7 @@ def emod_visXML(vxml, data, ses_output_str="Not Available", simtime=0.00, output
     #TODO Move simtime outside of page file to speed up processing
     simtime_df = data["SSA"].loc[simtime]
     # SimInfo-NV01 text fields
-    file_path = Path(ses_output_str)
-    sim_base_name = file_path.name
+    sim_base_name = file_stem
     try:
         if output_meta_data['ses_version'] == 'SI from IP':
             sim_base_name = sim_base_name + '_SI'
@@ -495,9 +494,10 @@ def create_visio(settings, data, output_meta_data, gui=""):
     NV_run.run_msg(gui, msg)
     # Read in VISIO Template and update with SES OUtput
     vxmls = get_visXML(settings["visio_template"])  # gets the pages in the VISIO XML.
+    file_stem = output_meta_data['file_path'].stem
     for name, vxml in vxmls.items():
         vxmls[name] = emod_visXML(
-            vxmls[name], data, settings["ses_output_str"][0][:-4], settings["simtime"], output_meta_data, gui
+            vxmls[name], data, file_stem, settings["simtime"], output_meta_data, gui
         )
     write_visio(vxmls, settings["visio_template"], settings["new_visio"],gui)
     for setting in settings["output"]:
@@ -517,20 +517,21 @@ def create_visio(settings, data, output_meta_data, gui=""):
             NV_run.run_msg(gui, msg)
 
 if __name__ == "__main__":
-    visio_template = "sample.vsdx"
-    file_path_string = "C:/Simulations/Next-Vis 1p21/SI Samples/siinfern.out"
-    visio_template_folder = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/_Tasks/2023-01-04 Updates/Stencile - Actual Airflow"
-    results_folder_str = visio_template_folder
+    one_output_file = ['C:/Simulations/Demonstration/SI Samples/siinfern-detailed.out']
+    two_output_files = ['C:/Simulations/Demonstration/SI Samples/siinfern-detailed.out', 'C:/Simulations/Demonstration/SI Samples/sinorm-detailed.out']
+    many_output_files = ['C:/Simulations/Demonstration/SI Samples\\coolpipe.out', 'C:/Simulations/Demonstration/SI Samples\\siinfern-detailed.out', 'C:/Simulations/Demonstration/SI Samples\\siinfern.out', 'C:/Simulations/Demonstration/SI Samples\\sinorm-detailed.out', 'C:/Simulations/Demonstration/SI Samples\\sinorm.out', 'C:/Simulations/Demonstration/SI Samples\\Test02R01.out', 'C:/Simulations/Demonstration/SI Samples\\Test06.out']
+    #If using input file, change 'file_type' value to 'input_file
+    two_input_files = ['C:/Simulations/Demonstration/SI Samples/siinfern-detailed.inp', 'C:/Simulations/Demonstration/SI Samples/sinorm-detailed.inp']
+    many_input_files = ['C:/Simulations/Demonstration/SI Samples\\coolpipe.inp', 'C:/Simulations/Demonstration/SI Samples\\siinfern-detailed.inp', 'C:/Simulations/Demonstration/SI Samples\\siinfern.inp', 'C:/Simulations/Demonstration/SI Samples\\sinorm-detailed.inp', 'C:/Simulations/Demonstration/SI Samples\\sinorm.inp', 'C:/Simulations/Demonstration/SI Samples\\Test02R01.inp', 'C:/Simulations/Demonstration/SI Samples\\Test06.inp']
     settings = {
-        "ses_output_str": [file_path_string],
-        "visio_template": "/".join([visio_template_folder, visio_template]),
-        "results_folder_str": results_folder_str,
-        "simtime": 500,
-        "version": "",
-        "control": "First",
-        "output": ["Visio"],
-        "file_type": "output_file",
-    }
-    simtime = settings['simtime']
+        'ses_output_str': one_output_file, 
+        'visio_template': 'C:/Simulations/Demonstration/Next Vis Samples1p21.vsdx', 
+        'results_folder_str': 'C:/Simulations/1p30 Testing', 
+        'simtime': -1, 
+        'version': '', 
+        'control': 'First', 
+        'output': ['Excel', 'Visio', '', '', 'Route', '', '', '', ''], 
+        'file_type':'', #'input_file', 
+        'path_exe': 'C:/Simulations/_Exe/SVSV6_32.exe'}
     NV_run.single_sim(settings)
     print('Finished')

@@ -5,7 +5,7 @@ import pandas as pd
 import NV_CONSTANTS
 import NV_excel_R01 as NV_excel
 
-def create_route_data(settings, data, output_meta_data, gui=""):
+def create_route_data(data, output_meta_data):
     # Get number of sub-segments per segement, from SST last timestep
     form8f_df = output_meta_data['form_8f']
     time = data['SST'].index.get_level_values("Time").max()
@@ -109,14 +109,16 @@ if __name__ == "__main__":
     ses_output_list = [directory_str + file_name]
     file_path = Path(directory_str)/ses_output_list[0]
     settings = {
-        "ses_output_str": ses_output_list,
-        "results_folder_str": None,
-        "visio_template": None,
-        "simtime": 990.0,
-        "version": "IP_TO_SI",
-        "control": "First",
-        "output": ["Excel","Route"],
-    }
-    data, output_meta_data = NV_parser.parse_file(file_path)
+        'ses_output_str': one_output_file, 
+        'visio_template': 'C:/Simulations/Demonstration/Next Vis Samples1p21.vsdx', 
+        'results_folder_str': 'C:/Simulations/1p30 Testing', 
+        'simtime': -1, 
+        'version': '', 
+        'control': 'First', 
+        'output': ['Excel', 'Visio', '', '', 'Route', '', '', '', ''], 
+        'file_type':'', #'input_file', 
+        'path_exe': 'C:/Simulations/_Exe/SVSV6_32.exe'}
+    file_path = Path(settings['ses_output_str'][0])
+    data, output_meta_data = NV_parser.parse_file(file_path, gui="", convert_df=settings['version'])
     create_route_excel(settings, data, output_meta_data)
     print('Finished')
