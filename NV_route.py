@@ -82,16 +82,20 @@ def format_df(route_num, df,df_key):
     df.name = df_name
 
 def create_route_excel(settings, data, output_meta_data, gui=""):
-    if not data['TRA'].empty: #Only perform analysis if train data is present.
-        route_data = create_route_data(data, output_meta_data)
-        #Create Excel Files
-        file_path = output_meta_data['file_path']
-        new_file_name = file_path.name[:-4] + "-Routes.out"
-        new_file_path = file_path.parent/new_file_name
-        output_meta_data['file_path'] = new_file_path
-        NV_excel.create_excel(settings, route_data, output_meta_data, gui)
-        #Revert back to original output_meta_data name (incase needed elsewhere)
-        output_meta_data['file_path'] = file_path
+    if 'TRA' in data:
+        if not data['TRA'].empty: #Only perform analysis if train data is present.
+            route_data = create_route_data(data, output_meta_data)
+            #Create Excel Files
+            file_path = output_meta_data['file_path']
+            new_file_name = file_path.name[:-4] + "-Routes.out"
+            new_file_path = file_path.parent/new_file_name
+            output_meta_data['file_path'] = new_file_path
+            NV_excel.create_excel(settings, route_data, output_meta_data, gui)
+            #Revert back to original output_meta_data name (incase needed elsewhere)
+            output_meta_data['file_path'] = file_path
+        else:
+            msg = "INFO: Route Data is skipped because trains are not operating in the output file."
+            run_msg(gui, msg)
     else: #Create an info message if trains are not simulated.
         msg = "INFO: Route Data is skipped because trains are not operating in the output file."
         run_msg(gui, msg)
@@ -104,7 +108,7 @@ def run_msg(gui, text):
 
 if __name__ == "__main__":
     import NV_parser
-    one_output_file = ['C:/Simulations/Demonstration/SI Samples/siinfern-detailed.out']
+    one_output_file = ['C:/Simulations/ng01/NG01-X001.out']
     settings = {
         'ses_output_str': one_output_file, 
         'visio_template': 'C:/Simulations/Demonstration/Next Vis Samples1p21.vsdx', 

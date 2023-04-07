@@ -61,40 +61,57 @@ def single_process(file_path, process_settings, settings, queued_list, processin
         process_status[value_index['Simulation']] = "Done"
         processing_dictionary[pid] = process_status
     # Parse output file
-    logging.info(f"Parsing {name}")
-    process_status[value_index['Read Output']] = "Processing"
-    processing_dictionary[pid] = process_status
-    data, output_meta_data = NV_parser.parse_file(file_path, gui="",convert_df=settings['version'])
-    process_status[value_index['Read Output']] = "Done"
-    processing_dictionary[pid] = process_status
-    logging.info(f"Finished Parsing {name}")
+    try:
+        logging.info(f"Parsing {name}")
+        process_status[value_index['Read Output']] = "Processing"
+        processing_dictionary[pid] = process_status
+        data, output_meta_data = NV_parser.parse_file(file_path, gui="",convert_df=settings['version'])
+        process_status[value_index['Read Output']] = "Done"
+        processing_dictionary[pid] = process_status
+        logging.info(f"Finished Parsing {name}")
+    except:
+        process_status[value_index['Read Output']] = "Failed"
+        logging.info(f"Error Parsing {name}")
+        return
     if process_settings['Visio']:
         pause_check(pause_value)
-        process_status[value_index['Visio']] = "Processing"
-        processing_dictionary[pid] = process_status
-        logging.info(f"Staring to create Visio file for {name}")
-        NV_visio.create_visio(settings, data, output_meta_data, gui="")
-        logging.info(f"Finished writing Visio file for {name}")
-        process_status[value_index['Visio']] = "Done"
-        processing_dictionary[pid] = process_status
+        try:
+            process_status[value_index['Visio']] = "Processing"
+            processing_dictionary[pid] = process_status
+            logging.info(f"Staring to create Visio file for {name}")
+            NV_visio.create_visio(settings, data, output_meta_data, gui="")
+            logging.info(f"Finished writing Visio file for {name}")
+            process_status[value_index['Visio']] = "Done"
+            processing_dictionary[pid] = process_status
+        except:
+            process_status[value_index['Visio']] = "Failed"
+            logging.info(f"Error writing Visio file for {name}")
     if process_settings['Excel']:
         pause_check(pause_value)
-        process_status[value_index['Excel']] = "Processing"
-        processing_dictionary[pid] = process_status
-        logging.info(f"Staring to create Excel file for {name}")
-        nve.create_excel(settings, data, output_meta_data, gui="")
-        logging.info(f"Finished writing Excel file for {name}")
-        process_status[value_index['Excel']] = "Done"
-        processing_dictionary[pid] = process_status
+        try:
+            process_status[value_index['Excel']] = "Processing"
+            processing_dictionary[pid] = process_status
+            logging.info(f"Staring to create Excel file for {name}")
+            nve.create_excel(settings, data, output_meta_data, gui="")
+            logging.info(f"Finished writing Excel file for {name}")
+            process_status[value_index['Excel']] = "Done"
+            processing_dictionary[pid] = process_status
+        except:
+            process_status[value_index['Excel']] = "Failed"
+            logging.info(f"Error writing Excel file for {name}")
     if process_settings['Route']:
         pause_check(pause_value)
-        process_status[value_index['Route']] = "Processing"
-        processing_dictionary[pid] = process_status
-        logging.info(f"Staring to create Route file for {name}")
-        NV_route.create_route_excel(settings, data, output_meta_data, gui="")
-        logging.info(f"Finished writing Excel file for {name}")
-        process_status[value_index['Route']] = "Done"
-        processing_dictionary[pid] = process_status
+        try:
+            process_status[value_index['Route']] = "Processing"
+            processing_dictionary[pid] = process_status
+            logging.info(f"Staring to create Route file for {name}")
+            NV_route.create_route_excel(settings, data, output_meta_data, gui="")
+            logging.info(f"Finished writing Route file for {name}")
+            process_status[value_index['Route']] = "Done"
+            processing_dictionary[pid] = process_status
+        except:
+            process_status[value_index['Route']] = "Failed"
+            logging.info(f"Error creating Route Excel file for {name}")
     done_list.append(name)
     logging.info(f"Finished processing {name}")
 
@@ -159,7 +176,7 @@ class Monitor_GUI(tk.Toplevel):
         p = "5"  # padding
         self.title("Next-Vis " + VERSION_NUMBER + " Monitor")
         self.c_width = 15
-        self.font_size = 14
+        self.font_size = 12
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         # Establish base frame to draw monitor
         self.monitor_window = ttk.Frame(self, padding=p, borderwidth=5)
@@ -170,8 +187,6 @@ class Monitor_GUI(tk.Toplevel):
         self.queued_scrollbar = ttk.Scrollbar(self.queue_frame)
         self.queued_scrollbar.pack(side='right', fill='y')
         self.queued_list_var = tk.Variable(value=[]) #Start with blank value
-        #Trying to start queue with a list of files. 
-        #self.queued_list_var.set(['hello world'])
         self.queued_list_var.set(list(self.manager.queued_files))
         self.queued_list = tk.Listbox(self.queue_frame, yscrollcommand=self.queued_scrollbar.set, listvariable=self.queued_list_var)
         self.queued_scrollbar.config(command = self.queued_list.yview)
@@ -188,7 +203,7 @@ class Monitor_GUI(tk.Toplevel):
                 width=self.c_width,
                 bg="DarkOrange1",
                 fg="Black",
-                font=("Arial", self.font_size, "bold"),
+                font=("Arial", self.font_size),
             )
             self.entry.grid(row=10, column=column_number)
             self.entry.insert(tk.END, header)
@@ -285,7 +300,7 @@ class Monitor_GUI(tk.Toplevel):
         # Use all processors except 1
         num_of_processes = max(multiprocessing.cpu_count() - 1, 1)  
         num_of_processes = min(num_of_processes, num_files)
-        logging.info('Stating loop for multiprocesing')
+        logging.info('Starting loop for multiprocesing')
         with multiprocessing.Pool(num_of_processes) as self.pool:
             self.results = []
             for file_path in self.file_paths:
@@ -294,8 +309,8 @@ class Monitor_GUI(tk.Toplevel):
             self.pool.close()
             self.pool.join()
         logging.info('Processing Pool finished')
-        self.in_progress = False #This stops the self-updating process.
         #Message that this finished.
+        self.in_progress = False #This stops the self-updating process.
         self.update_monitor_table()
         self.update()
         title_msg = "Post-processing complete."
@@ -332,7 +347,6 @@ class Monitor_GUI(tk.Toplevel):
                 status = "-"
             process_status_start_values.append(status)
             process_status_value_index[key] = i
-
         self.process_settings['process_status_start_values'] = process_status_start_values
         self.process_settings['process_status_value_index'] = process_status_value_index
         # Create list of file paths and start queue with names
@@ -379,7 +393,7 @@ class App(tk.Tk):
         self.title('Main Window')
         # place a button on the root window
         ttk.Button(self,
-                text='Open a window',
+                text='Start processes and monitor',
                 command=self.open_window).pack(expand=True)
 
     def open_window(self):
@@ -399,14 +413,14 @@ if __name__ == "__main__":
     many_input_files = ['C:/Simulations/Demonstration/SI Samples\\coolpipe.inp', 'C:/Simulations/Demonstration/SI Samples\\siinfern-detailed.inp', 'C:/Simulations/Demonstration/SI Samples\\siinfern.inp', 'C:/Simulations/Demonstration/SI Samples\\sinorm-detailed.inp', 'C:/Simulations/Demonstration/SI Samples\\sinorm.inp', 'C:/Simulations/Demonstration/SI Samples\\Test02R01.inp', 'C:/Simulations/Demonstration/SI Samples\\Test06.inp']
     many_input_files.remove('C:/Simulations/Demonstration/SI Samples\\Test02R01.inp') #Takes too long to compute
     settings = {
-        'ses_output_str': two_input_files, 
+        'ses_output_str': one_output_file, 
         'visio_template': 'C:/Simulations/Demonstration/Next Vis Samples1p21.vsdx', 
         'results_folder_str': 'C:/Simulations/1p30 Testing', 
         'simtime': -1, 
         'version': '', 
         'control': 'First', 
         'output': ['Excel', 'Visio', '', '', 'Route', '', '', '', ''], 
-        'file_type': 'input_file', 
+        'file_type': '', #If using input file, change 'file_type' value to 'input_file
         'path_exe': 'C:/Simulations/_Exe/SESV6_32.exe'}
 
     app = App(settings)
