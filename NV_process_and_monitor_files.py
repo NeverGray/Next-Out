@@ -101,7 +101,7 @@ def single_process(file_path, process_settings, settings, queued_list, processin
 def run_SES(ses_exe_path, ses_input_file_path, gui =""):
     try: 
         # Check the proces is successful, see https://realpython.com/python-subprocess/ 
-        subprocess.run([ses_exe_path, ses_input_file_path], check=True) 
+        subprocess.run([ses_exe_path, ses_input_file_path], check=True, creationflags=subprocess.CREATE_NO_WINDOW) 
         return True
     except FileNotFoundError as exc: 
         logging.info(f"Process failed because the executable could not be found.\n{exc}")
@@ -399,7 +399,7 @@ if __name__ == "__main__":
     many_input_files = ['C:/Simulations/Demonstration/SI Samples\\coolpipe.inp', 'C:/Simulations/Demonstration/SI Samples\\siinfern-detailed.inp', 'C:/Simulations/Demonstration/SI Samples\\siinfern.inp', 'C:/Simulations/Demonstration/SI Samples\\sinorm-detailed.inp', 'C:/Simulations/Demonstration/SI Samples\\sinorm.inp', 'C:/Simulations/Demonstration/SI Samples\\Test02R01.inp', 'C:/Simulations/Demonstration/SI Samples\\Test06.inp']
     many_input_files.remove('C:/Simulations/Demonstration/SI Samples\\Test02R01.inp') #Takes too long to compute
     settings = {
-        'ses_output_str': one_input_file, 
+        'ses_output_str': two_input_files, 
         'visio_template': 'C:/Simulations/Demonstration/Next Vis Samples1p21.vsdx', 
         'results_folder_str': 'C:/Simulations/1p30 Testing', 
         'simtime': -1, 
