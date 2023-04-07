@@ -122,11 +122,11 @@ def run_SES(ses_exe_path, ses_input_file_path, gui =""):
 def output_from_input(file_path, path_exe):
     #TODO Select suffix based on SES type
     try:
-        if "SVSV6_32.exe".lower() in path_exe.lower():
-            new_extension = ".OUT"
+        if "SES41.exe".lower() in path_exe.lower():
+            extension = ".PRN"
         else:
-            new_extension = ".PRN"
-        new_file_path = file_path.with_suffix(new_extension)
+            extension = ".OUT"
+        new_file_path = file_path.with_suffix(extension)
         return new_file_path
     except:
         logging.debug("Error in 'output_from_input' when converting file strings")
@@ -232,6 +232,9 @@ class Monitor_GUI(tk.Toplevel):
         self.after(UPDATE_FREQUENCY, self.update_monitor_window)
 
     def update_monitor_table(self):
+        #Update the queued and done list in the tkinter application, manager
+        self.queued_list_var.set(list(self.manager.queued_files))
+        self.done_list_var.set(list(self.manager.done_files))
         row_number = 20
         for key, values in self.manager.processing_dictionary.items():
             column_number = 10
@@ -255,9 +258,6 @@ class Monitor_GUI(tk.Toplevel):
 
     def update_monitor_window(self):
         if self.in_progress:
-            #Update the queued and done list in the tkinter application, manager
-            self.queued_list_var.set(list(self.manager.queued_files))
-            self.done_list_var.set(list(self.manager.done_files))
             #Update the processing dictionary
             self.update_monitor_table()
             self.update()
@@ -294,12 +294,16 @@ class Monitor_GUI(tk.Toplevel):
             self.pool.close()
             self.pool.join()
         logging.info('Processing Pool finished')
-        self.in_progress = False
-        #TODO Add message that this finished.
+        self.in_progress = False #This stops the self-updating process.
+        #Message that this finished.
+        self.update_monitor_table()
+        self.update()
         title_msg = "Post-processing complete."
         msg_1 = "Click 'Okay' to return to main screen."
         msg_all = msg_1
-        messagebox.showinfo(title=title_msg, message = msg_all)
+        #Make message box appear above the status window using code from https://stackoverflow.com/questions/52345195/getting-tkinter-messagebox-at-top-of-the-screen-in-python
+        self.wm_attributes("-topmost",-1)
+        messagebox.showinfo(title=title_msg, message = msg_all, parent=self)
         self.destroy()
 
     def create_process_settings(self):
@@ -340,6 +344,8 @@ class Monitor_GUI(tk.Toplevel):
 
     def on_closing(self):
         # Try to pause ongoing processes
+        self.update_monitor_table()
+        self.update()
         self.manager.pause_value.value = 1
         self.pause_text.set("Continue")
         # Create window
@@ -400,7 +406,7 @@ if __name__ == "__main__":
         'control': 'First', 
         'output': ['Excel', 'Visio', '', '', 'Route', '', '', '', ''], 
         'file_type': 'input_file', 
-        'path_exe': 'C:/Simulations/_Exe/SVSV6_32.exe'}
+        'path_exe': 'C:/Simulations/_Exe/SESV6_32.exe'}
 
     app = App(settings)
     app.mainloop()

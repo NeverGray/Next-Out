@@ -169,7 +169,7 @@ def run_SES(ses_exe_path, ses_input_file_path, gui =""):
             return False 
 
 def output_from_input(ses_output_str, path_exe, gui=""):
-    #TODO Select suffix based on SES type
+    #TODO Update to use file_path instead of strings, see NV_process_and_monitor_files's output_from_input
     try:
         if "SES41.exe".lower() in path_exe.lower():
             extension = ".PRN"

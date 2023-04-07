@@ -83,7 +83,7 @@ def format_df(route_num, df,df_key):
 
 def create_route_excel(settings, data, output_meta_data, gui=""):
     if not data['TRA'].empty: #Only perform analysis if train data is present.
-        route_data = create_route_data(settings, data, output_meta_data, gui)
+        route_data = create_route_data(data, output_meta_data)
         #Create Excel Files
         file_path = output_meta_data['file_path']
         new_file_name = file_path.name[:-4] + "-Routes.out"
@@ -104,10 +104,7 @@ def run_msg(gui, text):
 
 if __name__ == "__main__":
     import NV_parser
-    directory_str = "C:\\Simulations\\2023-03-21\\SI Samples\\" #Include \\ at end of directory
-    file_name = "coolpipe.out"
-    ses_output_list = [directory_str + file_name]
-    file_path = Path(directory_str)/ses_output_list[0]
+    one_output_file = ['C:/Simulations/Demonstration/SI Samples/siinfern-detailed.out']
     settings = {
         'ses_output_str': one_output_file, 
         'visio_template': 'C:/Simulations/Demonstration/Next Vis Samples1p21.vsdx', 
