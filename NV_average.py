@@ -38,7 +38,7 @@ def average_outputs(settings, gui=""):
         msg = f'Parsed {ses_output_path.name}, {i} of {num} output files'
         NV_run.run_msg(gui, msg)
         i +=1
-    # For each data type, create a data frame with the average
+    # For each data type, create a data frame for mean, max, and minimum
     dfs_mean_dict = {}
     dfs_max_dict = {}
     dfs_min_dict = {}
@@ -47,9 +47,12 @@ def average_outputs(settings, gui=""):
         df_concat = None
         df_concat = pd.concat(value)
         by_row_index = df_concat.groupby(df_concat.index.names)
-        dfs_mean_dict[key] = by_row_index.mean()
-        dfs_max_dict[key] = by_row_index.max()
-        dfs_min_dict[key] = by_row_index.min()
+        #Select only columns that are numeric
+        numeric_cols = df_concat.select_dtypes(include='number').columns
+        #Calulate the mean, max, and minimum of columns with numbers
+        dfs_mean_dict[key] = by_row_index[numeric_cols].mean()
+        dfs_max_dict[key] = by_row_index[numeric_cols].max()
+        dfs_min_dict[key] = by_row_index[numeric_cols].min()
         #Add ID, Title, and other non-numerical average dataframes
         if key in ['SSA','SST']:
             df_objects_only = value[0].select_dtypes(include=[object])
@@ -79,14 +82,18 @@ def average_outputs(settings, gui=""):
 if __name__ == "__main__":
     directory_str = 'C:/Simulations/Never Gray Way/'
     ses_output_list = [
-        directory_str + 'NG03-N011.OUT', 
-        directory_str + 'NG03-N012.OUT',
-        directory_str + 'NG03-N013.OUT',
-        directory_str + 'NG03-N014.OUT',
-        directory_str + 'NG03-N015.OUT', 
-        directory_str + 'NG03-N016.OUT',
-        directory_str + 'NG03-N017.OUT',
-        directory_str + 'NG03-N018.OUT',
+        directory_str + 'NG02-N001.OUT', 
+        directory_str + 'NG02-N002.OUT',
+        directory_str + 'NG02-N003.OUT',
+        directory_str + 'NG02-N004.OUT',
+        directory_str + 'NG02-N005.OUT', 
+        directory_str + 'NG02-N006.OUT',
+        directory_str + 'NG02-N007.OUT',
+        directory_str + 'NG02-N008.OUT',
+        directory_str + 'NG02-N009.OUT',
+        directory_str + 'NG02-N010.OUT',
+        directory_str + 'NG02-N011.OUT',   
+        directory_str + 'NG02-N012.OUT',       
         ]
     settings = {
         "ses_output_str": ses_output_list,

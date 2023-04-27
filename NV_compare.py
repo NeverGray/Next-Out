@@ -191,7 +191,7 @@ def remove_columns(df_list):
     return df_list
 
 if __name__ == "__main__":
-    directory_str = 'C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/_Tasks/2021-11-03 SI to IP/Test02 Inferno/'
+    directory_str = 'C:/Simulations/Never Gray Way/'
     ses_output_list = [
         directory_str + 'inferno_IP.prn', 
         directory_str + 'inferno_SI_from_IP.out'
