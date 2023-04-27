@@ -21,6 +21,13 @@ def average_outputs(settings, gui=""):
     NV_run.run_msg(gui, msg)
     i = 1
     for ses_output in settings['ses_output_str']:
+        #Perform SES simulation if using an input file
+        if settings["file_type"] == "input_file":
+            ses_output = NV_run.average_or_compare_call_ses(settings, ses_output, gui)
+            if ses_output == 'Simulation failed':
+                msg = 'Simulation failed'
+                NV_run.run_msg(gui, msg)
+                return
         ses_output_path = Path(ses_output)
         data, output_meta_data = NV_parser.parse_file(ses_output_path, gui, settings['version'])
         if Excel:
@@ -82,18 +89,18 @@ def average_outputs(settings, gui=""):
 if __name__ == "__main__":
     directory_str = 'C:/Simulations/Never Gray Way/'
     ses_output_list = [
-        directory_str + 'NG02-N001.OUT', 
-        directory_str + 'NG02-N002.OUT',
-        directory_str + 'NG02-N003.OUT',
-        directory_str + 'NG02-N004.OUT',
-        directory_str + 'NG02-N005.OUT', 
-        directory_str + 'NG02-N006.OUT',
-        directory_str + 'NG02-N007.OUT',
-        directory_str + 'NG02-N008.OUT',
-        directory_str + 'NG02-N009.OUT',
-        directory_str + 'NG02-N010.OUT',
-        directory_str + 'NG02-N011.OUT',   
-        directory_str + 'NG02-N012.OUT',       
+        directory_str + 'NG02-N001.inp', 
+        directory_str + 'NG02-N002.inp',
+        #directory_str + 'NG02-N003.inp',
+        #directory_str + 'NG02-N004.inp',
+        #directory_str + 'NG02-N005.inp', 
+        #directory_str + 'NG02-N006.inp',
+        #directory_str + 'NG02-N007.inp',
+        #directory_str + 'NG02-N008.inp',
+        #directory_str + 'NG02-N009.inp',
+        #directory_str + 'NG02-N010.inp',
+        #directory_str + 'NG02-N011.inp',   
+        #directory_str + 'NG02-N012.inp',    
         ]
     settings = {
         "ses_output_str": ses_output_list,
@@ -103,5 +110,7 @@ if __name__ == "__main__":
         "version": "tbd",
         "control": "First",
         "output": ["Average"],
+        "file_type": "input_file",
+        "path_exe": "C:\\simulations\\_EXE\\SVSV6_32.exe"
     }
     average_outputs(settings)

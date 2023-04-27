@@ -14,10 +14,22 @@ def compare_outputs(settings, gui=""):
         Excel = True
     else:
         Excel = False
-    base_file = Path(settings['ses_output_str'][0])
-    base_file_name = base_file.name
-    second_file = Path(settings['ses_output_str'][1])
-    second_file_name = second_file.name
+    base_file_str = settings['ses_output_str'][0]
+    second_file_str = settings['ses_output_str'][1]
+    #IF these are input files, perform SES simulations
+    if settings["file_type"] == "input_file":
+        base_file_str = NV_run.average_or_compare_call_ses(settings, base_file_str, gui)
+        if base_file_str == 'Simulation failed':
+            msg = 'Simulation failed'
+            NV_run.run_msg(gui, msg)
+            return
+        second_file_str = NV_run.average_or_compare_call_ses(settings, second_file_str, gui)
+        if base_file_str == 'Simulation failed':
+            msg = 'Simulation failed'
+            NV_run.run_msg(gui, msg)
+            return
+    base_file = Path(base_file_str)
+    second_file = Path(second_file_str)
     base_df, base_output_meta_data = NV_parser.parse_file(base_file, gui, settings['version'])
     second_df, second_output_meta_data = NV_parser.parse_file(second_file, gui, settings['version'])
     if Excel:
@@ -183,7 +195,6 @@ def dictionary_to_list(dic):
         new_list.append(value)
     return new_list
 
-
 def remove_columns(df_list):
     #Removes columns that are strings so comparision can be completed.
     df_list[0].drop(['ID','Title'], axis =1, inplace = True)
@@ -193,8 +204,8 @@ def remove_columns(df_list):
 if __name__ == "__main__":
     directory_str = 'C:/Simulations/Never Gray Way/'
     ses_output_list = [
-        directory_str + 'inferno_IP.prn', 
-        directory_str + 'inferno_SI_from_IP.out'
+        directory_str + 'inferno-detailed.inp', 
+        directory_str + 'inferno-detailed2.inp'
         ]
     settings = {
         "ses_output_str": ses_output_list,
@@ -203,7 +214,9 @@ if __name__ == "__main__":
         "simtime": 9999.0,
         "version": "IP_TO_SI",
         "control": "First",
-        "output": ["Visio","Average","Excel"],
+        "output": ["Excel"],
+        "file_type": "input_file",
+        "path_exe": "C:\\simulations\\_EXE\\SES41.exe"
     }
     import datetime
     now1 = datetime.datetime.now()

@@ -17,20 +17,6 @@ import NV_visio as nvv
 
 #Function to perform a single simulation
 def single_sim(settings, gui=""):
-    # If using input files, run SES simulation and change output string to a suffix.
-    if settings["file_type"] == "input_file":
-        msg = "Running SES Simulation for " + Path(settings["ses_output_str"][0]).name
-        run_msg(gui, msg)
-        success = run_SES(
-            settings["path_exe"], settings["ses_output_str"][0], gui
-            )
-        if success:
-            settings["ses_output_str"][0] = output_from_input(settings["ses_output_str"][0], settings["path_exe"], gui)
-        else:
-            #TODO add name of simulation to MSG with f' type command
-            msg = "Post-processing is stopped"
-            run_msg(gui, msg)
-            return
     if "Compare" in settings["output"]:
         try:
             NV_compare.compare_outputs(settings, gui)
@@ -42,6 +28,7 @@ def single_sim(settings, gui=""):
             return
         except:
             run_msg(gui, "ERROR! Could not compare files.")
+            return
     if "Average" in settings["output"]:
         try:
             NV_average.average_outputs(settings, gui)
@@ -53,6 +40,18 @@ def single_sim(settings, gui=""):
             return
         except:
             run_msg(gui, "ERROR! Could not average files.")
+            return
+    # If using input files, run SES simulation and change output string to a suffix.
+    if settings["file_type"] == "input_file":
+        msg = "Running SES Simulation for " + Path(settings["ses_output_str"][0]).name
+        run_msg(gui, msg)
+        success = run_SES(settings["path_exe"], settings["ses_output_str"][0], gui)
+        if success:
+            settings["ses_output_str"][0] = output_from_input(settings["ses_output_str"][0], settings["path_exe"], gui)
+        else:
+            #TODO add name of simulation to MSG with f' type command
+            msg = "Post-processing is stopped"
+            run_msg(gui, msg)
             return
     #TODO Works on first file in the list
     file_path = Path(settings['ses_output_str'][0])
@@ -182,6 +181,20 @@ def output_from_input(ses_output_str, path_exe, gui=""):
         msg = "Error in 'output_from_input' when converting file strings"
         run_msg(gui,msg)
         return ses_output_str
+
+#Perform SES Simulations on input files for analyses using average or compare
+def average_or_compare_call_ses(settings, ses_output, gui=""):
+    msg = "Running SES Simulation for " + Path(ses_output).name
+    run_msg(gui, msg)
+    success = run_SES(settings["path_exe"], ses_output)
+    if success:
+        ses_output = output_from_input(ses_output, settings["path_exe"], gui)
+        return ses_output
+    else:
+        #Simulation Failed!
+        ses_output = 'Simulation failed'
+        return False
+
 
 if __name__ == "__main__":
     directory_str = "C:\\simulations\\Next-Vis 1p21\\SI Samples\\"
