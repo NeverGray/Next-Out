@@ -33,9 +33,6 @@ class Start_Screen(tk.Tk):
             os.remove('tmp.ico')
         except:
             icon_value = False
-        # root.iconbitmap('icon4.ico')
-        # TODO Replace Icon in title bar with NV icon (icon4.ico)
-        # root.attributes('-toolwindow', 'True')
         self.ss = ttk.Frame(padding=p)  # start screen
         self.license_info = license_info
         # POST PROCESSING and Analysis Frames
@@ -402,6 +399,7 @@ class Start_Screen(tk.Tk):
         except:
             error_msg = "ERROR with selected result folder"
             self.gui_text(error_msg)
+            self.results_folder_str = None #Default to putting results in the same folder as the SES output
         self.settings = {
             "ses_output_str": self.ses_output_str,
             "visio_template": self.path_visio.get(),
@@ -419,6 +417,7 @@ class Start_Screen(tk.Tk):
                 try:
                     if (self.ses.get() == "File") or ("Average" in pp_list) or ("Compare" in pp_list):
                         nvr.single_sim(self.settings, gui=self)
+                        self.gui_text("Post processing completed.\n")
                     else:
                         # Launch process and monitor files when using multiple files
                         # nvr.multiple_sim(self.settings, gui=self)
@@ -428,7 +427,6 @@ class Start_Screen(tk.Tk):
                             self.settings['output'].remove('visio_open')
                             self.cbo_visio_open_option.set("")
                         self.open_monitor_gui()
-                    self.gui_text("Post processing completed.\n")
                 except:
                     self.gui_text(
                         "Error after validation, before single_sim or multiple_sim. \n"
@@ -459,6 +457,7 @@ class Start_Screen(tk.Tk):
         if len(settings["ses_output_str"]) == 0:
             msg = msg + "Files to process. Check if input or output files are present.\n"
             valid = False
+        # Check if the folder for post-processing output exists
         if not self.settings["results_folder_str"] is None:
             results_folder_path = Path(self.settings["results_folder_str"])
             if not results_folder_path.is_dir():

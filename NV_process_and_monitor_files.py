@@ -8,12 +8,13 @@ import tkinter as tk
 import subprocess
 from pathlib import Path
 from tkinter import messagebox, ttk
+import base64
 
 import NV_parser
 import NV_excel_R01 as nve
 import NV_route
 import NV_visio
-
+from NV_icon5 import Icon
 
 #logging.disable(logging.CRITICAL)
 logging.basicConfig(level=logging.DEBUG, format=' %(asctime)s -  %(levelname)s -  %(message)s')
@@ -178,6 +179,13 @@ class Monitor_GUI(tk.Toplevel):
         self.c_width = 15
         self.font_size = 12
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
+        try:
+            with open('tmp.ico','wb') as tmp:
+                tmp.write(base64.b64decode(Icon().img))
+            self.iconbitmap('tmp.ico')
+            os.remove('tmp.ico')
+        except:
+            icon_value = False
         # Establish base frame to draw monitor
         self.monitor_window = ttk.Frame(self, padding=p, borderwidth=5)
         # Queued List
@@ -412,7 +420,7 @@ if __name__ == "__main__":
     two_input_files = ['C:/Simulations/Demonstration/SI Samples/siinfern-detailed.inp', 'C:/Simulations/Demonstration/SI Samples/sinorm-detailed.inp']
     many_input_files = ['C:/Simulations/Demonstration/SI Samples\\coolpipe.inp', 'C:/Simulations/Demonstration/SI Samples\\siinfern-detailed.inp', 'C:/Simulations/Demonstration/SI Samples\\siinfern.inp', 'C:/Simulations/Demonstration/SI Samples\\sinorm-detailed.inp', 'C:/Simulations/Demonstration/SI Samples\\sinorm.inp', 'C:/Simulations/Demonstration/SI Samples\\Test02R01.inp', 'C:/Simulations/Demonstration/SI Samples\\Test06.inp']
     many_input_files.remove('C:/Simulations/Demonstration/SI Samples\\Test02R01.inp') #Takes too long to compute
-    settings = {
+    settings_from_above = {
         'ses_output_str': one_output_file, 
         'visio_template': 'C:/Simulations/Demonstration/Next Vis Samples1p21.vsdx', 
         'results_folder_str': 'C:/Simulations/1p30 Testing', 
@@ -422,7 +430,8 @@ if __name__ == "__main__":
         'output': ['Excel', 'Visio', '', '', 'Route', '', '', '', ''], 
         'file_type': '', #If using input file, change 'file_type' value to 'input_file
         'path_exe': 'C:/Simulations/_Exe/SESV6_32.exe'}
-
+    settings_to_debug = {'ses_output_str': ['C:/Simulations/1p30 Tests/SI Samples\\sinorm-detailed.inp', 'C:/Simulations/1p30 Tests/SI Samples\\sinorm.inp'], 'visio_template': 'C:/Simulations/1p30 Tests/Next Vis Samples1p21.vsdx', 'results_folder_str': 'C:/Simulations/1p30 Tests/2023-04-27 Results', 'simtime': -1, 'version': '', 'control': 'First', 'output': ['Excel', 'Visio', '', '', '', '', '', '', ''], 'file_type': 'input_file', 'path_exe': 'C:/Simulations/_Exe/SESV6_32.exe'}
+    settings = settings_from_above
     app = App(settings)
     app.mainloop()
     print('app.mainloop finished')
