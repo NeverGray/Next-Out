@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pandas as pd
 
-import NV_ip_to_si
+import NV_conversion
 import NV_run
 
 '''logging.basicConfig(
@@ -375,7 +375,7 @@ HE = {
 }
 
 # TODO Eliminate NumExpr detected 16 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 8.
-def parse_file(file_path, gui="", convert_df=""):  # Parser
+def parse_file(file_path, gui="", conversion_setting=""):  # Parser
     file_name = file_path.name
     NV_run.run_msg(gui, "Importing data from " + file_name + ".")
     # Variables for all referenced functions
@@ -641,8 +641,8 @@ def parse_file(file_path, gui="", convert_df=""):  # Parser
         data = create_dictionary_from_list([df_ssa, df_sst, df_train])
     else:
         data = create_dictionary_from_list([df_ssa, df_sst])
-    if convert_df == "IP_TO_SI":
-        data, output_meta_data = NV_ip_to_si.convert_ip_to_si(data, output_meta_data, gui)
+    if conversion_setting in ["IP_TO_SI", "SI_TO_IP"]:
+        data, output_meta_data = NV_conversion.convert_output_units(conversion_setting, data, output_meta_data, gui)
     NV_run.run_msg(gui, "Finished importing data from " + file_name +".")
     return data, output_meta_data
 
@@ -1182,17 +1182,18 @@ def calculate_actual_airflow(SST, SSA, ambient_temperature, version):
 
     
 if __name__ == "__main__":
-    directory_string = "C:\\simulations\\demonstration\\SI Samples\\"
+    directory_string = "C:\\simulations\\SI_TO_IP\\"
     file_name = "sinorm-detailed.out"
     path_string = directory_string + file_name
     file_path = Path(path_string)
-    d, output_meta_data = parse_file(file_path, convert_df="IP_TO_SI")
+    d, output_meta_data = parse_file(file_path, gui="",conversion_setting="SI_TO_IP")
     print('Finished')
+
     '''instructions for timing program
     import cProfile
     prof = cProfile.Profile()
     prof.enable() 
-    d, output_meta_data = parse_file(file_path, convert_df="IP_TO_SI")
+    d, output_meta_data = parse_file(file_path, conversion_setting="IP_TO_SI")
     prof.disable()
     print(output_meta_data, "test finished", sep = '\n')
     prof.dump_stats("C:/Simulations/Next-Vis Timing/NV 1p16 NG02-T005 010.prof")

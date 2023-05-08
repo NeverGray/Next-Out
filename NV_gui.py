@@ -10,10 +10,11 @@ from tkinter import filedialog, messagebox, ttk
 
 import keygen
 import NV_file_manager as nfm
-import NV_run as nvr
 import NV_process_and_monitor_files as nvpm
+import NV_run as nvr
 from NV_CONSTANTS import VERSION_NUMBER
 from NV_icon5 import Icon
+
 
 # add requirement for program to be legit to run
 class Start_Screen(tk.Tk):
@@ -34,16 +35,21 @@ class Start_Screen(tk.Tk):
         except:
             icon_value = False
         self.ss = ttk.Frame(padding=p)  # start screen
+        self.left_column = ttk.Frame(self.ss)
         self.license_info = license_info
         # POST PROCESSING and Analysis Frames
         frm_pp = ttk.LabelFrame(
             self.ss, borderwidth=5, text="Post Processing", padding=p
         )
+        frm_conversion = ttk.LabelFrame(
+            self.left_column, borderwidth=5, text="Conversion", padding=p
+        )
         frm_analysis = ttk.LabelFrame(
-            self.ss, borderwidth=5, text="Analysis", padding=p
+            self.left_column, borderwidth=5, text="Analysis*", padding=p
         )
         #Initialize all setting variables. This process makes saving, than loading settings easier.
         self.load_settings()
+        #Post Processing frame options
         cb_excel = ttk.Checkbutton(
             frm_pp, text="Excel", variable=self.cbo_excel, onvalue="Excel", offvalue=""
         )
@@ -51,12 +57,15 @@ class Start_Screen(tk.Tk):
             frm_pp, text="Visio", variable=self.cbo_visio, onvalue="Visio", offvalue="",
             command=self.update_post_processing_options
         )
-        cb_ip_to_si = ttk.Checkbutton(
-            frm_pp, text="Convert\nIP to SI", variable=self.cbo_ip_to_si, onvalue="IP_TO_SI", offvalue=""
-        )
+        #TODO Erase
         cb_route = ttk.Checkbutton(
             frm_pp, text="Route Data", variable=self.cbo_route, onvalue="Route", offvalue=""
         )
+        #Conversion frame options (radio buttons)
+        rb_conversion_none = ttk.Radiobutton(frm_conversion, text="None", variable=self.conversion, value="")
+        rb_IP_to_SI = ttk.Radiobutton(frm_conversion, text="IP to SI", variable=self.conversion, value="IP_TO_SI")
+        rb_SI_to_IP = ttk.Radiobutton(frm_conversion, text="SI to IP", variable=self.conversion, value="SI_TO_IP")
+        #Analysis frame options
         cb_average = ttk.Checkbutton(
             frm_analysis, text="Staggered\nheadways\nmean, max, min", variable=self.cbo_average, 
             onvalue="Average", offvalue="", command=self.update_post_processing_options
@@ -69,21 +78,27 @@ class Start_Screen(tk.Tk):
             offvalue="",
             command=self.update_post_processing_options
         )
+        analysis_label = ttk.Label(frm_analysis,text="* Visio Template\nis disabled with\nAnalysis")
         # POST PROCESSING grid
         cb_excel.grid(column=0, row=0, sticky='W', pady=py)
         cb_visio.grid(column=0, row=10, sticky='W', pady=py)
-        cb_ip_to_si.grid(column=0, row=15, sticky='W', pady=py)
-        cb_route.grid(column=0, row=17, sticky='W', pady=py)
+        cb_route.grid(column=0, row=15, sticky='W', pady=py)
+        # Conversion grid
+        rb_conversion_none.grid(column=0, row=10, sticky='W', pady=py)
+        rb_IP_to_SI.grid(column=0, row=17, sticky='W', pady=py)
+        rb_SI_to_IP.grid(column=0, row=18, sticky='W', pady=py)
         # Analysis grid
         self.cb_compare.grid(column=0, row=20, sticky='W', pady=py)
         cb_average.grid(column=0, row=30, sticky='W', pady=py)
+        analysis_label.grid(column=0, row=40, sticky='W', pady=py)
         # SES Files to Process
         frm_ses = ttk.LabelFrame(
             self.ss, borderwidth=5, text="SES Files to Process", padding=p
         )
         file_type = ttk.Label(frm_ses, text="Type:")
-        rb_input_files = ttk.Radiobutton(frm_ses, text="Input", variable=self.file_type, value="input_file", command=self.update_ses_exe)
-        rb_output_files = ttk.Radiobutton(frm_ses, text="Output", variable=self.file_type, value="output_file", command=self.update_ses_exe)
+        frm_input_output= ttk.Frame(frm_ses)
+        rb_input_files = ttk.Radiobutton(frm_input_output, text= "Input      ", variable=self.file_type, value="input_file", command=self.update_ses_exe)
+        rb_output_files = ttk.Radiobutton(frm_input_output, text="Output     ", variable=self.file_type, value="output_file", command=self.update_ses_exe)
         rb_file = ttk.Radiobutton(frm_ses, text="", variable=self.ses, value="File", command=self.update_output_options)
         rb_files = ttk.Radiobutton(frm_ses, text="", variable=self.ses, value="Files", command=self.update_output_options)
         rb_folder = ttk.Radiobutton(frm_ses, text="", variable=self.ses, value="Folder", command=self.update_output_options)
@@ -97,8 +112,11 @@ class Start_Screen(tk.Tk):
         r = 0
         frm_ses.grid(column=0, row=r)
         file_type.grid(column=0,row=r)
-        rb_input_files.grid(column=2, row=r, sticky=['W'], pady=py, padx="0")
-        rb_output_files.grid(column=3, row=r, sticky=['W'], pady=py, padx="0")
+        #rb_input_files.grid(column=2, row=r, sticky=['W'], pady=py, padx="0")
+        #rb_output_files.grid(column=3, row=r, sticky=['W'], pady=py, padx="0")
+        rb_input_files.pack(side="left")
+        rb_output_files.pack(side="left")
+        frm_input_output.grid(column=2, row=r, sticky=['W'], pady=py, padx="0")
         r = 9
         rb_file.grid(column=0, row=r, sticky=['W'], pady=py, padx="0")
         self.btn_file.grid(column=1, row=r, sticky=['W'], pady=py, padx=px)
@@ -206,8 +224,10 @@ class Start_Screen(tk.Tk):
         self.ss.grid(column=0, row=0, sticky="EWNS")
         self.ss.columnconfigure(1, weight=1)
         self.ss.rowconfigure(5, weight=1)
-        frm_pp.grid(column=0, row=0, rowspan=2, sticky=['NSEW'], pady=py, padx=px)
-        frm_analysis.grid(column=0, row=2, rowspan=2, sticky=['NSEW'], pady=py, padx=px)
+        frm_conversion.pack(side='top', fill='x', pady=py, padx=px)
+        frm_analysis.pack(side='top', fill='x', pady=py, padx=px)
+        frm_pp.grid(column=0, row=0, sticky=['NSEW'], pady=py, padx=px)
+        self.left_column.grid(row=1, column=0, rowspan=3, sticky=['NEW'])
         frm_ses.grid(column=1, row=0, sticky=['NSEW'], pady=py, padx=px)
         self.frm_ses_exe.grid(column=1,row=1, sticky=['NSEW'], pady=py, padx=px)
         self.frm_visio.grid(column=1, row=2, sticky=['WE'], pady=py, padx=px)
@@ -217,17 +237,18 @@ class Start_Screen(tk.Tk):
         self.minsize(550, 385)  # Measured using paint.net
         self.update_post_processing_options()
         self.display_validation_info()
+        self.update_ses_exe()
         self.ss.update()
 
     def load_settings(self, *args):
-        # Define all variable and default vvalues for  GUI
+        # Define all variable and default values for  GUI
         self.screen_settings = {
             'self.cbo_visio': 'tk.StringVar(value="")',
             'self.cbo_excel':  'tk.StringVar(value="Excel")',
-            'self.cbo_ip_to_si':  'tk.StringVar(value="")',
+            'self.cbo_route':  'tk.StringVar(value="")',
+            'self.conversion':  'tk.StringVar(value="")',
             'self.cbo_compare':  'tk.StringVar(value="")',
             'self.cbo_average':  'tk.StringVar(value="")',
-            'self.cbo_route':  'tk.StringVar(value="")',
             'self.file_type':  'tk.StringVar(value="output_file")',
             'self.ses':  'tk.StringVar(value="file")', #Radio button for file, files, or folders
             'self.path_file':  'tk.StringVar(value="")',
@@ -405,7 +426,7 @@ class Start_Screen(tk.Tk):
             "visio_template": self.path_visio.get(),
             "results_folder_str": self.results_folder_str,
             "simtime": -1, #Updated in validation
-            "version": self.cbo_ip_to_si.get(),
+            "conversion": self.conversion.get(), #Determine what type of conversion is needed
             "control": "First",
             "output": pp_list,
             "file_type": self.file_type.get(),
@@ -415,12 +436,11 @@ class Start_Screen(tk.Tk):
             # Check validity of license
             if self.valid_license():
                 try:
-                    if (self.ses.get() == "File") or ("Average" in pp_list) or ("Compare" in pp_list):
+                    if len(self.settings['ses_output_str']) == 1 or ("Average" in pp_list) or ("Compare" in pp_list):
                         nvr.single_sim(self.settings, gui=self)
                         self.gui_text("Post processing completed.\n")
                     else:
                         # Launch process and monitor files when using multiple files
-                        # nvr.multiple_sim(self.settings, gui=self)
                         self.gui_text("Processing multiple files, openning monitor window.")
                         # Turn off opening visio for multiple files
                         if 'visio_open' in self.settings['output']:

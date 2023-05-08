@@ -29,7 +29,7 @@ def average_outputs(settings, gui=""):
                 NV_run.run_msg(gui, msg)
                 return
         ses_output_path = Path(ses_output)
-        data, output_meta_data = NV_parser.parse_file(ses_output_path, gui, settings['version'])
+        data, output_meta_data = NV_parser.parse_file(ses_output_path, gui, settings['conversion'])
         if Excel:
             NV_excel.create_excel(settings, data, output_meta_data, gui)
         if first_iteration:
@@ -107,7 +107,7 @@ if __name__ == "__main__":
         "results_folder_str": None,
         "visio_template": None,
         "simtime": 9999.0,
-        "version": "tbd",
+        "conversion": "tbd",
         "control": "First",
         "output": ["Average"],
         "file_type": "input_file",

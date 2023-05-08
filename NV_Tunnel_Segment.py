@@ -33,6 +33,9 @@ def create_train_truths(output_meta_data, data, simtime):
             # Change train location from PIT back to IP if the file is converted from IP to SI
             if output_meta_data['ses_version'] == "SI from IP":
                 train_front = row['Location']/IP_TO_SI['ft'] #Train front from PIT
+            # Change train location from PIT back to SI if the file is converted from SI to IP
+            elif output_meta_data['ses_version'] == "IP from SI":
+                train_front = row['Location']*IP_TO_SI['ft']
             else:
                 train_front = row['Location']
             train_type_number = row['Train_Type_Number']
@@ -88,12 +91,13 @@ if __name__ == "__main__":
         "visio_template": "/".join([visio_template_folder, visio_template]),
         "results_folder_str": results_folder_str,
         "simtime": 500.0,
-        "version": "",
+        "conversion": "",
         "control": "First",
         "output": ["Visio"],
     }
     file_path = Path(settings['ses_output_str'][0])
-    data, output_meta_data = NV_parser.parse_file(file_path, gui="",convert_df=settings["version"])
+    conversion_setting = settings['conversion']
+    data, output_meta_data = NV_parser.parse_file(file_path, gui="",conversion_setting=conversion_setting)
     simtime = NV_visio.valid_simtime(settings["simtime"], data["SSA"], gui="")
     segment_time_df = create_segment_info(data, output_meta_data, simtime)
     print('Finished')

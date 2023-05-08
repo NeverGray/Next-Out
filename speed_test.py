@@ -33,7 +33,7 @@ if __name__ == "__main__":
         'visio_template': '', 
         'results_folder_str': None, 
         'simtime': -1, 
-        'version': '', 
+        'conversion': '', 
         'control': 'First', 
         'output': ['Excel', '', '', '', '', '', '', '', '']
     }

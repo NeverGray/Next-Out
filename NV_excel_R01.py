@@ -34,7 +34,7 @@ def create_excel(settings, data, output_meta_data, gui=""):
         }
     df_startrow = len(TITLES)
     #Select index for units in NV_CONSTANTS.COLUMN_UNITS value
-    if output_meta_data['ses_version'] == 'IP':
+    if output_meta_data['ses_version'] in ['IP','IP from SI']:
         unit_index = 1
     else:
         unit_index = 0
@@ -45,6 +45,8 @@ def create_excel(settings, data, output_meta_data, gui=""):
             # Set color based on SES Version of IP or SI
             if output_meta_data['ses_version'] == "SI from IP":
                 color_code = "#4BACC6" #Blue
+            elif output_meta_data['ses_version'] == "IP from SI":
+                color_code = "#8064A2" #Purple
             else:
                 color_code = "#F07F09" #Orange
             # Format options for title and headers
@@ -115,15 +117,15 @@ def create_excel(settings, data, output_meta_data, gui=""):
         NV_run.run_msg(gui, "ERROR writing Excel file "+ excel_results_path.name + ". Try closing file and process again.")
 
 if __name__ == "__main__":
-    file_path_string = "C:/Simulations/Next-Vis Timing/NG02-N031 R01.out"
-    visio_template = "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/Python2021/sample012.vsdx"
-    results_folder_str = "C:/Simulations/Next-Vis Timing"
+    file_path_string = "C:/Simulations/SI_TO_IP/sinorm-detailed.out"
+    visio_template = "C:/Simulations/2022-01-22/Next Vis Samples1p21.vsdx"
+    results_folder_str = "C:/Simulations/SI_TO_IP"
     settings = {
         "ses_output_str": [file_path_string],
         "visio_template": visio_template,
         "results_folder_str": results_folder_str,
         "simtime": 9999.0,
-        "version": "IP_TO_SI",
+        "conversion": "SI_TO_IP",
         "control": "First",
         "output": ["Excel"],
     }
@@ -131,8 +133,9 @@ if __name__ == "__main__":
     import time
 
     import NV_parser
+    conversion_setting = settings["conversion"]
     file_path = Path(settings['ses_output_str'][0])
-    data, output_meta_data = NV_parser.parse_file(file_path)
+    data, output_meta_data = NV_parser.parse_file(file_path, gui="", conversion_setting=conversion_setting)
     file_name = file_path.name
     start_create_excel = time.perf_counter()
     prof = cProfile.Profile()
@@ -143,4 +146,4 @@ if __name__ == "__main__":
     print(f"Time for create_excel {end_create_excel - start_create_excel:0.4f} seconds")
     # NV_run.single_sim(settings)
     # prof.print_stats()
-    prof.dump_stats("C:/Simulations/Next-Vis Timing/NV 1p16 xlsxwriter replacement.prof")
+    prof.dump_stats(results_folder_str + "/NV 1p16 xlsxwriter.prof")

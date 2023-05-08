@@ -8,7 +8,7 @@ import win32com.client
 import NV_run
 import NV_settings
 import NV_Tunnel_Segment
-from NV_CONSTANTS import *
+from NV_CONSTANTS import DEGREE_SYMBOL
 
 try:
     import zlib
@@ -62,6 +62,8 @@ def emod_visXML(vxml, data, file_stem, simtime=0.00, output_meta_data={},gui="")
     try:
         if output_meta_data['ses_version'] == 'SI from IP':
             sim_base_name = sim_base_name + '_SI'
+        elif output_meta_data['ses_version'] == 'IP from SI':
+            sim_base_name = sim_base_name + '_IP'
     except:
         NV_run.run_msg(gui, f'Error checking SES version')   
 
@@ -528,7 +530,7 @@ if __name__ == "__main__":
         'visio_template': 'C:/Simulations/Demonstration/Next Vis Samples1p21.vsdx', 
         'results_folder_str': 'C:/Simulations/1p30 Testing', 
         'simtime': -1, 
-        'version': '', 
+        'conversion': '', 
         'control': 'First', 
         'output': ['Excel', 'Visio', '', '', 'Route', '', '', '', ''], 
         'file_type':'', #'input_file', 

@@ -5,10 +5,10 @@ import sys
 import threading
 
 #TODO Need to fix or eliminate offline installations
-try:
-    import ed25519
-except:
-    pass
+#try:
+#    import ed25519
+#except:
+#    pass
 import requests
 
 print_message = False
@@ -226,19 +226,20 @@ def maintain_hearbeat_for_machine(machine_id, keygen_key):
     timer.start()
 
 def verify_ed25519(sig, msg):
+  #TODO UPdate offline license
   # Load the hex-encoded verify key from the env
-  verify_key = ed25519.VerifyingKey(
-    KEYGEN_PUBLIC_KEY.encode(),
-    encoding='hex'
-  )
+  #verify_key = ed25519.VerifyingKey(
+  #  KEYGEN_PUBLIC_KEY.encode(),
+  #  encoding='hex'
+  #)
 
   # Verify the license
-  try:
-    verify_key.verify(sig, msg)
+  #try:
+  #  verify_key.verify(sig, msg)
 
     return True
-  except ed25519.BadSignatureErr:
-    return False
+  #except ed25519.BadSignatureErr:
+  #  return False
 
 def verify_offline_license_key(license_key):
 

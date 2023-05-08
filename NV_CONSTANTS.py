@@ -1,4 +1,4 @@
-VERSION_NUMBER = '1.30'
+VERSION_NUMBER = '1.31'
 #Column name : [SI Unit, IP Unit]
 COLUMN_UNITS={
     "Airflow":	["m^3/s","kcfm"], #SSA Values
@@ -12,8 +12,8 @@ COLUMN_UNITS={
     "Wall_Temp":["\u00B0C","\u00B0F"],
     "Convection_to_Wall":["W","Btu/h"],
     "Radiation_to_Wall":["W","Btu/h"],
-    "Working_Fluid_Temp":["\u00B0C",""],
-    "Heat_Absorbed_by_Pipe":["W",""],
+    "Working_Fluid_Temp":["\u00B0C","\u00B0F"],
+    "Heat_Absorbed_by_Pipe":["W","Btu/h"],
     "Actual_Airflow_NV":["m^3/s","kcfm"], #Next-vis calculated data
     "Train_Number":["#","#"],          #Train Information
     "Route_Number":["#","#"],
@@ -46,7 +46,7 @@ COLUMN_UNITS={
     "Average_Velocity_Negative":["m/s","fpm"],
     "Airflow_Direction_Positive":["%","%"],
     "Airflow_Direction_Negative":["%","%"],
-    "Train_Propulsion__and_Braking_Heat":["W","Btu/h"],
+    "Train_Propulsion_and_Braking_Heat":["W","Btu/h"],
     "Train_Aux_and_Passenger_Sensible":["W","Btu/h"],
     "Train_Aux_and_Passenger_Latent":["W","Btu/h"],
     "Steady_State_Heat_Sensible":["W","Btu/h"],
@@ -95,6 +95,7 @@ COLUMN_UNITS={
     "From_Flywheel":["KWh","KWh"],
     "Auxiliary_Energy":["KWh","KWh"],
     "Regenerated_Energy_to_Third_Rail":["KWh","KWh"],
+    "ZN":["#","#"],
     "Morning_Wall_Temp":["\u00B0C","\u00B0F"], #HSA Values
     "Evening_Wall_Temp":["\u00B0C","\u00B0F"],
     "Morning_Air_Temp":["\u00B0C","\u00B0F"],

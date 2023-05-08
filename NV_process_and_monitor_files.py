@@ -1,17 +1,17 @@
 '''This code processes and monitor multiple files'''
+import base64
 import logging
 import multiprocessing
 import os
+import subprocess
 import threading
 import time
 import tkinter as tk
-import subprocess
 from pathlib import Path
 from tkinter import messagebox, ttk
-import base64
 
-import NV_parser
 import NV_excel_R01 as nve
+import NV_parser
 import NV_route
 import NV_visio
 from NV_icon5 import Icon
@@ -66,7 +66,7 @@ def single_process(file_path, process_settings, settings, queued_list, processin
         logging.info(f"Parsing {name}")
         process_status[value_index['Read Output']] = "Processing"
         processing_dictionary[pid] = process_status
-        data, output_meta_data = NV_parser.parse_file(file_path, gui="",convert_df=settings['version'])
+        data, output_meta_data = NV_parser.parse_file(file_path, gui="", conversion_setting=settings['conversion'])
         process_status[value_index['Read Output']] = "Done"
         processing_dictionary[pid] = process_status
         logging.info(f"Finished Parsing {name}")
@@ -318,9 +318,10 @@ class Monitor_GUI(tk.Toplevel):
             self.pool.join()
         logging.info('Processing Pool finished')
         #Message that this finished.
-        self.in_progress = False #This stops the self-updating process.
-        self.update_monitor_table()
+        #This stops the self-updating process.
+        self.update_monitor_window()
         self.update()
+        self.in_progress = False 
         title_msg = "Post-processing complete."
         msg_1 = "Click 'Okay' to return to main screen."
         msg_all = msg_1
@@ -425,12 +426,12 @@ if __name__ == "__main__":
         'visio_template': 'C:/Simulations/Demonstration/Next Vis Samples1p21.vsdx', 
         'results_folder_str': 'C:/Simulations/1p30 Testing', 
         'simtime': -1, 
-        'version': '', 
+        'conversion': '', 
         'control': 'First', 
         'output': ['Excel', 'Visio', '', '', 'Route', '', '', '', ''], 
         'file_type': '', #If using input file, change 'file_type' value to 'input_file
         'path_exe': 'C:/Simulations/_Exe/SESV6_32.exe'}
-    settings_to_debug = {'ses_output_str': ['C:/Simulations/1p30 Tests/SI Samples\\sinorm-detailed.inp', 'C:/Simulations/1p30 Tests/SI Samples\\sinorm.inp'], 'visio_template': 'C:/Simulations/1p30 Tests/Next Vis Samples1p21.vsdx', 'results_folder_str': 'C:/Simulations/1p30 Tests/2023-04-27 Results', 'simtime': -1, 'version': '', 'control': 'First', 'output': ['Excel', 'Visio', '', '', '', '', '', '', ''], 'file_type': 'input_file', 'path_exe': 'C:/Simulations/_Exe/SESV6_32.exe'}
+    settings_to_debug = {'ses_output_str': ['C:/Simulations/1p30 Tests/SI Samples\\sinorm-detailed.inp', 'C:/Simulations/1p30 Tests/SI Samples\\sinorm.inp'], 'visio_template': 'C:/Simulations/1p30 Tests/Next Vis Samples1p21.vsdx', 'results_folder_str': 'C:/Simulations/1p30 Tests/2023-04-27 Results', 'simtime': -1, 'conversion': '', 'control': 'First', 'output': ['Excel', 'Visio', '', '', '', '', '', '', ''], 'file_type': 'input_file', 'path_exe': 'C:/Simulations/_Exe/SESV6_32.exe'}
     settings = settings_from_above
     app = App(settings)
     app.mainloop()

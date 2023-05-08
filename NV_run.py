@@ -55,7 +55,7 @@ def single_sim(settings, gui=""):
             return
     #TODO Works on first file in the list
     file_path = Path(settings['ses_output_str'][0])
-    data, output_meta_data = NV_parser.parse_file(file_path, gui, settings['version'])
+    data, output_meta_data = NV_parser.parse_file(file_path, gui, settings['conversion'])
     file_name = file_path.name
     if len(data) == 0:
         run_msg(gui, "Error parsing data")
@@ -137,6 +137,8 @@ def get_results_path2(settings, output_meta_data, suffix):
     output_stem = output_file_path.stem
     if output_meta_data['ses_version'] == "SI from IP":
         results_name_str = output_stem + '_SI' + suffix
+    elif output_meta_data['ses_version'] == "IP from SI":
+        results_name_str = output_stem + '_IP' + suffix
     else:
         results_name_str = output_stem + suffix
     results_folder_str = settings.get("results_folder_str")
@@ -204,7 +206,7 @@ if __name__ == "__main__":
         "results_folder_str": None,
         "visio_template": None,
         "simtime": 9999.0,
-        "version": "",
+        "conversion": "",
         "control": "First",
         "output": ["Excel"],
         "file_type": "input_file",

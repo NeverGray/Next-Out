@@ -30,8 +30,8 @@ def compare_outputs(settings, gui=""):
             return
     base_file = Path(base_file_str)
     second_file = Path(second_file_str)
-    base_df, base_output_meta_data = NV_parser.parse_file(base_file, gui, settings['version'])
-    second_df, second_output_meta_data = NV_parser.parse_file(second_file, gui, settings['version'])
+    base_df, base_output_meta_data = NV_parser.parse_file(base_file, gui, settings['conversion'])
+    second_df, second_output_meta_data = NV_parser.parse_file(second_file, gui, settings['conversion'])
     if Excel:
         NV_excel.create_excel(settings, base_df, base_output_meta_data, gui)
         NV_excel.create_excel(settings, second_df, second_output_meta_data, gui)   
@@ -212,7 +212,7 @@ if __name__ == "__main__":
         "results_folder_str": directory_str,
         "visio_template": None,
         "simtime": 9999.0,
-        "version": "IP_TO_SI",
+        "conversion": "IP_TO_SI",
         "control": "First",
         "output": ["Excel"],
         "file_type": "input_file",
