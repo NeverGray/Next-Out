@@ -166,7 +166,7 @@ def compare_outputs(settings, gui=""):
                     ws.freeze_panes = freeze_cell
                 writer.book.properties.creator = "Next Vis 1p11`"
                 writer.book.properties.title = file_name
-                writer.save()
+                writer.book.save(bio) #Updated after Next-Vis 1p31
                 # From https://techoverflow.net/2019/07/24/how-to-write-bytesio-content-to-file-in-python/
                 # Copy the BytesIO stream to the output file
                 with open(compare_results_path, "wb") as outfile:  
@@ -202,20 +202,20 @@ def remove_columns(df_list):
     return df_list
 
 if __name__ == "__main__":
-    directory_str = 'C:/Simulations/Never Gray Way/'
+    directory_str = 'C:/Simulations/OpenSES_PR22_Tests/'
     ses_output_list = [
-        directory_str + 'inferno-detailed.inp', 
-        directory_str + 'inferno-detailed2.inp'
+        directory_str + 'inferno4p2.out', 
+        directory_str + 'inferno4p2_pr22.out'
         ]
     settings = {
         "ses_output_str": ses_output_list,
         "results_folder_str": directory_str,
         "visio_template": None,
         "simtime": 9999.0,
-        "conversion": "IP_TO_SI",
+        "conversion": "",
         "control": "First",
         "output": ["Excel"],
-        "file_type": "input_file",
+        "file_type": "output_file",
         "path_exe": "C:\\simulations\\_EXE\\SES41.exe"
     }
     import datetime
