@@ -62,18 +62,21 @@ def single_process(file_path, process_settings, settings, queued_list, processin
         process_status[value_index['Simulation']] = "Done"
         processing_dictionary[pid] = process_status
     # Parse output file
-    try:
-        logging.info(f"Parsing {name}")
-        process_status[value_index['Read Output']] = "Processing"
-        processing_dictionary[pid] = process_status
-        data, output_meta_data = NV_parser.parse_file(file_path, gui="", conversion_setting=settings['conversion'])
-        process_status[value_index['Read Output']] = "Done"
-        processing_dictionary[pid] = process_status
-        logging.info(f"Finished Parsing {name}")
-    except:
-        process_status[value_index['Read Output']] = "Failed"
-        logging.info(f"Error Parsing {name}")
-        return
+    if process_settings['Read Output']:
+        pause_check(pause_value)
+        try:
+            pause_check(pause_value)
+            logging.info(f"Parsing {name}")
+            process_status[value_index['Read Output']] = "Processing"
+            processing_dictionary[pid] = process_status
+            data, output_meta_data = NV_parser.parse_file(file_path, gui="", conversion_setting=settings['conversion'])
+            process_status[value_index['Read Output']] = "Done"
+            processing_dictionary[pid] = process_status
+            logging.info(f"Finished Parsing {name}")
+        except:
+            process_status[value_index['Read Output']] = "Failed"
+            logging.info(f"Error Parsing {name}")
+            return
     if process_settings['Visio']:
         pause_check(pause_value)
         try:
@@ -335,13 +338,16 @@ class Monitor_GUI(tk.Toplevel):
         self.process_settings = {}
         #Determine if an SES Simulation needs to be performed
         self.process_settings['Simulation'] = settings['file_type']=='input_file'
-        #All processes require the read_output to be performed
-        self.process_settings['Read Output'] = True
+        #Requirement for read_output to be performed
+        self.process_settings['Read Output'] = False
         #Determine what processes are needed after parsing the file
         post_read_processes = ['Visio','Excel','Route']
         for process_name in post_read_processes:
             setting_selected = process_name in settings['output']
             self.process_settings[process_name] = setting_selected
+            #Turn on Read Output if any post-processing is required
+            if setting_selected and not self.process_settings['Read Output']:
+                self.process_settings['Read Output'] = True
         #Determine staring values for process_dictionary. A list and index is used because this assumed to be faster than a dictionary
         process_status_start_values = []
         process_status_value_index = {}
