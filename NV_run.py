@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 
+import next_in
 import NV_average
 import NV_compare
 import NV_excel_R01 as nve
@@ -42,7 +43,14 @@ def single_sim(settings, gui=""):
             run_msg(gui, "ERROR! Could not average files.")
             return
     # If using input files, run SES simulation and change output string to a suffix.
-    if settings["file_type"] == "input_file":
+    if settings["file_type"] == "next_in":
+        next_in_path = Path(settings["ses_output_str"][0])
+        save_path = next_in_path.parent
+        ses_version = ses_version_from_exe_string(settings["path_exe"])
+        #TODO Update so it doens't overwrite the next-in excel file. Create prompt in GUI for input file name.
+        next_in.Next_In(next_in_path, save_path, ses_version)
+        settings["ses_output_str"][0] = str(next_in_path.with_suffix('.inp'))
+    if settings["file_type"] in ["input_file","next_in"]:
         msg = "Running SES Simulation for " + Path(settings["ses_output_str"][0]).name
         run_msg(gui, msg)
         success = run_SES(settings["path_exe"], settings["ses_output_str"][0], gui)
@@ -87,44 +95,6 @@ def single_sim(settings, gui=""):
                 + file_name
                 + ". Try closing the and process again",
             )
-
-#Multiple_Sim is an older code for concurrent processing before the process monitor was added in 2023-04, 1.30
-#Function is kept for reference if errors occur with newer concurrent process
-
-def multiple_sim(settings, gui=""):
-    num_files = len(settings["ses_output_str"])
-    if num_files == 0:
-        run_msg(gui, "No output files found")
-    elif num_files == 1:  # Catch if there is only file
-        run_msg(gui, "Started multiple files processing with only one simulation")
-        settings["ses_output_str"] = settings["ses_output_str"][0]
-        single_sim(settings)
-    else:
-        # Use all processors except 1
-        num_of_p = max(multiprocessing.cpu_count() - 1, 1)  
-        num_of_p = min(num_of_p, num_files)
-        run_msg(
-            gui,
-            "Processing "
-            + str(num_files)
-            + " SES Output files using "
-            + str(num_of_p)
-            + " threads",
-        )
-        # TODO Add messages to GUI when processing multiple files, with multiple processors
-        run_msg(
-            gui,
-            "Status window doesn't monitor post-processing on multiple threads.\nSee terminal window and Windows's Task Manager to watch progress.",
-        )
-        pool = multiprocessing.Pool(num_of_p, maxtasksperchild=1)
-        for name in settings["ses_output_str"]:
-            # Reference2 code for multiprocess https://pymotw.com/2/multiprocessing/basics.html
-            # Another code for multiprocessing https://stackoverflow.com/questions/20886565/using-multiprocessing-process-with-a-maximum-number-of-simultaneous-processes
-            single_settings = copy.copy(settings) #May not be needed after updates to NV_Visio uses file.stem instead of ses_output_str
-            single_settings["ses_output_str"] = [name]
-            pool.apply_async(single_sim, args=(single_settings,))
-        pool.close()
-        pool.join()
 
 def run_msg(gui, text):
     if gui != "":
@@ -197,10 +167,17 @@ def average_or_compare_call_ses(settings, ses_output, gui=""):
         ses_output = 'Simulation failed'
         return False
 
+def ses_version_from_exe_string(path):
+    executable_name = Path(path).name
+    if executable_name.lower() in ["ses41.exe","openses.exe"]:
+        version = "IP"
+    else:
+        version = "SI"
+    return version
 
 if __name__ == "__main__":
-    directory_str = "C:\\simulations\\Next-Vis 1p21\\SI Samples\\"
-    ses_output_list = directory_str + "sinorm.inp"
+    directory_str = "C:\\simulations\\Iterations\\"
+    ses_output_list = directory_str + "Next Iteration Sheet Rev07.xlsx"
     settings = {
         "ses_output_str": [ses_output_list],
         "results_folder_str": None,
@@ -209,7 +186,7 @@ if __name__ == "__main__":
         "conversion": "",
         "control": "First",
         "output": ["Excel"],
-        "file_type": "input_file",
-        "path_exe": "C:\\simulations\\_EXE\\SVSV6_32.exe"
+        "file_type": "next_in",
+        "path_exe": "C:\\simulations\\_EXE\\SESV6_32.exe"
     }
     single_sim(settings)

@@ -30,7 +30,6 @@ STATUS_FONT_COLOR = {
     'Failed':'red'
 }
 
-
 def single_process(file_path, process_settings, settings, queued_list, processing_dictionary, done_list, pause_value,):
     pause_check(pause_value)
     # Prepare to monitor process status
@@ -418,26 +417,33 @@ class App(tk.Tk):
         window.grab_set()
 
 if __name__ == "__main__":
-    one_output_file = ['C:/Simulations/Demonstration/SI Samples/siinfern-detailed.out']
-    two_output_files = ['C:/Simulations/Demonstration/SI Samples/siinfern-detailed.out', 'C:/Simulations/Demonstration/SI Samples/sinorm-detailed.out']
-    many_output_files = ['C:/Simulations/Demonstration/SI Samples\\coolpipe.out', 'C:/Simulations/Demonstration/SI Samples\\siinfern-detailed.out', 'C:/Simulations/Demonstration/SI Samples\\siinfern.out', 'C:/Simulations/Demonstration/SI Samples\\sinorm-detailed.out', 'C:/Simulations/Demonstration/SI Samples\\sinorm.out', 'C:/Simulations/Demonstration/SI Samples\\Test02R01.out', 'C:/Simulations/Demonstration/SI Samples\\Test06.out']
-    many_output_files.remove('C:/Simulations/Demonstration/SI Samples\\Test02R01.out') #Takes too long to compute
-    #If using input file, change 'file_type' value to 'input_file
-    one_input_file = ['C:/Simulations/Demonstration/SI Samples/siinfern-detailed.inp']
-    two_input_files = ['C:/Simulations/Demonstration/SI Samples/siinfern-detailed.inp', 'C:/Simulations/Demonstration/SI Samples/sinorm-detailed.inp']
-    many_input_files = ['C:/Simulations/Demonstration/SI Samples\\coolpipe.inp', 'C:/Simulations/Demonstration/SI Samples\\siinfern-detailed.inp', 'C:/Simulations/Demonstration/SI Samples\\siinfern.inp', 'C:/Simulations/Demonstration/SI Samples\\sinorm-detailed.inp', 'C:/Simulations/Demonstration/SI Samples\\sinorm.inp', 'C:/Simulations/Demonstration/SI Samples\\Test02R01.inp', 'C:/Simulations/Demonstration/SI Samples\\Test06.inp']
-    many_input_files.remove('C:/Simulations/Demonstration/SI Samples\\Test02R01.inp') #Takes too long to compute
+    testing = "next_in_iterations"
+    if testing is not "next_in_iterations":
+        one_output_file = ['C:/Simulations/Demonstration/SI Samples/siinfern-detailed.out']
+        two_output_files = ['C:/Simulations/Demonstration/SI Samples/siinfern-detailed.out', 'C:/Simulations/Demonstration/SI Samples/sinorm-detailed.out']
+        many_output_files = ['C:/Simulations/Demonstration/SI Samples\\coolpipe.out', 'C:/Simulations/Demonstration/SI Samples\\siinfern-detailed.out', 'C:/Simulations/Demonstration/SI Samples\\siinfern.out', 'C:/Simulations/Demonstration/SI Samples\\sinorm-detailed.out', 'C:/Simulations/Demonstration/SI Samples\\sinorm.out', 'C:/Simulations/Demonstration/SI Samples\\Test02R01.out', 'C:/Simulations/Demonstration/SI Samples\\Test06.out']
+        many_output_files.remove('C:/Simulations/Demonstration/SI Samples\\Test02R01.out') #Takes too long to compute
+        #If using input file, change 'file_type' value to 'input_file
+        one_input_file = ['C:/Simulations/Demonstration/SI Samples/siinfern-detailed.inp']
+        two_input_files = ['C:/Simulations/Demonstration/SI Samples/siinfern-detailed.inp', 'C:/Simulations/Demonstration/SI Samples/sinorm-detailed.inp']
+        many_input_files = ['C:/Simulations/Demonstration/SI Samples\\coolpipe.inp', 'C:/Simulations/Demonstration/SI Samples\\siinfern-detailed.inp', 'C:/Simulations/Demonstration/SI Samples\\siinfern.inp', 'C:/Simulations/Demonstration/SI Samples\\sinorm-detailed.inp', 'C:/Simulations/Demonstration/SI Samples\\sinorm.inp', 'C:/Simulations/Demonstration/SI Samples\\Test02R01.inp', 'C:/Simulations/Demonstration/SI Samples\\Test06.inp']
+        many_input_files.remove('C:/Simulations/Demonstration/SI Samples\\Test02R01.inp') #Takes too long to compute
+        ses_output_list = one_output_file
+    else:
+        directory_str = "C:\\simulations\\Iterations\\"
+        ses_output_list = [directory_str + "Next Iteration Sheet Rev08.xlsx"]
     settings_from_above = {
-        'ses_output_str': one_output_file, 
+        'ses_output_str': ses_output_list, 
         'visio_template': 'C:/Simulations/Demonstration/Next Vis Samples1p21.vsdx', 
         'results_folder_str': 'C:/Simulations/1p30 Testing', 
         'simtime': -1, 
         'conversion': '', 
         'control': 'First', 
         'output': ['Excel', 'Visio', '', '', 'Route', '', '', '', ''], 
-        'file_type': '', #If using input file, change 'file_type' value to 'input_file
-        'path_exe': 'C:/Simulations/_Exe/SESV6_32.exe'}
-    settings_to_debug = {'ses_output_str': ['C:/Simulations/1p30 Tests/SI Samples\\sinorm-detailed.inp', 'C:/Simulations/1p30 Tests/SI Samples\\sinorm.inp'], 'visio_template': 'C:/Simulations/1p30 Tests/Next Vis Samples1p21.vsdx', 'results_folder_str': 'C:/Simulations/1p30 Tests/2023-04-27 Results', 'simtime': -1, 'conversion': '', 'control': 'First', 'output': ['Excel', 'Visio', '', '', '', '', '', '', ''], 'file_type': 'input_file', 'path_exe': 'C:/Simulations/_Exe/SESV6_32.exe'}
+        'file_type': 'next_in', #If using input file, change 'file_type' value to 'input_file
+        'path_exe': 'C:/Simulations/_Exe/SESV6_32.exe',
+        'iteration_worksheets':['Iteration']
+        }
     settings = settings_from_above
     app = App(settings)
     app.mainloop()

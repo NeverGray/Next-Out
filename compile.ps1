@@ -13,5 +13,8 @@ Copy-Item "C:\Users\msn\OneDrive - Never Gray\Software Development\Next-Vis\Pyth
 Set-Location c:\bin\code
 #Below is code before update from 7 to 8 of pyarmor
 #pyarmor pack -e "--clean --onefile  --icon Icon4.ico --exclude matplotlib --exclude scipy --exclude unittest" main.py
-pyarmor-7 pack -e "--noconsole --onefile  --icon Icon4.ico --exclude matplotlib --exclude scipy --exclude unittest" main.py
+#pyarmor-7 pack -e "--noconsole --onefile  --icon Icon4.ico --exclude matplotlib --exclude scipy --exclude unittest" main.py
+#Below is the newer code to try packing the install
+pyinstaller -F main.py --noconsole --onefile  --icon Icon4.ico --exclude matplotlib --exclude scipy --exclude unittest
+pyarmor gen -O obfdist --pack dist/main.exe main.py
 Copy-Item "C:\bin\code\dist\main.exe" "C:\Simulations\_Exe"
