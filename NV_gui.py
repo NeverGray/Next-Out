@@ -24,7 +24,7 @@ class Start_Screen(tk.Tk):
         p = "5"  # padding
         py = "5"  # vertical padding
         px = "5"
-        self.title("Next-Vis " + VERSION_NUMBER)
+        self.title("Next-Sim " + VERSION_NUMBER)
         # Call a function before closing the window.  See https://stackoverflow.com/questions/49220464/passing-arguments-in-tkinters-protocolwm-delete-window-function-on-python
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         try:
@@ -436,6 +436,7 @@ class Start_Screen(tk.Tk):
             # Check validity of license
             if self.valid_license():
                 try:
+                    #If only performing one individual simulation
                     if len(self.settings['ses_output_str']) == 1 or ("Average" in pp_list) or ("Compare" in pp_list):
                         nvr.single_sim(self.settings, gui=self)
                         self.gui_text("Post processing completed.\n")

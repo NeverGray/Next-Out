@@ -8,12 +8,11 @@ import pandas as pd
 
 
 class Next_In():
-    def __init__(self, next_in_path, save_path, ses_version, iteration_sheet=""):
+    def __init__(self, next_in_path, save_path, ses_version):
         # Read in next-in excel to a dataframe
         self.ses_version = ses_version
         self.save_path = save_path
         self.next_in_path = next_in_path
-        self.iteration_sheet = iteration_sheet
         self.copy_then_read()
         #Create blank dataframe with 8 columns
         self.input_df = pd.DataFrame()
@@ -21,9 +20,6 @@ class Next_In():
            self.input_df.insert(i,i,np.nan)
         #Create empty list to collect map data 
         self.map_list =[]
-        self.create_input_from_next_in()
-        
-    def create_input_from_next_in(self):
         self.form_01()
         self.form_01_variables()
         self.form_02()
@@ -42,11 +38,11 @@ class Next_In():
         self.form_13()
         self.form_14()
         self.create_base_string()
-        if self.iteration_sheet == "":
-            self.save_base_file_as_input()
-        else:
-            self.create_map_df()
-            self.iteration()
+
+    def create_iterations(self,iteration_worksheet_name):
+        self.create_map_df()
+        list_of_input_paths = self.iteration(iteration_worksheet_name)
+        return list_of_input_paths
     
     def copy_then_read(self):
         copy_of_file = shutil.copyfile(self.next_in_path, self.next_in_path.parent/'next-vis.tmp')
@@ -698,9 +694,9 @@ class Next_In():
         return formated_entry
     
     #Used to save base file as input
-    def save_base_file_as_input(self):
-        base_file_name = self.next_in_path.with_suffix(".inp")  
-        with open(base_file_name, 'w') as f:
+    def save_base_file_as_input(self, file_path):
+        input_file_path = file_path.with_suffix(".inp")  
+        with open(input_file_path, 'w') as f:
             f.write(self.base_string)
 
     #Used if trouble shooting is needed between file creation and formatting
@@ -710,9 +706,9 @@ class Next_In():
         with open(input_path_df_to_text,'w') as f:
             f.write(input_string)
 
-    def iteration(self):
+    def iteration(self, iteration_worksheet_name):
         #Read in the iteration input data into a data frame
-        worksheet_df = self.read_worksheet(self.iteration_sheet)
+        worksheet_df = self.read_worksheet(iteration_worksheet_name)
         start_row = 5
         #Set the row limit to the last row with a valid file name
         row_limit = worksheet_df.iloc[:,1].last_valid_index()
@@ -769,16 +765,42 @@ class Next_In():
             save_name = self.save_path / input_file_name
             self.save_string_as_input(modified_string, save_name)
             input_paths_list.append(save_name)
+            input_string_list = self.paths_to_strings(input_paths_list)
+        return input_string_list
+    
+    def paths_to_strings(self, path_list):
+        string_list = []
+        for path in path_list:
+            string_list.append(str(path))
+        return string_list
 
     def save_string_as_input(self, string, save_name):
         with open(save_name, 'w') as f:
             f.write(string)
 
+def run_iterations(next_in_path, save_path, ses_version='SI'):
+    next_in = Next_In(next_in_path, save_path, ses_version='SI')
+    input_string_list = next_in.create_iterations("Iteration")
+    settings = {
+        'ses_output_str': input_string_list, 
+        'visio_template': 'C:/Simulations/Demonstration/Next Vis Samples1p21.vsdx', 
+        'results_folder_str': str(save_path), 
+        'simtime': -1, 
+        'conversion': '', 
+        'control': 'First', #TODO adjust 'control' for "Next-In" input
+        'output': ['Excel', '', '', '', '', '', '', '', ''], 
+        'file_type': 'input_file', #If using input file, change 'file_type' value to 'input_file
+        'path_exe': 'C:/Simulations/_Exe/SESV6_32.exe',
+        }
+    #Attempt to launch monitor and processing
+    import NV_process_and_monitor_files as nvpm
+    app = nvpm.App(settings)
+    app.mainloop()
+    print('app.mainloop finished')
+
 if __name__ == "__main__":
-    #TODO - How to determine version of Input File? (SI or IP)
-    directory_string = "C:\\Users\\msn\\OneDrive - Never Gray\\Software Development\\Next-Vis\\_Tasks\\Next-Sim Update\\Iterations\\"
-    directory_string_IP = "C:\\Users\\msn\\OneDrive - Never Gray\\Software Development\\Next-Vis\\_Tasks\\Next-Sim Update\\InputTesting for IP\\"
-    next_in_file_names = [
+    ses_version = 'SI'
+    next_in_text_files = [
         'Test01.xlsm',
         'Test02R01.xlsm',
         'Test03.xlsm',
@@ -788,7 +810,7 @@ if __name__ == "__main__":
         'Test07.xlsm',
         'Test08.xlsm'
     ]
-    next_in_file_names_IP = [
+    next_in_text_files_IP = [
         'inferno-detailed.xlsm',
         'normal-detailed.xlsm',
         'TestIP01.xlsm',
@@ -798,11 +820,12 @@ if __name__ == "__main__":
         'TestIP05R01.xlsm',
         'TestIP06.xlsm'
     ]
-    file_name = 'Next Iteration Sheet Rev07.xlsx'
-    #for file_name in next_in_file_names_IP:
+    directory_string = "C:\\simulations\\Iterations\\"
+    file_name = 'Next Iteration Sheet Rev08.xlsx'
+    if ses_version == 'IP':
+        directory_string = "C:\\Users\\msn\\OneDrive - Never Gray\\Software Development\\Next-Vis\\_Tasks\\Next-Sim Update\\InputTesting for IP\\"
     path_string = directory_string + file_name
     next_in_path = Path(path_string)
     save_path = Path(directory_string)
-    print(f'Reading file from Excel File {file_name}.')
-    next_in = Next_In(next_in_path, save_path, ses_version='SI')
-    print(f'Wrote {save_path.name}.')
+    run_iterations(next_in_path, save_path, ses_version)
+    #next_in = Next_In(next_in_path, save_path, ses_version='SI')

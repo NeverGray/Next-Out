@@ -47,9 +47,11 @@ def single_sim(settings, gui=""):
         next_in_path = Path(settings["ses_output_str"][0])
         save_path = next_in_path.parent
         ses_version = ses_version_from_exe_string(settings["path_exe"])
-        #TODO Update so it doens't overwrite the next-in excel file. Create prompt in GUI for input file name.
-        next_in.Next_In(next_in_path, save_path, ses_version)
-        settings["ses_output_str"][0] = str(next_in_path.with_suffix('.inp'))
+        next_in_instance = next_in.Next_In(next_in_path, save_path, ses_version)
+        next_in_input_path = Path(settings["ses_output_str"][0]).parent / settings["input_file_name"]
+        next_in_input_path = next_in_input_path.with_suffix('.inp')
+        next_in_instance.save_base_file_as_input(next_in_input_path)
+        settings["ses_output_str"][0] = str(next_in_input_path)
     if settings["file_type"] in ["input_file","next_in"]:
         msg = "Running SES Simulation for " + Path(settings["ses_output_str"][0]).name
         run_msg(gui, msg)
@@ -177,7 +179,7 @@ def ses_version_from_exe_string(path):
 
 if __name__ == "__main__":
     directory_str = "C:\\simulations\\Iterations\\"
-    ses_output_list = directory_str + "Next Iteration Sheet Rev07.xlsx"
+    ses_output_list = directory_str + "Next Iteration Sheet Rev08.xlsx"
     settings = {
         "ses_output_str": [ses_output_list],
         "results_folder_str": None,
@@ -187,6 +189,7 @@ if __name__ == "__main__":
         "control": "First",
         "output": ["Excel"],
         "file_type": "next_in",
-        "path_exe": "C:\\simulations\\_EXE\\SESV6_32.exe"
+        "path_exe": "C:\\simulations\\_EXE\\SESV6_32.exe",
+        "input_file_name":"testing input"
     }
     single_sim(settings)
