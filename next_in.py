@@ -698,6 +698,7 @@ class Next_In():
         input_file_path = file_path.with_suffix(".inp")  
         with open(input_file_path, 'w') as f:
             f.write(self.base_string)
+        return input_file_path
 
     #Used if trouble shooting is needed between file creation and formatting
     def save_unformatted_input_file(self):

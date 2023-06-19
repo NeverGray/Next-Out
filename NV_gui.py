@@ -9,6 +9,7 @@ from sys import exit as system_exit
 from tkinter import filedialog, messagebox, ttk
 
 import keygen
+import next_in
 import NV_file_manager as nfm
 import NV_process_and_monitor_files as nvpm
 import NV_run as nvr
@@ -57,7 +58,6 @@ class Start_Screen(tk.Tk):
             frm_pp, text="Visio", variable=self.cbo_visio, onvalue="Visio", offvalue="",
             command=self.update_post_processing_options
         )
-        #TODO Erase
         cb_route = ttk.Checkbutton(
             frm_pp, text="Route Data", variable=self.cbo_route, onvalue="Route", offvalue=""
         )
@@ -93,54 +93,104 @@ class Start_Screen(tk.Tk):
         analysis_label.grid(column=0, row=40, sticky='W', pady=py)
         # SES Files to Process
         frm_ses = ttk.LabelFrame(
-            self.ss, borderwidth=5, text="SES Files to Process", padding=p
+            self.ss, borderwidth=5, text="Files to Process", padding=p
         )
-        file_type = ttk.Label(frm_ses, text="Type:")
+        #Create a seperate frame to pack input, output, next-in radio buttons
         frm_input_output= ttk.Frame(frm_ses)
-        rb_input_files = ttk.Radiobutton(frm_input_output, text= "Input      ", variable=self.file_type, value="input_file", command=self.update_ses_exe)
-        rb_output_files = ttk.Radiobutton(frm_input_output, text="Output     ", variable=self.file_type, value="output_file", command=self.update_ses_exe)
+        file_type = ttk.Label(frm_input_output, text="File Type to Process: ")
+        rb_input_files = ttk.Radiobutton(frm_input_output, text= "SES Input      ", variable=self.file_type, value="input_file", command=self.update_frm_ses_exe)
+        rb_output_files = ttk.Radiobutton(frm_input_output, text="SES Output     ", variable=self.file_type, value="output_file", command=self.update_frm_ses_exe)
+        rb_next_in_files = ttk.Radiobutton(frm_input_output, text="Next-In        ", variable=self.file_type, value="next_in", command=self.update_frm_ses_exe)
         rb_file = ttk.Radiobutton(frm_ses, text="", variable=self.ses, value="File", command=self.update_output_options)
         rb_files = ttk.Radiobutton(frm_ses, text="", variable=self.ses, value="Files", command=self.update_output_options)
         rb_folder = ttk.Radiobutton(frm_ses, text="", variable=self.ses, value="Folder", command=self.update_output_options)
         self.btn_file = ttk.Button(frm_ses, text="One file", command=self.single_file)
         self.btn_files = ttk.Button(frm_ses, text="Many files", command=self.ses_files)
         self.btn_folder = ttk.Button(frm_ses, text="Folder", command=self.ses_folder)
-        ent_file = ttk.Entry(frm_ses, textvariable=self.path_file)
-        ent_files = ttk.Entry(frm_ses, textvariable=self.path_files)
-        ent_folder = ttk.Entry(frm_ses, textvariable=self.path_folder)
+        self.ent_file = ttk.Entry(frm_ses, textvariable=self.path_file)
+        self.ent_files = ttk.Entry(frm_ses, textvariable=self.path_files)
+        self.ent_folder = ttk.Entry(frm_ses, textvariable=self.path_folder)
         # SES Files Frame creation
         r = 0
         frm_ses.grid(column=0, row=r)
-        file_type.grid(column=0,row=r)
-        #rb_input_files.grid(column=2, row=r, sticky=['W'], pady=py, padx="0")
-        #rb_output_files.grid(column=3, row=r, sticky=['W'], pady=py, padx="0")
+        frm_input_output.grid(column=0, row=r, columnspan=3, sticky=['W'], pady=py, padx="0")
+        file_type.pack(side="left")
         rb_input_files.pack(side="left")
         rb_output_files.pack(side="left")
-        frm_input_output.grid(column=2, row=r, sticky=['W'], pady=py, padx="0")
+        rb_next_in_files.pack(side="left")
         r = 9
         rb_file.grid(column=0, row=r, sticky=['W'], pady=py, padx="0")
         self.btn_file.grid(column=1, row=r, sticky=['W'], pady=py, padx=px)
-        ent_file.grid(column=2, row=r, columnspan=2, sticky=['EW'], pady=py, padx=px)
+        self.ent_file.grid(column=2, row=r, columnspan=2, sticky=['EW'], pady=py, padx=px)
         r = 10
         rb_files.grid(column=0, row=r, sticky=['W'], pady=py, padx="0")
         self.btn_files.grid(column=1, row=r, sticky=['W'], pady=py, padx=px)
-        ent_files.grid(column=2, row=r, columnspan=2, sticky=['EW'], pady=py, padx=px)
+        self.ent_files.grid(column=2, row=r, columnspan=2, sticky=['EW'], pady=py, padx=px)
         r = 20
         rb_folder.grid(column=0, row=r, sticky=['W'], pady=py, padx="0")
         self.btn_folder.grid(column=1, row=r, sticky=['W'], pady=py, padx=px)
-        ent_folder.grid(column=2, row=r, columnspan=2, sticky=['EW'], pady=py, padx=px)
+        self.ent_folder.grid(column=2, row=r, columnspan=2, sticky=['EW'], pady=py, padx=px)
         frm_ses.columnconfigure(2, weight=1)
         # SES Executable for input files
         self.frm_ses_exe = ttk.LabelFrame(
-            self.ss, borderwidth=5, text="SES Executable (for input files)", padding=p
+            self.ss, borderwidth=5, text="SES Executable (for input files or Next-In)", padding=p
         )
         self.btn_exe = ttk.Button(self.frm_ses_exe, text="SES EXE", command=lambda: self.single_file('EXE'))
-        ent_file_exe = ttk.Entry(self.frm_ses_exe, textvariable=self.path_exe, )
+        self.ent_file_exe = ttk.Entry(self.frm_ses_exe, textvariable=self.path_exe, )
         # SES Executable Frame Creation
         r = 0
         self.btn_exe.grid(column=0, row=r, sticky=['W'], pady=py, padx=px)
-        ent_file_exe.grid(column=1, row=r, sticky=['WE'], columnspan=2)
+        self.ent_file_exe.grid(column=1, row=r, sticky=['WE'], columnspan=2)
         self.frm_ses_exe.columnconfigure(2,weight=1)
+        
+        # Next-In Options
+        self.frm_next_in = ttk.LabelFrame(self.ss, borderwidth=5, text="Next-In Options", padding=p)
+        #Create a seperate frame to pack of ses_version
+        frm_ses_version = ttk.Frame(self.frm_next_in)
+        ses_version = ttk.Label(frm_ses_version, text="SES Version: ")
+        rb_ses_version_SI = ttk.Radiobutton(frm_ses_version , text= "SI   ", variable=self.next_in_ses_version, value="SI")
+        rb_ses_version_IP = ttk.Radiobutton(frm_ses_version , text= "IP             ", variable=self.next_in_ses_version, value="IP")
+        label_run_ses_next_in = ttk.Label(frm_ses_version , text="Run SES: ")
+        cb_run_ses_next_in = ttk.Checkbutton(
+            frm_ses_version, text="", variable=self.cbo_run_ses_next_in, onvalue="run_ses", offvalue="", command=self.update_frm_ses_exe
+        )
+        frm_single_file = ttk.Frame(self.frm_next_in)
+        rb_single_file = ttk.Radiobutton(frm_single_file, text="Single File, Input File Name: ", variable=self.next_in_option, value="Single_next_in")
+        ent_single_file  = ttk.Entry(frm_single_file, textvariable=self.next_in_single_file_name)
+        rb_iteration = ttk.Radiobutton(self.frm_next_in, text="Multiple Files", variable=self.next_in_option, value="Iterations")
+        label_iteration_1 = ttk.Label(self.frm_next_in, text="      Iteration Worksheet 1:    ")
+        #TODO Enable iteration worksheet 2 and output name
+        label_iteration_2 = ttk.Label(self.frm_next_in, text="      Iteration Worksheet 2:    ")
+        label_output_name = ttk.Label(self.frm_next_in, text="      File name for summary:    ")
+        ent_worksheet_1 = ttk.Entry(self.frm_next_in, textvariable=self.iteration_worksheet_1)
+        ent_worksheet_2 = ttk.Entry(self.frm_next_in, textvariable=self.iteration_worksheet_2)
+        ent_output_name = ttk.Entry(self.frm_next_in, textvariable=self.itereation_output_worksheet)
+                
+        # Next-In Options Frame Creation
+        r = 0
+        frm_ses_version.grid(column=0, row=r, columnspan =2, sticky=['w'], pady=py, padx=px)
+        ses_version.pack(side="left")
+        rb_ses_version_SI.pack(side="left")
+        rb_ses_version_IP.pack(side="left")
+        label_run_ses_next_in.pack(side="left")
+        cb_run_ses_next_in.pack(side="right")
+        r = 5
+        frm_single_file.grid(column=0, row=r, columnspan =2, sticky=['w'], pady=py, padx=px)
+        rb_single_file.pack(side="left")
+        ent_single_file.pack(side="right")
+        r = 10
+        rb_iteration.grid(column=0, row=r, sticky=['W'], pady=py, padx=px)
+        r = 20
+        label_iteration_1.grid(column=0, row = r, sticky=['W'], pady=py, padx=px)
+        ent_worksheet_1.grid(column=1, row=r, sticky=['W'], pady=py, padx=px)
+        r = 30
+        #Future options for iteration sheet 2 and output
+        #label_iteration_2.grid(column=0, row = r, sticky=['W'], pady=py, padx=px)
+        #ent_worksheet_2.grid(column=1, row=r, sticky=['W'], pady=py, padx=px)
+        r = 40
+        label_output_name.grid(column=0, row = r, sticky=['W'], pady=py, padx=px)
+        ent_output_name.grid(column=1, row=r, sticky=['W'], pady=py, padx=px)
+        
         # VISIO Template - Row 1
         self.frm_visio = ttk.LabelFrame(
             self.ss, borderwidth=5, text="Visio Template", padding=p
@@ -181,13 +231,13 @@ class Start_Screen(tk.Tk):
         rb_user_time.grid(column=2, row=r, sticky='W', pady=py)
         self.ent_user_time.grid(column=3, row=r, sticky=['WE'], pady=py)
         self.frm_visio.columnconfigure(3, weight=1)
+        r = 3
+        self.cb_visio_open.grid(column=0, row=r, sticky='W', pady=py)
         r = 4
         lbl_image.grid(column=0, row=r, sticky='W', pady=py)
         cb_pdf.grid(column=1, row=r, sticky='W', pady=py)
         cb_png.grid(column=2, row=r, sticky='W', pady=py)
         cb_svg.grid(column=3, row=r, sticky='W', pady=py)
-        r = 3
-        self.cb_visio_open.grid(column=0, row=r, sticky='W', pady=py)
         # Results Folder widgets
         frm_results_folder = ttk.LabelFrame(self.ss, borderwidth=5, text="Folder to write results", padding=p)
         rb_ses = ttk.Radiobutton(frm_results_folder, text="Same as SES Output", variable=self.results_folder, value="ses output")
@@ -223,6 +273,7 @@ class Start_Screen(tk.Tk):
         # root.rowconfigure(0, weight=1)
         self.ss.grid(column=0, row=0, sticky="EWNS")
         self.ss.columnconfigure(1, weight=1)
+        #TODO Adjust row configure to tightly pack items
         self.ss.rowconfigure(5, weight=1)
         frm_conversion.pack(side='top', fill='x', pady=py, padx=px)
         frm_analysis.pack(side='top', fill='x', pady=py, padx=px)
@@ -230,14 +281,16 @@ class Start_Screen(tk.Tk):
         self.left_column.grid(row=1, column=0, rowspan=3, sticky=['NEW'])
         frm_ses.grid(column=1, row=0, sticky=['NSEW'], pady=py, padx=px)
         self.frm_ses_exe.grid(column=1,row=1, sticky=['NSEW'], pady=py, padx=px)
-        self.frm_visio.grid(column=1, row=2, sticky=['WE'], pady=py, padx=px)
-        frm_results_folder.grid(column=1, row=3, sticky=['WE'], pady=py, padx=px)
-        frm_run.grid(column=0, columnspan=2, row=4, sticky=['WE'], pady=py, padx=px)
-        frm_status.grid(column=0, row=5, columnspan=2, sticky=['WESN'], pady=py, padx=px)
+        self.frm_next_in.grid(column=1,row=2, sticky=['NSEW'], pady=py, padx=px)
+        self.frm_visio.grid(column=1, row=3, sticky=['WE'], pady=py, padx=px)
+        self.frm_visio.grid(column=1, row=3, sticky=['WE'], pady=py, padx=px)
+        frm_results_folder.grid(column=1, row=4, sticky=['WE'], pady=py, padx=px)
+        frm_run.grid(column=0, columnspan=2, row=5, sticky=['WE'], pady=py, padx=px)
+        frm_status.grid(column=0, row=6, columnspan=2, sticky=['WESN'], pady=py, padx=px)
         self.minsize(550, 385)  # Measured using paint.net
         self.update_post_processing_options()
         self.display_validation_info()
-        self.update_ses_exe()
+        self.update_frm_ses_exe()
         self.ss.update()
 
     def load_settings(self, *args):
@@ -263,7 +316,15 @@ class Start_Screen(tk.Tk):
             'self.cbo_png':  'tk.StringVar(value="")',
             'self.cbo_svg':  'tk.StringVar(value="")',
             'self.results_folder':  'tk.StringVar(value="ses output")',
-            'self.path_results_folder':  'tk.StringVar(value="")'
+            'self.path_results_folder':  'tk.StringVar(value="")',
+            'self.next_in_ses_version':  'tk.StringVar(value="SI")',
+            'self.cbo_run_ses_next_in':  'tk.StringVar(value="run_ses")',
+            'self.next_in_option':  'tk.StringVar(value="Iterations")',
+            'self.next_in_single_file_name':  'tk.StringVar(value="")',
+            'self.iteration_worksheet_1':  'tk.StringVar(value="")',
+            'self.iteration_worksheet_2':  'tk.StringVar(value="")',
+            'self.itereation_output_worksheet':'tk.StringVar(value="")',
+            'self.summary_output_name':  'tk.StringVar(value="")'
         }
         for key, value in self.screen_settings.items():
             exec(f'{key} = {value}') 
@@ -332,6 +393,9 @@ class Start_Screen(tk.Tk):
         elif self.file_type.get() == 'input_file':
             filetypes_suffix = [("SES Input", ("*.INP", "*.SES")),]
             title_text = "Select one SES input File"
+        elif self.file_type.get() == 'next_in':
+            filetypes_suffix = [("Excel Spreadsheet", ("*.xlsx", "*.xlsm")),]
+            title_text = "Select one Next-In Spreadsheet"
         else:
             filetypes_suffix = [("SES Output", ("*.PRN", "*.OUT")),]
             title_text ="Select one SES Output File"
@@ -410,6 +474,9 @@ class Start_Screen(tk.Tk):
         pp_list.append(self.cbo_png.get())
         pp_list.append(self.cbo_svg.get())
         pp_list.append(self.cbo_visio_open_option.get())
+        interation_worksheets = []
+        interation_worksheets.append(self.iteration_worksheet_1.get())
+        #interation_worksheets.append(self.iteration_worksheet_2)
         try:
             self.get_ses_file_str()
         except:
@@ -427,19 +494,43 @@ class Start_Screen(tk.Tk):
             "results_folder_str": self.results_folder_str,
             "simtime": -1, #Updated in validation
             "conversion": self.conversion.get(), #Determine what type of conversion is needed
-            "control": "First",
             "output": pp_list,
             "file_type": self.file_type.get(),
-            "path_exe": self.path_exe.get()
+            "path_exe": self.path_exe.get(),
+            "next_in_ses_version" : self.next_in_ses_version.get(),
+            "next_in_option" : self.next_in_option.get(),
+            "next_in_single_file_name": self.next_in_single_file_name.get(),
+            "run_ses_next_in": self.cbo_run_ses_next_in.get(),
+            "iteration_worksheets": interation_worksheets,
+            "summary_output_name": self.summary_output_name.get()
         }
         if self.validation(self.settings):
             # Check validity of license
             if self.valid_license():
                 try:
                     #If only performing one individual simulation
-                    if len(self.settings['ses_output_str']) == 1 or ("Average" in pp_list) or ("Compare" in pp_list):
-                        nvr.single_sim(self.settings, gui=self)
-                        self.gui_text("Post processing completed.\n")
+                    #TODO Check single simualtions are perofrmed with next_in
+                    if self.settings['file_type'] != "next_in":
+                        if len(self.settings['ses_output_str']) == 1 or ("Average" in pp_list) or ("Compare" in pp_list):
+                            nvr.single_sim(self.settings, gui=self)
+                            self.gui_text("Post processing completed.\n")
+                    elif self.settings['file_type'] == 'next_in':
+                        if self.settings['next_in_option'] == "Single_next_in":
+                            nvr.single_sim(self.settings, gui=self)
+                            self.gui_text("Post processing completed.\n")
+                        else:
+                            next_in_path = Path(self.settings["ses_output_str"][0])
+                            save_path = Path(self.settings['results_folder_str'])
+                            ses_version = self.settings["next_in_ses_version"]
+                            self.gui_text(f"Creating input files from worksheet {self.settings['iteration_worksheets'][0]}.\n")
+                            next_in_instance = next_in.Next_In(next_in_path, save_path, ses_version)
+                            self.settings["ses_output_str"] = next_in_instance.create_iterations(self.settings['iteration_worksheets'][0])
+                            self.settings["file_type"] = "input_file"
+                            self.gui_text("Processing multiple files, openning monitor window.")
+                            if 'visio_open' in self.settings['output']:
+                                self.settings['output'].remove('visio_open')
+                                self.cbo_visio_open_option.set("")
+                            self.open_monitor_gui()
                     else:
                         # Launch process and monitor files when using multiple files
                         self.gui_text("Processing multiple files, openning monitor window.")
@@ -570,21 +661,42 @@ class Start_Screen(tk.Tk):
         else:
             visio_state = 'disable'
         #Disable all items in a frame: https://www.tutorialspoint.com/how-to-gray-out-disable-a-tkinter-frame
-        for child in self.frm_visio.winfo_children():
-            child.configure(state=visio_state)
+        self.configure_widget_state(self.frm_visio, visio_state)
 
-    def update_ses_exe(self, *args):
-        if self.file_type.get() == "output_file":
-            ses_exe_state = 'disable'
-        else:
+
+    def update_frm_ses_exe(self, *args):
+        multiple_files_state = 'enable'
+        if self.file_type.get() == "input_file":
             ses_exe_state = 'enable'
-        #Disable all items in a frame: https://www.tutorialspoint.com/how-to-gray-out-disable-a-tkinter-frame
-        for child in self.frm_ses_exe.winfo_children():
-            child.configure(state=ses_exe_state)
-        #Set value of variable to be empty if you switch between Input and Output files. 
-        #This prevents accidently running an output file as an input file or vice-versa
-        self.path_file.set("")
-        self.path_files.set("")
+        elif self.file_type.get() == "next_in" and self.cbo_run_ses_next_in.get() == "run_ses":
+            ses_exe_state = 'enable'
+        else:
+            ses_exe_state = 'disable'
+        if self.file_type.get() == "next_in":
+            next_in_state = 'enable'
+            multiple_files_state = 'disable'
+            self.ses.set("File")
+        else:
+            next_in_state = 'disable'
+        self.configure_widget_state(self.frm_ses_exe, ses_exe_state)
+        self.configure_widget_state(self.frm_next_in, next_in_state)
+        #Update file buttons
+        self.btn_files.configure(state=multiple_files_state)
+        self.btn_folder.configure(state=multiple_files_state)
+        self.ent_files.configure(state=multiple_files_state)
+        self.ent_folder.configure(state=multiple_files_state)
+        # Old cold to erase entries
+        #self.path_file.set("")
+        #self.path_files.set("")
+
+    #Change the state of the elements in a frame
+    def configure_widget_state(self, widget, state):
+        widget_class = widget.winfo_class()
+        if widget_class in ('TRadiobutton','TEntry','TCheckbutton', 'TButton', 'TLabel'):
+            widget.configure(state=state)
+        elif 'frame' in widget_class.lower():
+            for child in widget.winfo_children():
+                self.configure_widget_state(child, state)
 
     def on_closing(self):
         title_on_closing = "Quite Next Vis?"
@@ -592,7 +704,6 @@ class Start_Screen(tk.Tk):
         msg_2 = "Click 'No' to exit without saving.\n"
         msg_3 = "Click 'Cancel' to return back to Next-Vis\n"
         msg_all = msg_1 + msg_2 + msg_3
-        #answer = messagebox.askokcancel("Quit", "Do you want to quit Next-Vis?")
         answer = messagebox.askyesnocancel(title=title_on_closing, message = msg_all)
         if answer is None:
             return

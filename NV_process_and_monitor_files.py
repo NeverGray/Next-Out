@@ -416,9 +416,24 @@ class App(tk.Tk):
         window.focus_force()
         window.grab_set()
 
+def prepare_iterations(settings):
+    import next_in
+    next_in_path = Path(settings["ses_output_str"][0])
+    save_path = Path(settings['results_folder_str'])
+    ses_version = settings["next_in_ses_version"]
+    next_in_instance = next_in.Next_In(next_in_path, save_path, ses_version)
+    settings["ses_output_str"] = next_in_instance.create_iterations(settings['iteration_worksheets'])
+    if settings['run_ses_next_in'] == "run_ses":
+        settings["file_type"] = "input_file"
+        app = App(settings)
+        app.mainloop()
+        print('app.mainloop finished')
+    else:
+        settings['output'] = [] #Erase output settings to prevent post-processing
+
 if __name__ == "__main__":
     testing = "next_in_iterations"
-    if testing is not "next_in_iterations":
+    if testing != "next_in_iterations":
         one_output_file = ['C:/Simulations/Demonstration/SI Samples/siinfern-detailed.out']
         two_output_files = ['C:/Simulations/Demonstration/SI Samples/siinfern-detailed.out', 'C:/Simulations/Demonstration/SI Samples/sinorm-detailed.out']
         many_output_files = ['C:/Simulations/Demonstration/SI Samples\\coolpipe.out', 'C:/Simulations/Demonstration/SI Samples\\siinfern-detailed.out', 'C:/Simulations/Demonstration/SI Samples\\siinfern.out', 'C:/Simulations/Demonstration/SI Samples\\sinorm-detailed.out', 'C:/Simulations/Demonstration/SI Samples\\sinorm.out', 'C:/Simulations/Demonstration/SI Samples\\Test02R01.out', 'C:/Simulations/Demonstration/SI Samples\\Test06.out']
@@ -430,21 +445,27 @@ if __name__ == "__main__":
         many_input_files.remove('C:/Simulations/Demonstration/SI Samples\\Test02R01.inp') #Takes too long to compute
         ses_output_list = one_output_file
     else:
-        directory_str = "C:\\simulations\\Iterations\\"
-        ses_output_list = [directory_str + "Next Iteration Sheet Rev08.xlsx"]
+        directory_str = "C:\\simulations\\Next-sim\\"
+        ses_output_list = [directory_str + "Next Iteration Sheet Rev09.xlsx"]
     settings_from_above = {
         'ses_output_str': ses_output_list, 
         'visio_template': 'C:/Simulations/Demonstration/Next Vis Samples1p21.vsdx', 
-        'results_folder_str': 'C:/Simulations/1p30 Testing', 
+        'results_folder_str': 'C:/Simulations/Next-Sim Output', 
         'simtime': -1, 
-        'conversion': '', 
-        'control': 'First', 
-        'output': ['Excel', 'Visio', '', '', 'Route', '', '', '', ''], 
+        'conversion': '',
+        'output': ['Excel','', '', '', '', ''], 
         'file_type': 'next_in', #If using input file, change 'file_type' value to 'input_file
         'path_exe': 'C:/Simulations/_Exe/SESV6_32.exe',
-        'iteration_worksheets':['Iteration']
+        "next_in_ses_version" : "SI",
+        "next_in_single_file_name": 'does not matter',
+        "run_ses_next_in": "run_ses",
+        "iteration_worksheets": "Iteration",
+        "summary_output_name": "blank for now"
         }
     settings = settings_from_above
-    app = App(settings)
-    app.mainloop()
-    print('app.mainloop finished')
+    if testing == "next_in_iterations":
+        prepare_iterations(settings)
+    else:
+        app = App(settings)
+        app.mainloop()
+        print('app.mainloop finished')
