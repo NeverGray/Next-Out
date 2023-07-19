@@ -30,7 +30,7 @@ STATUS_FONT_COLOR = {
     'Failed':'red'
 }
 
-def single_process(file_path, process_settings, settings, queued_list, processing_dictionary, done_list, pause_value,):
+def single_process(file_path, process_settings, settings, queued_list, processing_dictionary, done_list, pause_value, parameter_value_list):
     pause_check(pause_value)
     # Prepare to monitor process status
     name = file_path.stem
@@ -40,7 +40,6 @@ def single_process(file_path, process_settings, settings, queued_list, processin
     process_status = process_settings['process_status_start_values']
     process_status[value_index['name']] = name
     processing_dictionary[pid] = process_status
-
     # Start processing files
     # Perform simulation if necessary
     if process_settings['Simulation']:
@@ -76,6 +75,13 @@ def single_process(file_path, process_settings, settings, queued_list, processin
             process_status[value_index['Read Output']] = "Failed"
             logging.info(f"Error Parsing {name}")
             return
+    if settings['file_type']=="next_in":
+        try:
+            next_in_output = settings['next_in_output']
+            parameter_value_list_for_run = next_in_output.lookup_parameters(data, output_meta_data)
+            parameter_value_list.extend(parameter_value_list_for_run)
+        except:
+            logging.debug(f"Error in extracting iteration output for {name}")
     if process_settings['Visio']:
         pause_check(pause_value)
         try:
@@ -168,6 +174,7 @@ class Manager_Class:
         self.pause_value = self.manager.Value("i",0)
         self.finished = self.manager.Value("i",0)
         self.file_names = self.manager.list()
+        self.parameter_value_list = self.manager.list()
 
 class Monitor_GUI(tk.Toplevel):
     def __init__(self, parent, manager, start_screen_settings):
@@ -314,7 +321,7 @@ class Monitor_GUI(tk.Toplevel):
         with multiprocessing.Pool(num_of_processes) as self.pool:
             self.results = []
             for file_path in self.file_paths:
-                result = self.pool.apply_async(single_process, args=(file_path, self.process_settings, self.settings, self.manager.queued_files, self.manager.processing_dictionary, self.manager.done_files, self.manager.pause_value,))
+                result = self.pool.apply_async(single_process, args=(file_path, self.process_settings, self.settings, self.manager.queued_files, self.manager.processing_dictionary, self.manager.done_files, self.manager.pause_value,self.manager.parameter_value_list))
                 self.results.append(result)
             self.pool.close()
             self.pool.join()
@@ -336,9 +343,15 @@ class Monitor_GUI(tk.Toplevel):
         settings = self.settings
         self.process_settings = {}
         #Determine if an SES Simulation needs to be performed
-        self.process_settings['Simulation'] = settings['file_type']=='input_file'
+        if settings['file_type'] in ['input_file','next_in']:
+            self.process_settings['Simulation'] = True
+        else:
+            self.process_settings['Simulation'] = True
         #Requirement for read_output to be performed
-        self.process_settings['Read Output'] = False
+        if settings['file_type'] == ['next-in']:
+            self.process_settings['Read Output'] = True
+        else:
+            self.process_settings['Read Output'] = False
         #Determine what processes are needed after parsing the file
         post_read_processes = ['Visio','Excel','Route']
         for process_name in post_read_processes:
@@ -423,8 +436,9 @@ def prepare_iterations(settings):
     ses_version = settings["next_in_ses_version"]
     next_in_instance = next_in.Next_In(next_in_path, save_path, ses_version)
     settings["ses_output_str"] = next_in_instance.create_iterations(settings['iteration_worksheets'])
+    settings['next_in_instance'] = next_in_instance
     if settings['run_ses_next_in'] == "run_ses":
-        settings["file_type"] = "input_file"
+        #settings["file_type"] = "input_file"
         app = App(settings)
         app.mainloop()
         print('app.mainloop finished')
@@ -445,8 +459,8 @@ if __name__ == "__main__":
         many_input_files.remove('C:/Simulations/Demonstration/SI Samples\\Test02R01.inp') #Takes too long to compute
         ses_output_list = one_output_file
     else:
-        directory_str = "C:\\simulations\\Next-sim\\"
-        ses_output_list = [directory_str + "Next Iteration Sheet Rev09.xlsx"]
+        directory_str = "C:\\Users\\msn\\OneDrive - Never Gray\\Software Development\\Next-Vis\\_Tasks\\Next-Sim Update\\Output_Summary\\"
+        ses_output_list = [directory_str + "Next Iteration Sheet Rev11.xlsx"]
     settings_from_above = {
         'ses_output_str': ses_output_list, 
         'visio_template': 'C:/Simulations/Demonstration/Next Vis Samples1p21.vsdx', 

@@ -10,6 +10,7 @@ from tkinter import filedialog, messagebox, ttk
 
 import keygen
 import next_in
+import next_in_output
 import NV_file_manager as nfm
 import NV_process_and_monitor_files as nvpm
 import NV_run as nvr
@@ -503,7 +504,9 @@ class Start_Screen(tk.Tk):
             "run_ses_next_in": self.cbo_run_ses_next_in.get(),
             "iteration_worksheets": interation_worksheets,
             "summary_output_name": self.summary_output_name.get()
+            #'next_in_path' is saved after validation
         }
+
         if self.validation(self.settings):
             # Check validity of license
             if self.valid_license():
@@ -519,13 +522,16 @@ class Start_Screen(tk.Tk):
                             nvr.single_sim(self.settings, gui=self)
                             self.gui_text("Post processing completed.\n")
                         else:
+                            #Next-in Iterations
                             next_in_path = Path(self.settings["ses_output_str"][0])
                             save_path = Path(self.settings['results_folder_str'])
                             ses_version = self.settings["next_in_ses_version"]
                             self.gui_text(f"Creating input files from worksheet {self.settings['iteration_worksheets'][0]}.\n")
                             next_in_instance = next_in.Next_In(next_in_path, save_path, ses_version)
+                            self.settings['next_in_path'] = Path(self.settings['ses_output_str'][0])
                             self.settings["ses_output_str"] = next_in_instance.create_iterations(self.settings['iteration_worksheets'][0])
-                            self.settings["file_type"] = "input_file"
+                            next_in_output_instance = next_in_output.Next_In_Output(next_in_instance)
+                            self.settings['next_in_output'] = next_in_output_instance
                             self.gui_text("Processing multiple files, openning monitor window.")
                             if 'visio_open' in self.settings['output']:
                                 self.settings['output'].remove('visio_open')
