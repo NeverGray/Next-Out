@@ -1,0 +1,18 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"[python]": {
+			"editor.defaultFormatter": "ms-python.black-formatter"
+		},
+		"python.formatting.provider": "none",
+		"python.defaultInterpreterPath": "C:\\bin\\python310\\Scripts\\python"
+	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": []
+	}
+}

@@ -5,6 +5,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import openpyxl
 
 
 class Next_In:
@@ -46,17 +47,17 @@ class Next_In:
         return list_of_input_paths
 
     def copy_then_read(self):
-        copy_of_file = shutil.copyfile(
-            self.next_in_path, self.next_in_path.parent / "next-vis.tmp"
-        )
-        self.next_in = pd.read_excel(
-            copy_of_file,
-            sheet_name=None,
-            na_values="",
-            keep_default_na=False,
-            header=None,
-        )
-        os.unlink(copy_of_file)
+        try:
+            self.next_in = pd.read_excel(
+                self.next_in_path,
+                sheet_name=None,
+                na_values="",
+                keep_default_na=False,
+                header=None,
+            )
+            self.next_in_excel = openpyxl.load_workbook(self.next_in_path)
+        except FileNotFoundError:
+            print("File not found. Please provide the correct file path.")
 
     def read_worksheet(self, name):
         worksheet_df = self.next_in[name]
@@ -972,6 +973,7 @@ class Next_In:
         column_titles[0] = "Number"
         column_titles[1] = "File Name"
         self.iteration_input.columns = column_titles
+
         # Set up iteration output worksheet
         column_limit = worksheet_df.iloc[3].last_valid_index() + 1
         self.iteration_output = worksheet_df.iloc[
