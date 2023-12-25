@@ -5,6 +5,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import next_in_output
 import openpyxl
 
 
@@ -14,7 +15,7 @@ class Next_In:
         self.ses_version = ses_version
         self.save_path = save_path
         self.next_in_path = next_in_path
-        self.copy_then_read()
+        self.read_in_next_in()
         # Create blank dataframe with 8 columns
         self.input_df = pd.DataFrame()
         for i in range(0, 8):
@@ -46,7 +47,8 @@ class Next_In:
         list_of_input_paths = self.create_input_from_iteration()
         return list_of_input_paths
 
-    def copy_then_read(self):
+    def read_in_next_in(self):
+        #TODO Add check if file is open in Excel
         try:
             self.next_in = pd.read_excel(
                 self.next_in_path,
@@ -55,7 +57,7 @@ class Next_In:
                 keep_default_na=False,
                 header=None,
             )
-            self.next_in_excel = openpyxl.load_workbook(self.next_in_path)
+            self.next_in_openpyxl = openpyxl.load_workbook(self.next_in_path)
         except FileNotFoundError:
             print("File not found. Please provide the correct file path.")
 
@@ -1011,7 +1013,7 @@ class Next_In:
                     map_column = letter_number - 1
                     map_dictionary[column] = self.map_df.loc[
                         form_name, map_row, map_column
-                    ].values.tolist()[0]
+                    ].values.tolist()
         # Create input files. Split the base_string into lines
         modified_lines = self.base_string.splitlines()
         for _, row in self.iteration_input.iterrows():
