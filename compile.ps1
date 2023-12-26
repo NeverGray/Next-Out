@@ -1,5 +1,5 @@
 Set-Location c:\bin
-.\python310\Scripts\Activate
+.\python311\Scripts\Activate
 Remove-Item "C:\Bin\code\*.py" -Force
 Remove-Item "C:\Bin\code\*.ini" -Force
 Copy-Item "C:\Users\msn\OneDrive - Never Gray\Software Development\Next-Vis\Python2021\*.py" "C:\bin\code\"
@@ -16,5 +16,8 @@ Set-Location c:\bin\code
 #pyarmor-7 pack -e "--noconsole --onefile  --icon Icon4.ico --exclude matplotlib --exclude scipy --exclude unittest" main.py
 #Below is the newer code to try packing the install
 pyinstaller -F main.py --noconsole --onefile  --icon Icon4.ico --exclude matplotlib --exclude scipy --exclude unittest
-pyarmor gen -O obfdist --pack dist/main.exe main.py
+# based on code on https://pyarmor.readthedocs.io/en/latest/tutorial/obfuscation.html
+pyarmor gen -O obfdist --enable-jit --mix-str --assert-call --private --pack dist/main.exe main.py
 Copy-Item "C:\bin\code\dist\main.exe" "C:\Simulations\_Exe"
+Remove-Item -Path "C:\simulations\_exe\Next-Sim Beta10.exe"
+Rename-Item -Path "C:\simulations\_exe\main.exe" -NewName "Next-Sim Beta10.exe"

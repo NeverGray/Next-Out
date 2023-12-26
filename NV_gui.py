@@ -17,7 +17,6 @@ import NV_run as nvr
 from NV_CONSTANTS import VERSION_NUMBER
 from NV_icon5 import Icon
 
-
 # add requirement for program to be legit to run
 class Start_Screen(tk.Tk):
     def __init__(self, license_info):
