@@ -937,7 +937,7 @@ class Next_In:
                 value = "{:.0f}".format(col) + "."
             else:
                 value = col
-            formated_entry = str(value).ljust(10)
+            formated_entry = str(value)[:9].ljust(10) #Formats text within 9 characters
         else:  # line is a string and needs additional spaces
             formated_entry = col.ljust(10)
         return formated_entry
@@ -993,6 +993,7 @@ class Next_In:
         map_dictionary = {}
         input_paths_list = []
         for column in self.iteration_input.columns:
+            print(f"Column value: {column}")
             if not pd.isna(
                 column
             ):  # If there is a value of some kind, check for an equal sign
@@ -1000,7 +1001,7 @@ class Next_In:
                     form_name = column.split("'")[1]
                     excel_rc = column.split("!")[1].replace("$", "")
                     excel_column_letters = re.findall(r"[A-Za-z]", excel_rc)[0]
-                    excel_row = re.findall(r"\d", excel_rc)[0]
+                    excel_row = re.findall(r"\d+", excel_rc)[0]
                     map_row = int(excel_row) - 1
                     # Calculate the column number when there are multiple letters, such as 'AA'
                     letter_number = 0
@@ -1091,8 +1092,8 @@ if __name__ == "__main__":
         "TestIP05R01.xlsm",
         "TestIP06.xlsm",
     ]
-    directory_string = "C:\\simulations\\Iterations\\"
-    file_name = "Next Iteration Sheet Rev08.xlsx"
+    directory_string = "C:\\simulations\\NG03\\"
+    file_name = "Next-In 3p0 Never Gray Way lite.xlsm"
     if ses_version == "IP":
         directory_string = "C:\\Users\\msn\\OneDrive - Never Gray\\Software Development\\Next-Vis\\_Tasks\\Next-Sim Update\\InputTesting for IP\\"
     path_string = directory_string + file_name

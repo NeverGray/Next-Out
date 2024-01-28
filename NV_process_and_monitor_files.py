@@ -537,75 +537,64 @@ def prepare_iterations(settings):
 
 
 if __name__ == "__main__":
-    testing = "next_in_iterations"
-    if testing != "next_in_iterations":
-        one_output_file = [
-            "C:/Simulations/Demonstration/SI Samples/siinfern-detailed.out"
-        ]
-        two_output_files = [
-            "C:/Simulations/Demonstration/SI Samples/siinfern-detailed.out",
-            "C:/Simulations/Demonstration/SI Samples/sinorm-detailed.out",
-        ]
-        three_output_files = [
-            "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/_Tasks/Next-Sim Update/Output_Summary/siinfern_Fire_01-01_140m3s_E.inp",
-            "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/_Tasks/Next-Sim Update/Output_Summary/siinfern_Fire_01-02_140m3s_E.inp",
-            "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/_Tasks/Next-Sim Update/Output_Summary/siinfern_Fire_01-03_140m3s_E.inp",
-        ]
-        many_output_files = [
-            "C:/Simulations/Demonstration/SI Samples\\coolpipe.out",
-            "C:/Simulations/Demonstration/SI Samples\\siinfern-detailed.out",
-            "C:/Simulations/Demonstration/SI Samples\\siinfern.out",
-            "C:/Simulations/Demonstration/SI Samples\\sinorm-detailed.out",
-            "C:/Simulations/Demonstration/SI Samples\\sinorm.out",
-            "C:/Simulations/Demonstration/SI Samples\\Test02R01.out",
-            "C:/Simulations/Demonstration/SI Samples\\Test06.out",
-        ]
-        many_output_files.remove(
-            "C:/Simulations/Demonstration/SI Samples\\Test02R01.out"
-        )  # Takes too long to compute
-        # If using input file, change 'file_type' value to 'input_file
-        one_input_file = [
-            "C:/Simulations/Demonstration/SI Samples/siinfern-detailed.inp"
-        ]
-        two_input_files = [
-            "C:/Simulations/Demonstration/SI Samples/siinfern-detailed.inp",
-            "C:/Simulations/Demonstration/SI Samples/sinorm-detailed.inp",
-        ]
-        many_input_files = [
-            "C:/Simulations/Demonstration/SI Samples\\coolpipe.inp",
-            "C:/Simulations/Demonstration/SI Samples\\siinfern-detailed.inp",
-            "C:/Simulations/Demonstration/SI Samples\\siinfern.inp",
-            "C:/Simulations/Demonstration/SI Samples\\sinorm-detailed.inp",
-            "C:/Simulations/Demonstration/SI Samples\\sinorm.inp",
-            "C:/Simulations/Demonstration/SI Samples\\Test02R01.inp",
-            "C:/Simulations/Demonstration/SI Samples\\Test06.inp",
-        ]
-        many_input_files.remove(
-            "C:/Simulations/Demonstration/SI Samples\\Test02R01.inp"
-        )  # Takes too long to compute
-        ses_output_list = three_output_files
-    else:
-        directory_str = "C:\\Users\\msn\\OneDrive - Never Gray\\Software Development\\Next-Vis\\_Tasks\\Next-Sim Update\\Output_Summary\\"
-        ses_output_list = [directory_str + "Next Iteration Sheet Rev13 lite.xlsx"]
-    settings_from_above = {
-        "ses_output_str": ses_output_list,
-        "visio_template": "C:/Simulations/Demonstration/Next Vis Samples1p21.vsdx",
-        "results_folder_str": "C:/Users/msn/OneDrive - Never Gray/Software Development/Next-Vis/_Tasks/Next-Sim Update/Output_Summary/",
-        "simtime": -1,
-        "conversion": "",
-        "output": ["Excel", "", "", "", "", ""],
-        "file_type": "next_in",  # If using input file, change 'file_type' value to 'input_file
-        "path_exe": "C:/Simulations/_Exe/SESV6_32.exe",
-        "next_in_ses_version": "SI",
-        "next_in_single_file_name": "does not matter",
-        "run_ses_next_in": "run_ses",
-        "iteration_worksheets": "Iteration",
-        "summary_output_name": "blank for now",
+    import next_in
+    import next_in_output
+    # Main code copied from NV_GUi
+    settings={
+        'ses_output_str': ['C:\\Simulations\\2023-12-28\\Next-In 3p1 lite.xlsm'],
+        'visio_template': 'C:/Simulations/1p31 Testing/Next Vis Samples1p21.vsdx',
+        'results_folder_str': 'C:/Simulations/2023-12-28',
+        'simtime': -1,
+        'conversion': '',
+        'output': ['', '', '', '', '', '', '', '', ''], 
+        'file_type': 'next_in',
+        'path_exe': 'C:/Simulations/_Exe/SESV6_32.exe', 
+        'next_in_ses_version': 'SI', 
+        'next_in_option': 'Iterations', 
+        'next_in_single_file_name': 'test001',
+        'run_ses_next_in': 'run_ses', 
+        'iteration_worksheets': ['Iteration'],
+        'summary_name': 'summary',
+        #'next_in_instance': <next_in.Next_In object at 0x000001B92B795BD0>,
+        #'next_in_path': WindowsPath('C:/Simulations/2023-12-28/Next-In 3p1 lite.xlsm'),
+        #'next_in_output': <next_in_output.Next_In_Output object at 0x000001B92DEAAE90>
     }
-    settings = settings_from_above
-    if testing == "next_in_iterations":
-        prepare_iterations(settings)
+    
+    
+    
+    next_in_path = Path(settings["ses_output_str"][0])
+    #Define save path for output files
+    if settings["results_folder_str"] is None: #Keep everything in same folder as ses output
+        save_path = next_in_path.parent
     else:
-        app = App(settings)
-        app.mainloop()
-        print("app.mainloop finished")
+        save_path = Path(settings["results_folder_str"]) #Use specified folder
+    ses_version = settings["next_in_ses_version"]
+    next_in_instance = next_in.Next_In(next_in_path, save_path, ses_version)
+    settings["next_in_instance"] = next_in_instance
+    settings["next_in_path"] = Path(settings["ses_output_str"][0])
+    settings["ses_output_str"] = next_in_instance.create_iterations(
+        settings["iteration_worksheets"][0]
+    )
+    settings["next_in_output"] = next_in_output.Next_In_Output(settings["next_in_instance"])
+    print("Processing multiple files, openning monitor window.")
+    if settings["results_folder_str"] is None: #Keep everything in same folder as ses output
+        save_path = next_in_path.parent
+    else:
+        save_path = Path(settings["results_folder_str"]) #Use specified folder
+    ses_version = settings["next_in_ses_version"]
+    print(f"Creating input files from worksheet {settings['iteration_worksheets'][0]}.\n")
+    next_in_instance = next_in.Next_In(
+        next_in_path, save_path, ses_version
+    )
+    settings["next_in_instance"] = next_in_instance
+    settings["next_in_path"] = Path(settings["ses_output_str"][0])
+    settings["ses_output_str"] = next_in_instance.create_iterations(
+        settings["iteration_worksheets"][0]
+    )
+    settings["next_in_output"] = next_in_output.Next_In_Output(settings["next_in_instance"])
+    print("Processing multiple files, openning monitor window.")
+    print(settings)
+    #Start window
+    app = App(settings)
+    app.mainloop()
+    print("app.mainloop finished")

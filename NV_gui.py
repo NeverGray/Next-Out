@@ -708,6 +708,7 @@ class Start_Screen(tk.Tk):
                             self.gui_text("Post processing completed.\n")
                     elif self.settings["file_type"] == "next_in":
                         if self.settings["next_in_option"] == "Single_next_in":
+                            # TODO May have issue with result folder being none
                             nvr.single_sim(self.settings, gui=self)
                             self.gui_text("Post processing completed.\n")
                         else:

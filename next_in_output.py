@@ -6,6 +6,7 @@ import next_in
 import NV_CONSTANTS
 import NV_parser
 import openpyxl
+import logging
 
 TIME_SEGMENT = ["SSA", "SA"]
 TIME_SEGMENT_SUB = ["SST", "ST", "PER"]
@@ -63,32 +64,37 @@ class Next_In_Output:
         parameter_value_list = []
         if row_number > -1:  # That means if found a run with the same name
             for parameter_column, lookup in self.parameters_dict.items():
-                df_name = lookup["df"]
-                if df_name in COMBINED_TIME:
-                    # Get columns numbers where value for lookup data is located
-                    time_column = lookup["Time"]
-                    segment_column = lookup["Segment"]
-                    parameter_name = lookup["parameter"]
-                    # Get the values of looked up data
-                    time_value = self.iteration_output.iloc[row_number, time_column]
-                    segment_value = self.iteration_output.iloc[
-                        row_number, segment_column
-                    ]
-                    # Get additioanl values for sub-segement, if needed
-                    if df_name in TIME_SEGMENT:
-                        parameter_value = d[df_name].loc[time_value, segment_value][
-                            parameter_name
+                try:
+                    df_name = lookup["df"]
+                    if df_name in COMBINED_TIME:
+                        # Get columns numbers where value for lookup data is located
+                        time_column = lookup["Time"]
+                        segment_column = lookup["Segment"]
+                        parameter_name = lookup["parameter"]
+                        # Get the values of looked up data
+                        time_value = self.iteration_output.iloc[row_number, time_column]
+                        segment_value = self.iteration_output.iloc[
+                            row_number, segment_column
                         ]
-                    elif df_name in TIME_SEGMENT_SUB:
-                        sub_column = lookup["Sub"]
-                        sub_value = self.iteration_output.iloc[row_number, sub_column]
-                        parameter_value = d[df_name].loc[
-                            time_value, segment_value, sub_value
-                        ][parameter_name]
-                    # Lookup value
-                    parameter_value_list.append(
-                        [row_number, parameter_column, parameter_value]
-                    )
+                        # Get additional values for sub-segement, if needed
+                        #TODO Add check if time value is valid (not Nan)
+                        if df_name in TIME_SEGMENT:
+                            #TODO Check if time value is available
+                            parameter_value = d[df_name].loc[time_value, segment_value][
+                                parameter_name
+                            ]
+                        elif df_name in TIME_SEGMENT_SUB:
+                            sub_column = lookup["Sub"]
+                            sub_value = self.iteration_output.iloc[row_number, sub_column]
+                            parameter_value = d[df_name].loc[
+                                time_value, segment_value, sub_value
+                            ][parameter_name]
+                        # Lookup value
+                        parameter_value_list.append(
+                            [row_number, parameter_column, parameter_value]
+                        )
+                except:
+                    logging.debug(f"Error in next_in_output.lookup parameters for run {run_name}")
         return parameter_value_list
 
     def write_summary(self):
