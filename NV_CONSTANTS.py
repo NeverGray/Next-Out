@@ -23,7 +23,7 @@ COLUMN_UNITS={
     "Accel":["m/s^2","mph/s","TRA"],
     "Air_Drag":["kN","lbs","TRA"],
     "Air_Drag_Coeff":["#","#","TRA"],
-    "Tractive_Effort":["N/motor","lbs/mo","TRA"],
+    "Tractive_Effort":["N/motor","lbs/motor","TRA"],
     "Motor_Current":["amps","amps","TRA"],
     "Line_Current":["amps","amps","TRA"],
     "Fly_Wheel":["rpm","rpm","TRA"],

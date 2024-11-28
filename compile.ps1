@@ -19,5 +19,5 @@ pyinstaller -F main.py --noconsole --onefile  --icon Icon4.ico --exclude matplot
 # based on code on https://pyarmor.readthedocs.io/en/latest/tutorial/obfuscation.html
 pyarmor gen -O obfdist --enable-jit --mix-str --assert-call --private --pack dist/main.exe main.py
 Copy-Item "C:\bin\code\dist\main.exe" "C:\Simulations\_Exe"
-Remove-Item -Path "C:\simulations\_exe\Next-Sim Beta10.exe"
-Rename-Item -Path "C:\simulations\_exe\main.exe" -NewName "Next-Sim Beta10.exe"
+Remove-Item -Path "C:\simulations\_exe\Next-Sim Beta11.exe"
+Rename-Item -Path "C:\simulations\_exe\main.exe" -NewName "Next-Sim Beta11.exe"
