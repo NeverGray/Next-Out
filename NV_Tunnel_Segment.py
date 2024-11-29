@@ -22,7 +22,6 @@ def create_form4_truths(output_meta_data, simtime):
     
 ''' Create Truth Table of trains in segments (not sub-segments)'''
 def create_train_truths(output_meta_data, data, simtime):
-    #Next-In 1p13 Check if trains exist at the simtime
     if ('TRA' in data) and ('form9_df' in output_meta_data) and simtime in data['TRA'].index:
         simtime_tra = data['TRA'].loc[simtime]
         # Create default empty series

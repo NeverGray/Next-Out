@@ -6,6 +6,7 @@ import pandas as pd
 
 import NV_CONSTANTS
 import NV_run
+import xlsxwriter
 
 SHEET_NAMES ={
     "SSA" :"Second-by-second Aerodynamic Data (SSA)",
@@ -117,9 +118,9 @@ def create_excel(settings, data, output_meta_data, gui=""):
         NV_run.run_msg(gui, "ERROR writing Excel file "+ excel_results_path.name + ". Try closing file and process again.")
 
 if __name__ == "__main__":
-    file_path_string = "C:/Simulations/SI_TO_IP/sinorm-detailed.out"
+    file_path_string = "C:/Simulations/Testing/SES-119 002.out"
     visio_template = "C:/Simulations/2022-01-22/Next Vis Samples1p21.vsdx"
-    results_folder_str = "C:/Simulations/SI_TO_IP"
+    results_folder_str = "C:/Simulations/Testing"
     settings = {
         "ses_output_str": [file_path_string],
         "visio_template": visio_template,

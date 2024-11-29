@@ -15,7 +15,6 @@ import NV_excel_R01 as nve
 import NV_parser
 import NV_route
 import NV_visio
-from NV_icon5 import Icon
 from NV_CONSTANTS import VERSION_NUMBER
 
 # logging.disable(logging.CRITICAL)
@@ -89,6 +88,7 @@ def single_process(
             process_status[value_index["Read Output"]] = "Failed"
             logging.info(f"Error Parsing {name}")
             return
+    '''  
     if settings["file_type"] == "next_in":
         try:
             # TODO Add if statement to check if there is an iteration sheet
@@ -99,7 +99,8 @@ def single_process(
             parameter_value_list.extend(parameter_value_list_for_run)
             logging.debug(f"Successfully extracted summary output for {name}")
         except:
-            logging.debug(f"Error in extracting summary output for {name}")
+            logging.debug(f"Error in extracting summary output for {name}")'''
+
     if process_settings["Visio"]:
         pause_check(pause_value)
         try:
@@ -210,17 +211,10 @@ class Monitor_GUI(tk.Toplevel):
         self.create_process_settings()  # Create settings for processing
         self.in_progress = True
         p = "5"  # padding
-        self.title("Next-Sim " + VERSION_NUMBER + " Monitor")
+        self.title("Next-Out " + VERSION_NUMBER + " Monitor")
         self.c_width = 15
         self.font_size = 12
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
-        try:
-            with open("tmp.ico", "wb") as tmp:
-                tmp.write(base64.b64decode(Icon().img))
-            self.iconbitmap("tmp.ico")
-            os.remove("tmp.ico")
-        except:
-            icon_value = False
         # Establish base frame to draw monitor
         self.monitor_window = ttk.Frame(self, padding=p, borderwidth=5)
         # Queued List
@@ -396,34 +390,11 @@ class Monitor_GUI(tk.Toplevel):
         messagebox.showinfo(title=title_msg, message=msg_all, parent=self)
         self.destroy()
 
-    def create_summary_sheet(self):
-        print('start here')
-        try:
-            parameter_value_list = self.manager.parameter_value_list
-            #TODO Incorporate line below into Next-In object
-            #work_book = openpyxl.load_workbook(self.settings['next_in_instance'].next_in_path)
-            work_book = self.settings['next_in_instance'].next_in_openpyxl
-            work_sheet = work_book[self.settings['iteration_worksheets'][0]]
-            row_offset = 6
-            column_offset = 1
-            for item in parameter_value_list:
-                row = item[0] + row_offset
-                column = item[1] + column_offset
-                value = item[2]
-                cell = work_sheet.cell(row,column)
-                cell.value = value
-                #cell.data_type = 'n' to set datatype if needed.
-            summary_name_xlsx = self.settings['summary_name'] + ".xlsx"
-            work_book.save(Path(self.settings['ses_output_str'][0]).parent / summary_name_xlsx)
-        except:
-            logging.info(f"Error creating summary sheet")
-
-
     def create_process_settings(self):
         settings = self.settings
         self.process_settings = {}
         # Determine if an SES Simulation needs to be performed
-        if settings["file_type"] in ["input_file", "next_in"]:
+        if settings["file_type"] in ["input_file"]:
             self.process_settings["Simulation"] = True
         else:
             self.process_settings["Simulation"] = True
@@ -511,34 +482,7 @@ class App(tk.Tk):
         window.focus_force()
         window.grab_set()
 
-
-def prepare_iterations(settings):
-    import next_in
-    import next_in_output
-
-    next_in_path = Path(settings["ses_output_str"][0])
-    save_path = Path(settings["results_folder_str"])
-    ses_version = settings["next_in_ses_version"]
-    next_in_instance = next_in.Next_In(next_in_path, save_path, ses_version)
-    settings["ses_output_str"] = next_in_instance.create_iterations(
-        settings["iteration_worksheets"]
-    )
-    settings["next_in_instance"] = next_in_instance
-    settings["next_in_output"] = next_in_output.Next_In_Output(
-        settings["next_in_instance"]
-    )
-    if settings["run_ses_next_in"] == "run_ses":
-        # settings["file_type"] = "input_file"
-        app = App(settings)
-        app.mainloop()
-        print("app.mainloop finished")
-    else:
-        settings["output"] = []  # Erase output settings to prevent post-processing
-
-
 if __name__ == "__main__":
-    import next_in
-    import next_in_output
     # Main code copied from NV_GUi
     settings={
         'ses_output_str': ['C:\\Simulations\\2023-12-28\\Next-In 3p1 lite.xlsm'],
@@ -559,41 +503,6 @@ if __name__ == "__main__":
         #'next_in_path': WindowsPath('C:/Simulations/2023-12-28/Next-In 3p1 lite.xlsm'),
         #'next_in_output': <next_in_output.Next_In_Output object at 0x000001B92DEAAE90>
     }
-    
-    
-    
-    next_in_path = Path(settings["ses_output_str"][0])
-    #Define save path for output files
-    if settings["results_folder_str"] is None: #Keep everything in same folder as ses output
-        save_path = next_in_path.parent
-    else:
-        save_path = Path(settings["results_folder_str"]) #Use specified folder
-    ses_version = settings["next_in_ses_version"]
-    next_in_instance = next_in.Next_In(next_in_path, save_path, ses_version)
-    settings["next_in_instance"] = next_in_instance
-    settings["next_in_path"] = Path(settings["ses_output_str"][0])
-    settings["ses_output_str"] = next_in_instance.create_iterations(
-        settings["iteration_worksheets"][0]
-    )
-    settings["next_in_output"] = next_in_output.Next_In_Output(settings["next_in_instance"])
-    print("Processing multiple files, openning monitor window.")
-    if settings["results_folder_str"] is None: #Keep everything in same folder as ses output
-        save_path = next_in_path.parent
-    else:
-        save_path = Path(settings["results_folder_str"]) #Use specified folder
-    ses_version = settings["next_in_ses_version"]
-    print(f"Creating input files from worksheet {settings['iteration_worksheets'][0]}.\n")
-    next_in_instance = next_in.Next_In(
-        next_in_path, save_path, ses_version
-    )
-    settings["next_in_instance"] = next_in_instance
-    settings["next_in_path"] = Path(settings["ses_output_str"][0])
-    settings["ses_output_str"] = next_in_instance.create_iterations(
-        settings["iteration_worksheets"][0]
-    )
-    settings["next_in_output"] = next_in_output.Next_In_Output(settings["next_in_instance"])
-    print("Processing multiple files, openning monitor window.")
-    print(settings)
     #Start window
     app = App(settings)
     app.mainloop()

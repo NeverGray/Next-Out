@@ -1,5 +1,4 @@
 import datetime
-import logging
 import os
 import re
 from pathlib import Path
@@ -9,7 +8,9 @@ import pandas as pd
 import NV_conversion
 import NV_run
 
-'''logging.basicConfig(
+''' If you need to log errors, enable code.
+import logging
+    logging.basicConfig(
     level=logging.DEBUG, format=" %(asctime)s - %(levelname)s - %(message)s"
 )'''
 

@@ -1,43 +1,27 @@
-import base64
-import datetime
 import os
 import pickle
 import tkinter as tk
-from multiprocessing import Queue
 from pathlib import Path
-from sys import exit as system_exit
 from tkinter import filedialog, messagebox, ttk
 
-import keygen
-import next_in
-import next_in_output
 import NV_file_manager as nfm
-import NV_process_and_monitor_files as nvpm
+import NO_process_multiple_files
 import NV_run as nvr
 from NV_CONSTANTS import VERSION_NUMBER
-from NV_icon5 import Icon
 
 # add requirement for program to be legit to run
 class Start_Screen(tk.Tk):
-    def __init__(self, license_info):
+    def __init__(self):
         super().__init__()
         # Initialization and settings
         p = "3"  # padding
         py = "3"  # vertical padding
         px = "3"
-        self.title("Next-Sim " + VERSION_NUMBER)
+        self.title("Next-Out " + VERSION_NUMBER)
         # Call a function before closing the window.  See https://stackoverflow.com/questions/49220464/passing-arguments-in-tkinters-protocolwm-delete-window-function-on-python
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
-        try:
-            with open("tmp.ico", "wb") as tmp:
-                tmp.write(base64.b64decode(Icon().img))
-            self.iconbitmap("tmp.ico")
-            os.remove("tmp.ico")
-        except:
-            icon_value = False
         self.ss = ttk.Frame(padding=p)  # start screen
         self.left_column = ttk.Frame(self.ss)
-        self.license_info = license_info
         # POST PROCESSING and Analysis Frames
         frm_pp = ttk.LabelFrame(
             self.ss, borderwidth=5, text="Post Processing", padding=p
@@ -115,7 +99,6 @@ class Start_Screen(tk.Tk):
         frm_ses = ttk.LabelFrame(
             self.ss, borderwidth=5, text="Files to Process", padding=p
         )
-        # Create a seperate frame to pack input, output, next-in radio buttons
         frm_input_output = ttk.Frame(frm_ses)
         file_type = ttk.Label(frm_input_output, text="File Type to Process: ")
         rb_input_files = ttk.Radiobutton(
@@ -130,13 +113,6 @@ class Start_Screen(tk.Tk):
             text="SES Output     ",
             variable=self.file_type,
             value="output_file",
-            command=self.update_frm_ses_exe,
-        )
-        rb_next_in_files = ttk.Radiobutton(
-            frm_input_output,
-            text="Next-In        ",
-            variable=self.file_type,
-            value="next_in",
             command=self.update_frm_ses_exe,
         )
         rb_file = ttk.Radiobutton(
@@ -175,7 +151,6 @@ class Start_Screen(tk.Tk):
         file_type.pack(side="left")
         rb_input_files.pack(side="left")
         rb_output_files.pack(side="left")
-        rb_next_in_files.pack(side="left")
         r = 9
         rb_file.grid(column=0, row=r, sticky=["W"], pady=py, padx="0")
         self.btn_file.grid(column=1, row=r, sticky=["W"], pady=py, padx=px)
@@ -199,7 +174,7 @@ class Start_Screen(tk.Tk):
         self.frm_ses_exe = ttk.LabelFrame(
             self.ss,
             borderwidth=5,
-            text="SES Executable (for input files or Next-In)",
+            text="SES Executable (for input files)",
             padding=p,
         )
         self.btn_exe = ttk.Button(
@@ -214,96 +189,6 @@ class Start_Screen(tk.Tk):
         self.btn_exe.grid(column=0, row=r, sticky=["W"], pady=py, padx=px)
         self.ent_file_exe.grid(column=1, row=r, sticky=["WE"], columnspan=2)
         self.frm_ses_exe.columnconfigure(2, weight=1)
-
-        # Next-In Options
-        self.frm_next_in = ttk.LabelFrame(
-            self.ss, borderwidth=5, text="Next-In Options", padding=p
-        )
-        # Create a seperate frame to pack of ses_version
-        frm_ses_version = ttk.Frame(self.frm_next_in)
-        ses_version = ttk.Label(frm_ses_version, text="SES Version: ")
-        rb_ses_version_SI = ttk.Radiobutton(
-            frm_ses_version, text="SI   ", variable=self.next_in_ses_version, value="SI"
-        )
-        rb_ses_version_IP = ttk.Radiobutton(
-            frm_ses_version,
-            text="IP             ",
-            variable=self.next_in_ses_version,
-            value="IP",
-        )
-        label_run_ses_next_in = ttk.Label(frm_ses_version, text="Run SES: ")
-        cb_run_ses_next_in = ttk.Checkbutton(
-            frm_ses_version,
-            text="",
-            variable=self.cbo_run_ses_next_in,
-            onvalue="run_ses",
-            offvalue="",
-            command=self.update_frm_ses_exe,
-        )
-        frm_single_file = ttk.Frame(self.frm_next_in)
-        rb_single_file = ttk.Radiobutton(
-            frm_single_file,
-            text="Single File, Input File Name: ",
-            variable=self.next_in_option,
-            value="Single_next_in",
-        )
-        ent_single_file = ttk.Entry(
-            frm_single_file, textvariable=self.next_in_single_file_name
-        )
-        rb_iteration = ttk.Radiobutton(
-            self.frm_next_in,
-            text="Create iterations",
-            variable=self.next_in_option,
-            value="Iterations",
-        )
-        label_iteration_1 = ttk.Label(
-            self.frm_next_in, text="      Iteration Worksheet:    "
-        )
-        # TODO Enable iteration worksheet 2 and output name
-        label_iteration_2 = ttk.Label(
-            self.frm_next_in, text="      Iteration Worksheet 2:    "
-        )
-        label_output_name = ttk.Label(
-            self.frm_next_in, text="      Name for summary file:    "
-        )
-        ent_worksheet_1 = ttk.Entry(
-            self.frm_next_in, textvariable=self.iteration_worksheet_1
-        )
-        ent_worksheet_2 = ttk.Entry(
-            self.frm_next_in, textvariable=self.iteration_worksheet_2
-        )
-        ent_summary_name = ttk.Entry(
-            self.frm_next_in, textvariable=self.summary_name
-        )
-
-        # Next-In Options Frame Creation
-        r = 0
-        frm_ses_version.grid(
-            column=0, row=r, columnspan=2, sticky=["w"], pady=py, padx=px
-        )
-        ses_version.pack(side="left")
-        rb_ses_version_SI.pack(side="left")
-        rb_ses_version_IP.pack(side="left")
-        label_run_ses_next_in.pack(side="left")
-        cb_run_ses_next_in.pack(side="right")
-        r = 5
-        frm_single_file.grid(
-            column=0, row=r, columnspan=2, sticky=["w"], pady=py, padx=px
-        )
-        rb_single_file.pack(side="left")
-        ent_single_file.pack(side="right")
-        r = 10
-        rb_iteration.grid(column=0, row=r, sticky=["W"], pady=py, padx=px)
-        r = 20
-        label_iteration_1.grid(column=0, row=r, sticky=["W"], pady=py, padx=px)
-        ent_worksheet_1.grid(column=1, row=r, sticky=["W"], pady=py, padx=px)
-        r = 30
-        # Future options for iteration sheet 2 and output
-        # label_iteration_2.grid(column=0, row = r, sticky=['W'], pady=py, padx=px)
-        # ent_worksheet_2.grid(column=1, row=r, sticky=['W'], pady=py, padx=px)
-        r = 40
-        label_output_name.grid(column=0, row=r, sticky=["W"], pady=py, padx=px)
-        ent_summary_name.grid(column=1, row=r, sticky=["W"], pady=py, padx=px)
 
         # VISIO Template - Row 1
         self.frm_visio = ttk.LabelFrame(
@@ -438,17 +323,15 @@ class Start_Screen(tk.Tk):
         self.left_column.grid(row=1, column=0, rowspan=3, sticky=["NEW"])
         frm_ses.grid(column=1, row=0, sticky=["NSEW"], pady=py, padx=px)
         self.frm_ses_exe.grid(column=1, row=1, sticky=["NSEW"], pady=py, padx=px)
-        self.frm_next_in.grid(column=1, row=2, sticky=["NSEW"], pady=py, padx=px)
-        self.frm_visio.grid(column=1, row=3, sticky=["WE"], pady=py, padx=px)
-        self.frm_visio.grid(column=1, row=3, sticky=["WE"], pady=py, padx=px)
-        frm_results_folder.grid(column=1, row=4, sticky=["WE"], pady=py, padx=px)
-        frm_run.grid(column=0, columnspan=2, row=5, sticky=["WE"], pady=py, padx=px)
+        self.frm_visio.grid(column=1, row=2, sticky=["WE"], pady=py, padx=px)
+        self.frm_visio.grid(column=1, row=2, sticky=["WE"], pady=py, padx=px)
+        frm_results_folder.grid(column=1, row=3, sticky=["WE"], pady=py, padx=px)
+        frm_run.grid(column=0, columnspan=2, row=4, sticky=["WE"], pady=py, padx=px)
         frm_status.grid(
             column=0, row=6, columnspan=2, sticky=["WESN"], pady=py, padx=px
         )
         self.minsize(550, 385)  # Measured using paint.net
         self.update_post_processing_options()
-        self.display_validation_info()
         self.update_frm_ses_exe()
         self.ss.update()
 
@@ -476,10 +359,6 @@ class Start_Screen(tk.Tk):
             "self.cbo_svg": 'tk.StringVar(value="")',
             "self.results_folder": 'tk.StringVar(value="ses output")',
             "self.path_results_folder": 'tk.StringVar(value="")',
-            "self.next_in_ses_version": 'tk.StringVar(value="SI")',
-            "self.cbo_run_ses_next_in": 'tk.StringVar(value="run_ses")',
-            "self.next_in_option": 'tk.StringVar(value="Iterations")',
-            "self.next_in_single_file_name": 'tk.StringVar(value="")',
             "self.iteration_worksheet_1": 'tk.StringVar(value="")',
             "self.iteration_worksheet_2": 'tk.StringVar(value="")',
             "self.summary_name": 'tk.StringVar(value="")',
@@ -501,51 +380,6 @@ class Start_Screen(tk.Tk):
         except:
             msg = "Error loading settings"
             messagebox.showinfo(message=msg)
-
-    def display_validation_info(self, *args):
-        msg_line = []
-        msg_line.append(f'Click OKAY to accept "Next-Vis License Agrement"')
-        msg_line.append("Otherwise, click Cancel to exit")
-        if self.license_info["type"] == "Floating":
-            (
-                validation_code,
-                license_id,
-                validation_info,
-            ) = keygen.validate_license_key_with_fingerprint(
-                self.license_info["floating_key"],
-                self.license_info["machine_fingerprint"],
-            )
-            floats_available = validation_info["data"]["attributes"]["maxMachines"]
-            floats_in_use = validation_info["data"]["relationships"]["machines"][
-                "meta"
-            ]["count"]
-            authorized_organization = self.license_info["Authorized_Organization"]
-            expiry = validation_info["data"]["attributes"]["expiry"][:10]
-            msg_line.append(
-                f"\n{floats_in_use} of {floats_available} floating licenses in use for {authorized_organization}."
-            )
-            msg_line.append(f"License Expires on {expiry}.")
-        else:
-            expiry = str(self.license_info["expiry"])
-            msg_line.append(f"\nOffline License Expires on {expiry}.")
-        msg = "\n".join(msg_line)
-        answer = messagebox.askokcancel(
-            title="Use and accept license", message=msg, icon="info"
-        )
-        if not answer:
-            system_exit("User did not accept license agreement")
-
-    def check_floating_license(self, *args):
-        active_license = keygen.ping_heartbeat_for_machine(
-            self.license_info["machine_fingerprint"], self.license_info["floating_key"]
-        )
-        if active_license:
-            return True
-        else:
-            messagebox.showinfo(
-                message="No licenses is available or there is no internet connection.\nProgram is going to shut down"
-            )
-            system_exit("The license is no longer active")
 
     def get_visio_file(self, *args):
         try:
@@ -569,11 +403,6 @@ class Start_Screen(tk.Tk):
                 ("SES Input", ("*.INP", "*.SES")),
             ]
             title_text = "Select one SES input File"
-        elif self.file_type.get() == "next_in":
-            filetypes_suffix = [
-                ("Excel Spreadsheet", ("*.xlsx", "*.xlsm")),
-            ]
-            title_text = "Select one Next-In Spreadsheet"
         else:
             filetypes_suffix = [
                 ("SES Output", ("*.PRN", "*.OUT")),
@@ -683,82 +512,34 @@ class Start_Screen(tk.Tk):
             "output": pp_list,
             "file_type": self.file_type.get(),
             "path_exe": self.path_exe.get(),
-            "next_in_ses_version": self.next_in_ses_version.get(),
-            "next_in_option": self.next_in_option.get(),
-            "next_in_single_file_name": self.next_in_single_file_name.get(),
-            "run_ses_next_in": self.cbo_run_ses_next_in.get(),
             "iteration_worksheets": interation_worksheets,
             "summary_name": self.summary_name.get()
-            #'next_in_path' is saved after validation
         }
 
         if self.validation(self.settings):
-            # Check validity of license
-            if self.valid_license():
-                try:
-                    # If only performing one individual simulation
-                    # TODO Check single simualtions are perofrmed with next_in
-                    if self.settings["file_type"] != "next_in":
-                        if (
-                            len(self.settings["ses_output_str"]) == 1
-                            or ("Average" in pp_list)
-                            or ("Compare" in pp_list)
-                        ):
-                            nvr.single_sim(self.settings, gui=self)
-                            self.gui_text("Post processing completed.\n")
-                    elif self.settings["file_type"] == "next_in":
-                        if self.settings["next_in_option"] == "Single_next_in":
-                            # TODO May have issue with result folder being none
-                            nvr.single_sim(self.settings, gui=self)
-                            self.gui_text("Post processing completed.\n")
-                        else:
-                            # Next-in Iterations
-                            next_in_path = Path(self.settings["ses_output_str"][0])
-                            #Define save path for output files
-                            if self.settings["results_folder_str"] is None: #Keep everything in same folder as ses output
-                                save_path = next_in_path.parent
-                            else:
-                                save_path = Path(self.settings["results_folder_str"]) #Use specified folder
-                            ses_version = self.settings["next_in_ses_version"]
-                            self.gui_text(
-                                f"Creating input files from worksheet {self.settings['iteration_worksheets'][0]}.\n"
-                            )
-                            next_in_instance = next_in.Next_In(
-                                next_in_path, save_path, ses_version
-                            )
-                            self.settings["next_in_instance"] = next_in_instance
-                            self.settings["next_in_path"] = Path(
-                                self.settings["ses_output_str"][0]
-                            )
-                            self.settings[
-                                "ses_output_str"
-                            ] = next_in_instance.create_iterations(
-                                self.settings["iteration_worksheets"][0]
-                            )
-                            self.settings["next_in_output"] = next_in_output.Next_In_Output(self.settings["next_in_instance"])
-                            self.gui_text(
-                                "Processing multiple files, openning monitor window."
-                            )
-                            if "visio_open" in self.settings["output"]:
-                                self.settings["output"].remove("visio_open")
-                                self.cbo_visio_open_option.set("")
-                            self.open_monitor_gui()
-                    else:
-                        # Launch process and monitor files when using multiple files
-                        self.gui_text(
-                            "Processing multiple files, openning monitor window."
-                        )
-                        # Turn off opening visio for multiple files
-                        if "visio_open" in self.settings["output"]:
-                            self.settings["output"].remove("visio_open")
-                            self.cbo_visio_open_option.set("")
-                        self.open_monitor_gui()
-                except:
+            try:
+                # If only performing one individual simulation
+                if (
+                    len(self.settings["ses_output_str"]) == 1
+                    or ("Average" in pp_list)
+                    or ("Compare" in pp_list)
+                    ):
+                    nvr.single_sim(self.settings, gui=self)
+                    self.gui_text("Post processing completed.\n")
+                else:
+                    # Launch process and monitor files when using multiple files
                     self.gui_text(
-                        "Error after validation, before single_sim or multiple_sim. \n"
+                        "Processing multiple files, openning monitor window."
                     )
-            else:
-                self.gui_text("Error Checking validity of license.")
+                    # Turn off opening visio for multiple files
+                    if "visio_open" in self.settings["output"]:
+                        self.settings["output"].remove("visio_open")
+                        self.cbo_visio_open_option.set("")
+                    self.open_monitor_gui()
+            except:
+                self.gui_text(
+                    "Error after validation, before single_sim or multiple_sim. \n"
+                )
         else:
             self.gui_text("Error with Validation of Settings")
         self.btn_run["state"] = tk.NORMAL
@@ -845,27 +626,6 @@ class Start_Screen(tk.Tk):
         else:  # Default is same as SES output. Use empty string
             self.results_folder_str = None
 
-    def valid_license(self, *args):
-        if self.license_info["type"] == "Floating":
-            ok = self.check_floating_license()
-            return ok
-        else:
-            delta = datetime.timedelta(1)
-            expiry = self.license_info["expiry"]
-            for file_path in self.settings["ses_output_str"]:
-                file_time_seconds = os.path.getmtime(file_path)
-                file_date = datetime.date.fromtimestamp(file_time_seconds)
-                new_delta = expiry - file_date
-                if new_delta < delta:
-                    delta = new_delta
-            if delta < datetime.timedelta(0):
-                messagebox.showinfo(
-                    message="Offline License is being used past the expiry date"
-                )
-                system_exit("License is expired")
-            else:
-                return True
-
     def update_output_options(self, *args):
         option = self.ses.get()
         if option == "File":
@@ -890,21 +650,9 @@ class Start_Screen(tk.Tk):
         multiple_files_state = "enable"
         if self.file_type.get() == "input_file":
             ses_exe_state = "enable"
-        elif (
-            self.file_type.get() == "next_in"
-            and self.cbo_run_ses_next_in.get() == "run_ses"
-        ):
-            ses_exe_state = "enable"
         else:
             ses_exe_state = "disable"
-        if self.file_type.get() == "next_in":
-            next_in_state = "enable"
-            multiple_files_state = "disable"
-            self.ses.set("File")
-        else:
-            next_in_state = "disable"
         self.configure_widget_state(self.frm_ses_exe, ses_exe_state)
-        self.configure_widget_state(self.frm_next_in, next_in_state)
         # Update file buttons
         self.btn_files.configure(state=multiple_files_state)
         self.btn_folder.configure(state=multiple_files_state)
@@ -956,14 +704,14 @@ class Start_Screen(tk.Tk):
         self.ss.update
 
     def open_monitor_gui(self):
-        manager = nvpm.Manager_Class()
-        window = nvpm.Monitor_GUI(self, manager, self.settings)
+        manager = NO_process_multiple_files.Manager_Class()
+        window = NO_process_multiple_files.Monitor_GUI(self, manager, self.settings)
         window.focus_force()
         window.grab_set()
 
 
-def launch_window(license_info):
-    start_screen = Start_Screen(license_info)
+def launch_window():
+    start_screen = Start_Screen()
     start_screen.mainloop()
 
 

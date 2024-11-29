@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pandas as pd
 
-import next_in
 import NV_average
 import NV_compare
 import NV_excel_R01 as nve
@@ -42,19 +41,6 @@ def single_sim(settings, gui=""):
         except:
             run_msg(gui, "ERROR! Could not average files.")
             return
-    # If using input files, run SES simulation and change output string to a suffix.
-    if settings["file_type"] == "next_in":
-        next_in_path = Path(settings["ses_output_str"][0])
-        save_path = Path(settings['results_folder_str'])
-        ses_version = settings["next_in_ses_version"]
-        next_in_instance = next_in.Next_In(next_in_path, save_path, ses_version)
-        file_path = save_path /settings["next_in_single_file_name"]
-        input_file_path = next_in_instance.save_base_file_as_input(file_path)
-        settings["ses_output_str"][0] = str(input_file_path)
-        if settings['run_ses_next_in'] == "run_ses":
-            settings["file_type"] = "input_file"
-        else:
-            settings['output'] = [] #Erase output settings to prevent post-processing
     if settings["file_type"] == "input_file":
         msg = "Running SES Simulation for " + Path(settings["ses_output_str"][0]).name
         run_msg(gui, msg)
@@ -197,9 +183,7 @@ if __name__ == "__main__":
         "conversion": "",
         "control": "First",
         "output": ["Excel"],
-        "file_type": "next_in",
+        "file_type": "",
         "path_exe": "C:\\simulations\\_EXE\\SESV6_32.exe",
-        "next_in_ses_version" : "SI",
-        "next_in_single_file_name" : "testing_for_input"
     }
     single_sim(settings)
