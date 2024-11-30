@@ -5,7 +5,7 @@ import zipfile
 import pandas as pd
 import win32com.client
 
-import NV_run
+import NO_run
 import NV_settings
 import NV_Tunnel_Segment
 from NV_CONSTANTS import DEGREE_SYMBOL
@@ -26,13 +26,13 @@ def valid_simtime(simtime, df, gui=""):
     time = float(simtime)
     if time == -1 or time > timeseries_list[-1]:
         time = timeseries_list[-1]
-        #NV_run.run_msg(gui, f'Using last simulation time {time}')
+        #NO_run.run_msg(gui, f'Using last simulation time {time}')
     elif not time in timeseries_list:
         for x in timeseries_list:
             if x - time > 0:
                 time = x
                 break
-        NV_run.run_msg(gui, f"Could not find requested simulation time. Using {time}")
+        NO_run.run_msg(gui, f"Could not find requested simulation time. Using {time}")
     return time
 
 def get_visXML(visio_template):
@@ -65,7 +65,7 @@ def emod_visXML(vxml, data, file_stem, simtime=0.00, output_meta_data={},gui="")
         elif output_meta_data['ses_version'] == 'IP from SI':
             sim_base_name = sim_base_name + '_IP'
     except:
-        NV_run.run_msg(gui, f'Error checking SES version')   
+        NO_run.run_msg(gui, f'Error checking SES version')   
 
     file_time = output_meta_data.get("file_time") 
     shape_dict = {
@@ -84,14 +84,14 @@ def emod_visXML(vxml, data, file_stem, simtime=0.00, output_meta_data={},gui="")
         try:
             update_damper(Shape, output_meta_data['damper_position'])
         except:
-            NV_run.run_msg(gui, f'Error Updating Damper')
+            NO_run.run_msg(gui, f'Error Updating Damper')
     
     # Fan
     for Shape in P1root.findall(".//Visio:Row[@N='Fan_Segment']../..", ns):
         try:
             update_fan(Shape, output_meta_data['form5_fan_data'], simtime, ns)
         except:
-            NV_run.run_msg(gui, f'Error Updating Fan')
+            NO_run.run_msg(gui, f'Error Updating Fan')
     
     # Jet Fan Segments
     if not('jet_fan_data' in output_meta_data):
@@ -100,7 +100,7 @@ def emod_visXML(vxml, data, file_stem, simtime=0.00, output_meta_data={},gui="")
         try:
             update_jet_fan(Shape, output_meta_data['jet_fan_data'], simtime, ns)
         except:
-            NV_run.run_msg(gui, f'Error Updating Jet Fan')
+            NO_run.run_msg(gui, f'Error Updating Jet Fan')
     
     # Airflow_NV02
     if P1root.find(".//Visio:Row[@N='Airflow_NV02']../..", ns) is not None:
@@ -108,7 +108,7 @@ def emod_visXML(vxml, data, file_stem, simtime=0.00, output_meta_data={},gui="")
             try:
                 update_airflow_NV02(simtime_df, shape)
             except:
-                NV_run.run_msg(gui, f'Error updating airflow_NV02')
+                NO_run.run_msg(gui, f'Error updating airflow_NV02')
     
     # Velocity_NV02
     if P1root.find(".//Visio:Row[@N='Velocity_NV02']../..", ns) is not None:
@@ -116,7 +116,7 @@ def emod_visXML(vxml, data, file_stem, simtime=0.00, output_meta_data={},gui="")
             try:
                 update_velocity_NV02(simtime_df, shape)
             except:
-                NV_run.run_msg(gui, f'Error Updating velocity_NV02')
+                NO_run.run_msg(gui, f'Error Updating velocity_NV02')
     
     # Temperature_NV02
     if P1root.find(".//Visio:Row[@N='Temperature_seg_NV02']../..", ns) is not None:
@@ -126,7 +126,7 @@ def emod_visXML(vxml, data, file_stem, simtime=0.00, output_meta_data={},gui="")
             try:
                 update_temperature_NV02(simtime_df, SST_simtime, shape)
             except:
-                NV_run.run_msg(gui, f'Error Updating velocity_NV02')
+                NO_run.run_msg(gui, f'Error Updating velocity_NV02')
     
     # Update Tunnel Segments
     if P1root.find(".//Visio:Row[@N='Tunnel_Segment_NV01']../..", ns) is not None:
@@ -136,7 +136,7 @@ def emod_visXML(vxml, data, file_stem, simtime=0.00, output_meta_data={},gui="")
             try:
                 update_tunnel_segment(shape, segment_time_df)       
             except:
-                NV_run.run_msg(gui, f'Error Updating Tunnel Segment')
+                NO_run.run_msg(gui, f'Error Updating Tunnel Segment')
     return P1root
 
 def update_temperature_NV02(simtime_df, SST_simtime, shape):
@@ -442,16 +442,16 @@ def write_visio(vxmls, visio_template, new_visio ,gui=""):
                 + str(new_visio)
                 + ". Try closing the file and process again."
             )
-            NV_run.run_msg(gui, msg)         
+            NO_run.run_msg(gui, msg)         
     try:
         with zipfile.ZipFile(new_visio, "a") as zappend:
             for name, vxml in vxmls.items():
                 temp_string = ET.tostring(vxml, encoding="utf-8", xml_declaration=True)
                 zappend.writestr(name, temp_string, compress_type=compression)
-        NV_run.run_msg(gui,f'Created Visio Diagram {new_visio.name}.')
+        NO_run.run_msg(gui,f'Created Visio Diagram {new_visio.name}.')
     except:
         msg = "Error writing " + str(new_visio) + ". Try closing the file and process again."
-        NV_run.run_msg(gui, msg)
+        NO_run.run_msg(gui, msg)
 
 def convert_visio(new_visio,settings_output,gui):
     try:
@@ -461,7 +461,7 @@ def convert_visio(new_visio,settings_output,gui):
         if "visio_2_pdf" in settings_output:
             new_pdf = new_visio.with_suffix('.pdf')
             doc.ExportAsFixedFormat( 1, str(new_pdf), 1, 0)
-            NV_run.run_msg(gui,f'Created PDF of {new_visio.name}')
+            NO_run.run_msg(gui,f'Created PDF of {new_visio.name}')
         if ("visio_2_png" in settings_output) or ("visio_2_svg" in settings_output):   
         #Export document as PNG 
             pages = doc.Pages
@@ -479,21 +479,21 @@ def convert_visio(new_visio,settings_output,gui):
                         page.Export(str(new_png))
                     if "visio_2_svg" in settings_output:
                         page.Export(str(new_svg))
-            NV_run.run_msg(gui,f'Created png or svg or both of {new_visio.name}') 
+            NO_run.run_msg(gui,f'Created png or svg or both of {new_visio.name}') 
         visio.Application.Quit()
     except:
         if visio is not None:
             visio.Application.Quit()
         msg = 'Error creating PDF or PNG for '+ str(new_visio)
-        NV_run.run_msg(gui, msg)
+        NO_run.run_msg(gui, msg)
 
 def create_visio(settings, data, output_meta_data, gui=""):
     settings["simtime"] = valid_simtime(settings["simtime"], data["SSA"], gui)
     time_4_name = int(settings["simtime"])
     time_suffix = "-" + str(time_4_name) + ".vsdx"
-    settings["new_visio"] = NV_run.get_results_path2(settings, output_meta_data, time_suffix)
+    settings["new_visio"] = NO_run.get_results_path2(settings, output_meta_data, time_suffix)
     msg = "Creating Visio diagram " + settings["new_visio"].name + " for simulation time " + str(settings["simtime"]) + "."
-    NV_run.run_msg(gui, msg)
+    NO_run.run_msg(gui, msg)
     # Read in VISIO Template and update with SES OUtput
     vxmls = get_visXML(settings["visio_template"])  # gets the pages in the VISIO XML.
     file_stem = output_meta_data['file_path'].stem
@@ -509,14 +509,14 @@ def create_visio(settings, data, output_meta_data, gui=""):
     if 'visio_open' in settings["output"]:
         try:
             msg = f'Opening {settings["new_visio"].name} in Visio.'
-            NV_run.run_msg(gui, msg)
+            NO_run.run_msg(gui, msg)
             visio = win32com.client.Dispatch("Visio.Application")
             doc = visio.Documents.Open(str(settings["new_visio"]))
         except:
             if visio is not None:
                 visio.Application.Quit()
             msg = 'Error Openning '+ str(settings["new_visio"])
-            NV_run.run_msg(gui, msg)
+            NO_run.run_msg(gui, msg)
 
 if __name__ == "__main__":
     one_output_file = ['C:/Simulations/Demonstration/SI Samples/siinfern-detailed.out']
@@ -535,5 +535,5 @@ if __name__ == "__main__":
         'output': ['Excel', 'Visio', '', '', 'Route', '', '', '', ''], 
         'file_type':'', #'input_file', 
         'path_exe': 'C:/Simulations/_Exe/SVSV6_32.exe'}
-    NV_run.single_sim(settings)
+    NO_run.single_sim(settings)
     print('Finished')

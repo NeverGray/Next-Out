@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd
 
 import NV_CONSTANTS
-import NV_excel_R01 as NV_excel
+import NO_Excel_R01 as NV_excel
 
 
 def create_route_data(data, output_meta_data):
@@ -111,7 +111,7 @@ def run_msg(gui, text):
         print("Run msg: " + text)
 
 if __name__ == "__main__":
-    import NV_parser
+    import NO_parser
     one_output_file = ['C:/Simulations/ng01/NG01-X001.out']
     settings = {
         'ses_output_str': one_output_file, 
@@ -124,6 +124,6 @@ if __name__ == "__main__":
         'file_type':'', #'input_file', 
         'path_exe': 'C:/Simulations/_Exe/SVSV6_32.exe'}
     file_path = Path(settings['ses_output_str'][0])
-    data, output_meta_data = NV_parser.parse_file(file_path, gui="", conversion_setting=settings['conversion'])
+    data, output_meta_data = NO_parser.parse_file(file_path, gui="", conversion_setting=settings['conversion'])
     create_route_excel(settings, data, output_meta_data)
     print('Finished')

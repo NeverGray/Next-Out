@@ -1,5 +1,10 @@
-"""This code processes and monitor multiple files"""
-import base64
+# Project Name: Next-Out
+# Description: Performs multiple simulations and post-processing simutaneously. Display progress in a graphical user interface.
+# Copyright (c) 2024 Justin Edenbaum, Never Gray
+#
+# This file is licensed under the MIT License.
+# You may obtain a copy of the license at https://opensource.org/licenses/MIT
+
 import logging
 import multiprocessing
 import os
@@ -9,10 +14,9 @@ import time
 import tkinter as tk
 from pathlib import Path
 from tkinter import messagebox, ttk
-import openpyxl
 
-import NV_excel_R01 as nve
-import NV_parser
+import NO_Excel_R01 as nve
+import NO_parser
 import NV_route
 import NV_visio
 from NV_CONSTANTS import VERSION_NUMBER
@@ -78,7 +82,7 @@ def single_process(
             logging.info(f"Parsing {name}")
             process_status[value_index["Read Output"]] = "Processing"
             processing_dictionary[pid] = process_status
-            data, output_meta_data = NV_parser.parse_file(
+            data, output_meta_data = NO_parser.parse_file(
                 file_path, gui="", conversion_setting=settings["conversion"]
             )
             process_status[value_index["Read Output"]] = "Done"

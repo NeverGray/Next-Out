@@ -1,11 +1,18 @@
+# Project Name: Next-Out
+# Description: Create a dataframe from the average values of SES outputs. 
+# Copyright (c) 2024 Justin Edenbaum, Never Gray
+#
+# This file is licensed under the MIT License.
+# You may obtain a copy of the license at https://opensource.org/licenses/MIT
+
 from io import BytesIO
 from pathlib import Path
 
 import pandas as pd
 
-import NV_excel_R01 as NV_excel
-import NV_parser
-import NV_run
+import NO_Excel_R01 as NV_excel
+import NO_parser
+import NO_run
 
 
 def average_outputs(settings, gui=""):
@@ -18,18 +25,18 @@ def average_outputs(settings, gui=""):
     # For each ses_output, add dataframes to a Dictionary organized by data type ('SSA', 'SST', etc...) 
     num = len(settings['ses_output_str'])
     msg = f'Finding mean, max, and min of {num} output files.'
-    NV_run.run_msg(gui, msg)
+    NO_run.run_msg(gui, msg)
     i = 1
     for ses_output in settings['ses_output_str']:
         #Perform SES simulation if using an input file
         if settings["file_type"] == "input_file":
-            ses_output = NV_run.average_or_compare_call_ses(settings, ses_output, gui)
+            ses_output = NO_run.average_or_compare_call_ses(settings, ses_output, gui)
             if ses_output == 'Simulation failed':
                 msg = 'Simulation failed'
-                NV_run.run_msg(gui, msg)
+                NO_run.run_msg(gui, msg)
                 return
         ses_output_path = Path(ses_output)
-        data, output_meta_data = NV_parser.parse_file(ses_output_path, gui, settings['conversion'])
+        data, output_meta_data = NO_parser.parse_file(ses_output_path, gui, settings['conversion'])
         if Excel:
             NV_excel.create_excel(settings, data, output_meta_data, gui)
         if first_iteration:
@@ -43,7 +50,7 @@ def average_outputs(settings, gui=""):
                 if not value.empty: #Prevents errors calculating values with empty data frames
                     df_by_type[key].append(value)
         msg = f'Parsed {ses_output_path.name}, {i} of {num} output files'
-        NV_run.run_msg(gui, msg)
+        NO_run.run_msg(gui, msg)
         i +=1
     # For each data type, create a data frame for mean, max, and minimum
     dfs_mean_dict = {}

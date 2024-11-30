@@ -1,3 +1,10 @@
+# Project Name: Next-Out
+# Description: List of version number, column names and units for SI and IP, and conversion factors.
+# Copyright (c) 2024 Justin Edenbaum, Never Gray
+#
+# This file is licensed under the MIT License.
+# You may obtain a copy of the license at https://opensource.org/licenses/MIT
+
 VERSION_NUMBER = "0.1"
 #Column name : [SI Unit, IP Unit]
 COLUMN_UNITS={

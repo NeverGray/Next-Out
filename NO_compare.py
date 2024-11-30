@@ -1,12 +1,19 @@
+# Project Name: Next-Out
+# Description: Compare two SES output files.
+# Copyright (c) 2024 Justin Edenbaum, Never Gray
+#
+# This file is licensed under the MIT License.
+# You may obtain a copy of the license at https://opensource.org/licenses/MIT
+
 from io import BytesIO
 from pathlib import Path
 
 import pandas as pd
 from openpyxl.styles import Font
 
-import NV_excel_R01 as NV_excel
-import NV_parser
-import NV_run
+import NO_Excel_R01 as NV_excel
+import NO_parser
+import NO_run
 
 
 def compare_outputs(settings, gui=""):
@@ -18,20 +25,20 @@ def compare_outputs(settings, gui=""):
     second_file_str = settings['ses_output_str'][1]
     #IF these are input files, perform SES simulations
     if settings["file_type"] == "input_file":
-        base_file_str = NV_run.average_or_compare_call_ses(settings, base_file_str, gui)
+        base_file_str = NO_run.average_or_compare_call_ses(settings, base_file_str, gui)
         if base_file_str == 'Simulation failed':
             msg = 'Simulation failed'
-            NV_run.run_msg(gui, msg)
+            NO_run.run_msg(gui, msg)
             return
-        second_file_str = NV_run.average_or_compare_call_ses(settings, second_file_str, gui)
+        second_file_str = NO_run.average_or_compare_call_ses(settings, second_file_str, gui)
         if base_file_str == 'Simulation failed':
             msg = 'Simulation failed'
-            NV_run.run_msg(gui, msg)
+            NO_run.run_msg(gui, msg)
             return
     base_file = Path(base_file_str)
     second_file = Path(second_file_str)
-    base_df, base_output_meta_data = NV_parser.parse_file(base_file, gui, settings['conversion'])
-    second_df, second_output_meta_data = NV_parser.parse_file(second_file, gui, settings['conversion'])
+    base_df, base_output_meta_data = NO_parser.parse_file(base_file, gui, settings['conversion'])
+    second_df, second_output_meta_data = NO_parser.parse_file(second_file, gui, settings['conversion'])
     if Excel:
         NV_excel.create_excel(settings, base_df, base_output_meta_data, gui)
         NV_excel.create_excel(settings, second_df, second_output_meta_data, gui)   
@@ -39,15 +46,15 @@ def compare_outputs(settings, gui=""):
     second_data = dictionary_to_list(second_df)
     num_df = len(base_data)
     suffix = base_output_meta_data['file_path'].suffix
-    base_path = NV_run.get_results_path2(settings, base_output_meta_data, suffix)
+    base_path = NO_run.get_results_path2(settings, base_output_meta_data, suffix)
     suffix = second_output_meta_data['file_path'].suffix
-    second_path = NV_run.get_results_path2(settings, second_output_meta_data, suffix)
+    second_path = NO_run.get_results_path2(settings, second_output_meta_data, suffix)
     if num_df != len(second_data):
         msg = "Error in Comparing two output files! " + base_path.name + "and" + second_path.name + "have different structures."
-        NV_run.run_msg(gui, msg)
+        NO_run.run_msg(gui, msg)
     else:
         msg = f'Comparing {base_path.name} and {second_path.name}.'
-        NV_run.run_msg(gui, msg)
+        NO_run.run_msg(gui, msg)
         diff = []
         diff_summary = []
         p_e = []  # percent Error
@@ -77,7 +84,7 @@ def compare_outputs(settings, gui=""):
             base_output_meta_data['file_path'] = Path(parent + '/' + file_name_4_path)
             output_meta_data = base_output_meta_data.copy()
             output_meta_data['ses_version'] = 'Unconfirmed'
-            compare_results_path = NV_run.get_results_path2(settings, output_meta_data, ".xlsx")
+            compare_results_path = NO_run.get_results_path2(settings, output_meta_data, ".xlsx")
             p_e_text = (
                 "Percent Error = Absolute value of [(Difference) / ("
                 + base_path.name
@@ -173,21 +180,21 @@ def compare_outputs(settings, gui=""):
                     try:
                         outfile.write(bio.getvalue())
                     except:
-                        NV_run.run_msg(gui,
+                        NO_run.run_msg(gui,
                             "Error writing "
                             + str(compare_results_path)
                             + ".xlsx. Try closing file and trying again."
                         )
                     # TODO Add strings using https://stackoverflow.com/questions/43537598/write-strings-text-and-pandas-dataframe-to-excel
             msg = ("Created " + str(compare_results_path))
-            NV_run.run_msg(gui, msg)
+            NO_run.run_msg(gui, msg)
         except:
             msg = (
                 "CRITICAL ERROR! Constructing (not saving) Excel File "
                 + file_name
                 + ".xlsx. Close the file if opened."
             )
-            NV_run.run_msg(gui, msg)
+            NO_run.run_msg(gui, msg)
 
 def dictionary_to_list(dic):
     new_list = []

@@ -1,12 +1,19 @@
+# Project Name: Next-Out
+# Description: Launches Graphical User Interface to use Next-Out.
+# Copyright (c) 2024 Justin Edenbaum, Never Gray
+#
+# This file is licensed under the MIT License.
+# You may obtain a copy of the license at https://opensource.org/licenses/MIT
+
 import os
 import pickle
 import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
-import NV_file_manager as nfm
+import NO_file_manager
 import NO_process_multiple_files
-import NV_run as nvr
+import NO_run
 from NV_CONSTANTS import VERSION_NUMBER
 
 # add requirement for program to be legit to run
@@ -524,7 +531,7 @@ class Start_Screen(tk.Tk):
                     or ("Average" in pp_list)
                     or ("Compare" in pp_list)
                     ):
-                    nvr.single_sim(self.settings, gui=self)
+                    NO_run.single_sim(self.settings, gui=self)
                     self.gui_text("Post processing completed.\n")
                 else:
                     # Launch process and monitor files when using multiple files
@@ -604,7 +611,7 @@ class Start_Screen(tk.Tk):
                 suffix = [".INP", ".SES"]
             else:
                 suffix = [".OUT", ".PRN"]
-            self.ses_output_str = nfm.find_all_files(
+            self.ses_output_str = NO_file_manager.find_all_files(
                 extensions=suffix, pathway=folder_path, with_path=True
             )
         else:

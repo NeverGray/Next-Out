@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 
-import NV_run
+import NO_run
 from NV_CONSTANTS import VERSION_NUMBER as VERSION_NUMBER
 
 if __name__ == "__main__":
@@ -48,7 +48,7 @@ if __name__ == "__main__":
         prof = cProfile.Profile()
         prof.enable() 
         start_post_processing = time.perf_counter() 
-        NV_run.single_sim(single_settings)
+        NO_run.single_sim(single_settings)
         end_post_processing = time.perf_counter()
         prof.disable()
         # Record data for post processing

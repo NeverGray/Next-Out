@@ -1,6 +1,12 @@
+# Project Name: Next-Out
+# Description: Return a list of all files in a folder with specific extensions
+# Copyright (c) 2024 Justin Edenbaum, Never Gray
+#
+# This file is licensed under the MIT License.
+# You may obtain a copy of the license at https://opensource.org/licenses/MIT
+
 import os
 from pathlib import Path
-
 
 def find_all_files(extensions=[".OUT", ".PRN"], pathway=None, character=None, with_path=False):
     all_files = []

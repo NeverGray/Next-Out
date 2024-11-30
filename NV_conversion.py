@@ -4,8 +4,8 @@ from pathlib import Path
 import pandas as pd
 
 import NV_CONSTANTS
-import NV_parser as nvp
-import NV_run
+import NO_parser as nvp
+import NO_run
 
 
 def convert_output_units(conversion_setting, data, output_meta_data, gui=""):
@@ -16,7 +16,7 @@ def convert_output_units(conversion_setting, data, output_meta_data, gui=""):
         else:
             unit_msg = "IP"
         msg = f"Converting data from {output_meta_data['file_path'].name} to {unit_msg}"
-        NV_run.run_msg(gui, msg)
+        NO_run.run_msg(gui, msg)
         #Iterate through all the dataframs in the data dictionary
         for dataframe in data.values():
             #Iterate through all columns (not indexes)
@@ -57,7 +57,7 @@ def convert_output_units(conversion_setting, data, output_meta_data, gui=""):
         elif conversion_setting=="SI_TO_IP":
             output_meta_data['ses_version'] = "IP from SI"
     else:
-        NV_run.run_msg(gui, "Cannot convert file "+ output_meta_data['file_path'].name +" because it is already in that unit.")
+        NO_run.run_msg(gui, "Cannot convert file "+ output_meta_data['file_path'].name +" because it is already in that unit.")
     return data, output_meta_data
 
 def conversion_is_possible(conversion_setting, output_meta_data):
@@ -100,5 +100,5 @@ if __name__ == "__main__":
     #TODO Transfer new data created in function
     conversion_setting = settings["conversion"]
     new_data, new_output_meta_data = convert_output_units(conversion_setting, data, output_meta_data, gui="")
-    import NV_excel_R01 as NV_excel
+    import NO_Excel_R01 as NV_excel
     NV_excel.create_excel(settings, data, output_meta_data)

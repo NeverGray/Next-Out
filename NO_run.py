@@ -1,5 +1,10 @@
-import copy
-import multiprocessing  # When trying to make a multiprocessing
+# Project Name: Next-Out
+# Description: Performs simulations and post-process results one file at a time.
+# Copyright (c) 2024 Justin Edenbaum, Never Gray
+#
+# This file is licensed under the MIT License.
+# You may obtain a copy of the license at https://opensource.org/licenses/MIT
+
 import subprocess
 from pathlib import Path
 
@@ -8,6 +13,7 @@ import pandas as pd
 import NO_average
 import NO_average
 import NO_Excel_R01 as nve
+import NO_file_manager as nfm
 # Import of scripts
 import NO_parser
 import NV_route

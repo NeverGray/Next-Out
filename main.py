@@ -1,4 +1,9 @@
-#TODO Insert Beginning Notes
+# Project Name: Next-Out
+# Description: Perform SES simuilations. Post-processes and analyze output data.
+# Copyright (c) 2024 Justin Edenbaum, Never Gray
+#
+# This file is licensed under the MIT License.
+# You may obtain a copy of the license at https://opensource.org/licenses/MIT
 
 import multiprocessing
 import NO_gui

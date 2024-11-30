@@ -1,3 +1,10 @@
+# Project Name: Next-Out
+# Description: Create Dataframes from SES output files.
+# Copyright (c) 2024 Justin Edenbaum, Never Gray
+#
+# This file is licensed under the MIT License.
+# You may obtain a copy of the license at https://opensource.org/licenses/MIT
+
 import datetime
 import os
 import re
@@ -6,7 +13,7 @@ from pathlib import Path
 import pandas as pd
 
 import NV_conversion
-import NV_run
+import NO_run
 
 ''' If you need to log errors, enable code.
 import logging
@@ -378,7 +385,7 @@ HE = {
 # TODO Eliminate NumExpr detected 16 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 8.
 def parse_file(file_path, gui="", conversion_setting=""):  # Parser
     file_name = file_path.name
-    NV_run.run_msg(gui, "Importing data from " + file_name + ".")
+    NO_run.run_msg(gui, "Importing data from " + file_name + ".")
     # Variables for all referenced functions
     data_pit = []  # All Point in Time data
     data_train = []
@@ -416,7 +423,7 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
             output_meta_data.update({"form4_df": form4_df})
     except:
         msg = 'Error processing Form 4 position'
-        NV_run.run_msg(gui, msg)
+        NO_run.run_msg(gui, msg)
 
     # Read damper position and fan data from Form 5
     # TODO Update to get open or closed status for Form 3. Combine with get_titles_and_form3.
@@ -426,7 +433,7 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
         output_meta_data.update({"form5_fan_data": form5_fan_data_df})
     except:
         msg = 'Error processing Form 5 position'
-        NV_run.run_msg(gui, msg)
+        NO_run.run_msg(gui, msg)
     
     # Read jet fan data from Form 7C
     try:
@@ -436,7 +443,7 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
             output_meta_data.update({"jet_fan_data": jet_fan_data})
     except:
         msg = 'Error processing Form 7C, Jet Fan Data'
-        NV_run.run_msg(gui, msg)
+        NO_run.run_msg(gui, msg)
 
     # Read route data from Form 8F
     try:
@@ -444,7 +451,7 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
         output_meta_data.update({"form_8f": form8f_df})
     except:
         msg = 'Error Processing Form 8F'
-        NV_run.run_msg(gui, msg)
+        NO_run.run_msg(gui, msg)
 
     # Read route data from Form 9A
     try: 
@@ -452,7 +459,7 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
         output_meta_data.update({"form9_df": form9_df})
     except:
         msg = 'Error Processing Form 9'
-        NV_run.run_msg(gui, msg)
+        NO_run.run_msg(gui, msg)
 
     # Determine if there are abbreviated prints from Form 12.
     m = None  # Sets the value equal to none to start while loop
@@ -477,7 +484,7 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
                 summary = True
         i += 1
         if i > (len(lines) - 1):
-            NV_run.run_msg(
+            NO_run.run_msg(
                 gui,
                 "Error in reading output file "
                 + file_name
@@ -486,7 +493,7 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
             return []
         assert i < (len(lines)), "Cannot find first time! Line variable " + str(i)
     if abbreviated:  # First time an abbreviated print is read
-        NV_run.run_msg(
+        NO_run.run_msg(
             gui,
             "Warning - "
             + file_name
@@ -644,7 +651,7 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
         data = create_dictionary_from_list([df_ssa, df_sst])
     if conversion_setting in ["IP_TO_SI", "SI_TO_IP"]:
         data, output_meta_data = NV_conversion.convert_output_units(conversion_setting, data, output_meta_data, gui)
-    NV_run.run_msg(gui, "Finished importing data from " + file_name +".")
+    NO_run.run_msg(gui, "Finished importing data from " + file_name +".")
     return data, output_meta_data
 
 def create_dictionary_from_list(df_list):

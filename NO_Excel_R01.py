@@ -1,5 +1,5 @@
 # Project Name: Next-Out
-# Description: Creates Excel files from the data frames of SES output data.
+# Description: Creates Excel files from the 
 # Copyright (c) 2024 Justin Edenbaum, Never Gray
 #
 # This file is licensed under the MIT License.
