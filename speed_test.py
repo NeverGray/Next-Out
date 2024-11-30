@@ -8,7 +8,7 @@ from pathlib import Path
 import pandas as pd
 
 import NO_run
-from NV_CONSTANTS import VERSION_NUMBER as VERSION_NUMBER
+from NO_constants import VERSION_NUMBER as VERSION_NUMBER
 
 if __name__ == "__main__":
     directory_str = "C:\\Simulations\\SpeedTest"

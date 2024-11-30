@@ -1,3 +1,10 @@
+# Project Name: Next-Out
+# Description: Populate Visio Stencils from dataframes.
+# Copyright (c) 2024 Justin Edenbaum, Never Gray
+#
+# This file is licensed under the MIT License.
+# You may obtain a copy of the license at https://opensource.org/licenses/MIT
+
 import re
 import xml.etree.ElementTree as ET
 import zipfile
@@ -6,9 +13,9 @@ import pandas as pd
 import win32com.client
 
 import NO_run
-import NV_settings
-import NV_Tunnel_Segment
-from NV_CONSTANTS import DEGREE_SYMBOL
+import NO_visio_settings
+import NO_tunnel_segment
+from NO_constants import DEGREE_SYMBOL
 
 try:
     import zlib
@@ -131,7 +138,7 @@ def emod_visXML(vxml, data, file_stem, simtime=0.00, output_meta_data={},gui="")
     # Update Tunnel Segments
     if P1root.find(".//Visio:Row[@N='Tunnel_Segment_NV01']../..", ns) is not None:
         #TODO Reduce time by moving segment_time_df outside of this script
-        segment_time_df = NV_Tunnel_Segment.create_segment_info(data, output_meta_data, simtime)
+        segment_time_df = NO_tunnel_segment.create_segment_info(data, output_meta_data, simtime)
         for shape in P1root.findall(".//Visio:Row[@N='Tunnel_Segment_NV01']../..", ns):
             try:
                 update_tunnel_segment(shape, segment_time_df)       
@@ -251,7 +258,7 @@ def update_tunnel_segment(shape, segment_time_df):
     #Default values 1 of 2
     end_arrow = '5'
     begin_arrow = '0'
-    train_fire_values = NV_settings.train_fire_values
+    train_fire_values = NO_visio_settings.train_fire_values
     if seg_id in segment_time_df.index:
         data_airflow = segment_time_df.loc[seg_id]['Airflow']
         airflow = str(round(abs(data_airflow), 1))
@@ -309,7 +316,7 @@ def update_damper(shape, damper_position_dict):
     shape_text = NV02_text(status, shape_text)
     shape_child = shape.find(".//Visio:Shape[@Name='Damper_Closed_Lines']", ns)
     line_shapes = shape_child.findall(".//Visio:Shape",ns)
-    damper_settings = NV_settings.damper_settings.get(status)
+    damper_settings = NO_visio_settings.damper_settings.get(status)
     for line_shape in line_shapes:
         line_shape = update_shape_NV01(line_shape,damper_settings)
 
@@ -334,13 +341,13 @@ def update_fan(shape, form5_fan_data, simtime, ns):
         fan_status = "unknown"
         fan_direction = 1
     # Modify Fan_Blades for fan_status
-    fan_settings = NV_settings.fan_settings.get(fan_status)
+    fan_settings = NO_visio_settings.fan_settings.get(fan_status)
     shape_child = shape.find(".//Visio:Shape[@Name='Fan_Blades']", ns)
     shape_toddlers = shape_child.findall(".//Visio:Shape",ns)
     for shape_toddler in shape_toddlers:
         shape_toddler = update_shape_NV01(shape_toddler,fan_settings)
     # Modify Fan_center_line for fan direction
-    fan_settings = NV_settings.fan_settings.get(fan_direction)
+    fan_settings = NO_visio_settings.fan_settings.get(fan_direction)
     shape_child = shape.find(".//Visio:Shape[@Name='Fan_center_line']", ns)
     shape_child = update_shape_NV01(shape_child,fan_settings)
 
@@ -358,17 +365,17 @@ def update_jet_fan(shape, jet_fan_data, simtime, ns):
                 if velocity_discharge < 0:
                     jet_fan_direction = 'negative'
     shape_child = shape.find(".//Visio:Shape[@Name='jet_fan_outter_shell']", ns)
-    shape_child = update_shape_NV01(shape_child,NV_settings.jet_fan_power[jet_fan_status])
+    shape_child = update_shape_NV01(shape_child,NO_visio_settings.jet_fan_power[jet_fan_status])
     if jet_fan_direction == 'positive':
         shape_child = shape.find(".//Visio:Shape[@Name='Arrow_positive']", ns)
-        shape_child = update_shape_NV01(shape_child,NV_settings.line_black)
+        shape_child = update_shape_NV01(shape_child,NO_visio_settings.line_black)
         shape_child = shape.find(".//Visio:Shape[@Name='Arrow_negative']", ns)
-        shape_child = update_shape_NV01(shape_child,NV_settings.line_white)
+        shape_child = update_shape_NV01(shape_child,NO_visio_settings.line_white)
     else:
         shape_child = shape.find(".//Visio:Shape[@Name='Arrow_positive']", ns)
-        shape_child = update_shape_NV01(shape_child,NV_settings.line_white)
+        shape_child = update_shape_NV01(shape_child,NO_visio_settings.line_white)
         shape_child = shape.find(".//Visio:Shape[@Name='Arrow_negative']", ns)
-        shape_child = update_shape_NV01(shape_child,NV_settings.line_black)
+        shape_child = update_shape_NV01(shape_child,NO_visio_settings.line_black)
 
 
 def update_shape_NV01(shape, settings_dict):

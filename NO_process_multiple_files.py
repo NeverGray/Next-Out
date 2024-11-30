@@ -17,9 +17,9 @@ from tkinter import messagebox, ttk
 
 import NO_Excel_R01 as nve
 import NO_parser
-import NV_route
-import NV_visio
-from NV_CONSTANTS import VERSION_NUMBER
+import NO_route
+import NO_visio
+from NO_constants import VERSION_NUMBER
 
 # logging.disable(logging.CRITICAL)
 logging.basicConfig(
@@ -111,7 +111,7 @@ def single_process(
             process_status[value_index["Visio"]] = "Processing"
             processing_dictionary[pid] = process_status
             logging.info(f"Staring to create Visio file for {name}")
-            NV_visio.create_visio(settings, data, output_meta_data, gui="")
+            NO_visio.create_visio(settings, data, output_meta_data, gui="")
             logging.info(f"Finished writing Visio file for {name}")
             process_status[value_index["Visio"]] = "Done"
             processing_dictionary[pid] = process_status
@@ -137,7 +137,7 @@ def single_process(
             process_status[value_index["Route"]] = "Processing"
             processing_dictionary[pid] = process_status
             logging.info(f"Staring to create Route file for {name}")
-            NV_route.create_route_excel(settings, data, output_meta_data, gui="")
+            NO_route.create_route_excel(settings, data, output_meta_data, gui="")
             logging.info(f"Finished writing Route file for {name}")
             process_status[value_index["Route"]] = "Done"
             processing_dictionary[pid] = process_status

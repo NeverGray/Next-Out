@@ -1,8 +1,15 @@
+# Project Name: Next-Out
+# Description: Organize SES output in the dataframe along a route.
+# Copyright (c) 2024 Justin Edenbaum, Never Gray
+#
+# This file is licensed under the MIT License.
+# You may obtain a copy of the license at https://opensource.org/licenses/MIT
+
 from pathlib import Path
 
 import pandas as pd
 
-import NV_CONSTANTS
+import NO_constants
 import NO_Excel_R01 as NV_excel
 
 
@@ -52,10 +59,10 @@ def create_route_data(data, output_meta_data):
     
     # Covert IP Mid_Points to SI Mid_Points if ip_to_si is selected.
     if output_meta_data['ses_version'] == 'SI from IP':
-        route_mid_points['Mid_Point'] = route_mid_points['Mid_Point']*NV_CONSTANTS.IP_TO_SI['ft']
+        route_mid_points['Mid_Point'] = route_mid_points['Mid_Point']*NO_constants.IP_TO_SI['ft']
     # Covert SI Mid_Points to SI Mid_Points if ip_to_si is selected.
     elif output_meta_data['ses_version'] == 'IP from SI':
-        route_mid_points['Mid_Point'] = route_mid_points['Mid_Point']/NV_CONSTANTS.IP_TO_SI['ft']
+        route_mid_points['Mid_Point'] = route_mid_points['Mid_Point']/NO_constants.IP_TO_SI['ft']
     route_mid_points['Mid_Point'] = route_mid_points['Mid_Point'].round(1)
     # Index the dataframes on route number and mid_point of route
     route_mid_points.set_index(['Route_Number','Segment','Sub'], inplace=True)

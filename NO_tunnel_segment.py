@@ -1,6 +1,6 @@
 import pandas as pd
 
-from NV_CONSTANTS import IP_TO_SI as IP_TO_SI
+from NO_constants import IP_TO_SI as IP_TO_SI
 
 #From https://stackoverflow.com/questions/20625582/how-to-deal-with-settingwithcopywarning-in-pandas
 pd.options.mode.chained_assignment = None  # default='warn'
@@ -80,7 +80,7 @@ if __name__ == "__main__":
     from pathlib import Path
 
     import NO_parser
-    import NV_visio     
+    import NO_visio     
     visio_template = "Next Vis Samples1p21.vsdx"
     file_path_string = "C:/simulations/NV_Tunnel_Fix/siinfern-detailed.out"
     visio_template_folder = "C:/simulations/NV_Tunnel_Fix"
@@ -97,6 +97,6 @@ if __name__ == "__main__":
     file_path = Path(settings['ses_output_str'][0])
     conversion_setting = settings['conversion']
     data, output_meta_data = NO_parser.parse_file(file_path, gui="",conversion_setting=conversion_setting)
-    simtime = NV_visio.valid_simtime(settings["simtime"], data["SSA"], gui="")
+    simtime = NO_visio.valid_simtime(settings["simtime"], data["SSA"], gui="")
     segment_time_df = create_segment_info(data, output_meta_data, simtime)
     print('Finished')

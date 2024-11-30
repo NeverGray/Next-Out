@@ -1,12 +1,15 @@
+# Project Name: Next-Out
+# Description: Change outputs between SI and IP units.
+# Copyright (c) 2024 Justin Edenbaum, Never Gray
+#
+# This file is licensed under the MIT License.
+# You may obtain a copy of the license at https://opensource.org/licenses/MIT
 
 from pathlib import Path
 
-import pandas as pd
-
-import NV_CONSTANTS
+import NO_constants
 import NO_parser as nvp
 import NO_run
-
 
 def convert_output_units(conversion_setting, data, output_meta_data, gui=""):
     if conversion_is_possible(conversion_setting, output_meta_data):
@@ -22,34 +25,34 @@ def convert_output_units(conversion_setting, data, output_meta_data, gui=""):
             #Iterate through all columns (not indexes)
             for column in dataframe.columns:
                 #Check if the column name is in column_units
-                if column in NV_CONSTANTS.COLUMN_UNITS:
+                if column in NO_constants.COLUMN_UNITS:
                     #Get the list of the units of the column for IP and SI
-                    units = NV_CONSTANTS.COLUMN_UNITS[column]
+                    units = NO_constants.COLUMN_UNITS[column]
                     si_unit = units[0]
                     ip_unit = units[1]
                     #A conversion is needed if the two units for the column are different, 
                     if si_unit != ip_unit:
                         if conversion_setting=="IP_TO_SI":
                             #Temperature requires a special formula
-                            if ip_unit == NV_CONSTANTS.DEGREE_SYMBOL + 'F':
+                            if ip_unit == NO_constants.DEGREE_SYMBOL + 'F':
                                 dataframe[column] = (dataframe[column] - 32)/1.8 
                                 #For average temps columns (ST_temp_exception), some zero values should not be converted.
                                 if column in ST_temp_exception:
                                     average_to_zero(data, dataframe, column)
                             #all other units can use a simple conversion factor
-                            elif ip_unit in NV_CONSTANTS.IP_TO_SI:
-                                conversion_factor = NV_CONSTANTS.IP_TO_SI[ip_unit]
+                            elif ip_unit in NO_constants.IP_TO_SI:
+                                conversion_factor = NO_constants.IP_TO_SI[ip_unit]
                                 dataframe[column] = dataframe[column] * conversion_factor
                         elif conversion_setting=="SI_TO_IP":
                             #Temperature requires a special formula
-                            if si_unit == NV_CONSTANTS.DEGREE_SYMBOL + 'C':
+                            if si_unit == NO_constants.DEGREE_SYMBOL + 'C':
                                 dataframe[column] = (dataframe[column]*1.8) + 32
                                 #For average temps columns (ST_temp_exception), some zero values should not be converted.
                                 if column in ST_temp_exception:
                                     average_to_zero(data, dataframe, column)
                             #all other units can use a simple conversion factor
-                            elif ip_unit in NV_CONSTANTS.IP_TO_SI:
-                                conversion_factor = NV_CONSTANTS.IP_TO_SI[ip_unit]
+                            elif ip_unit in NO_constants.IP_TO_SI:
+                                conversion_factor = NO_constants.IP_TO_SI[ip_unit]
                                 dataframe[column] = dataframe[column] / conversion_factor    
         #Change output_meta_data to show the file has been converted.
         if conversion_setting=="IP_TO_SI":

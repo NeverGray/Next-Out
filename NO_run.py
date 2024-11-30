@@ -16,8 +16,8 @@ import NO_Excel_R01 as nve
 import NO_file_manager as nfm
 # Import of scripts
 import NO_parser
-import NV_route
-import NV_visio as nvv
+import NO_route
+import NO_visio as nvv
 
 
 #Function to perform a single simulation
@@ -92,7 +92,7 @@ def single_sim(settings, gui=""):
             )
     if "Route" in settings["output"]:  # Route data
         try:
-            NV_route.create_route_excel(settings,data,output_meta_data,gui)
+            NO_route.create_route_excel(settings,data,output_meta_data,gui)
         except:
             msg = "Error creating Route Data Excel Files"
             run_msg(gui,msg)

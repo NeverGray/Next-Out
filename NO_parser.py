@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pandas as pd
 
-import NV_conversion
+import NO_conversion
 import NO_run
 
 ''' If you need to log errors, enable code.
@@ -650,7 +650,7 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
     else:
         data = create_dictionary_from_list([df_ssa, df_sst])
     if conversion_setting in ["IP_TO_SI", "SI_TO_IP"]:
-        data, output_meta_data = NV_conversion.convert_output_units(conversion_setting, data, output_meta_data, gui)
+        data, output_meta_data = NO_conversion.convert_output_units(conversion_setting, data, output_meta_data, gui)
     NO_run.run_msg(gui, "Finished importing data from " + file_name +".")
     return data, output_meta_data
 

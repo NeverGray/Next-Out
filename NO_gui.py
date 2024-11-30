@@ -14,7 +14,7 @@ from tkinter import filedialog, messagebox, ttk
 import NO_file_manager
 import NO_process_multiple_files
 import NO_run
-from NV_CONSTANTS import VERSION_NUMBER
+from NO_constants import VERSION_NUMBER
 
 # add requirement for program to be legit to run
 class Start_Screen(tk.Tk):
@@ -373,11 +373,11 @@ class Start_Screen(tk.Tk):
         for key, value in self.screen_settings.items():
             exec(f"{key} = {value}")
         try:
-            settings_file_name = "nv_settings.ini"
+            settings_file_name = "NO_settings.ini"
             path_of_file = Path(settings_file_name)
             if path_of_file.is_file():
                 try:
-                    with open("nv_settings.ini", "rb") as f:
+                    with open("NO_settings.ini", "rb") as f:
                         settings_2_load = pickle.load(f)
                     for key, value in settings_2_load.items():
                         if value != "":
@@ -698,7 +698,7 @@ class Start_Screen(tk.Tk):
                 settings_2_save = {}
                 for key, value in self.screen_settings.items():
                     exec(f'settings_2_save["{key}"]= {key}.get()')
-                with open("nv_settings.ini", "wb") as f:
+                with open("NO_visio_settings.ini", "wb") as f:
                     pickle.dump(settings_2_save, f)
                 self.destroy()
             except:

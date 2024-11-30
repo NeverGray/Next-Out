@@ -11,7 +11,7 @@ from tkinter import messagebox
 
 import pandas as pd
 
-import NV_CONSTANTS
+import NO_constants
 import NO_run
 import xlsxwriter #Selected engine for pd.ExcelWriter
 
@@ -41,7 +41,7 @@ def create_excel(settings, data, output_meta_data, gui=""):
         "Units:": output_meta_data['ses_version']
         }
     df_startrow = len(TITLES)
-    #Select index for units in NV_CONSTANTS.COLUMN_UNITS value
+    #Select index for units in NO_constants.COLUMN_UNITS value
     if output_meta_data['ses_version'] in ['IP','IP from SI']:
         unit_index = 1
     else:
@@ -97,14 +97,14 @@ def create_excel(settings, data, output_meta_data, gui=""):
                 for i in range(len(item.columns)):
                     column = i + freeze_column_max
                     worksheet.write(df_startrow, column, item.columns[i], format_value_header)
-                    if item.columns[i] in NV_CONSTANTS.COLUMN_UNITS: 
-                        value = NV_CONSTANTS.COLUMN_UNITS[item.columns[i]][unit_index]        
+                    if item.columns[i] in NO_constants.COLUMN_UNITS: 
+                        value = NO_constants.COLUMN_UNITS[item.columns[i]][unit_index]        
                         worksheet.write(unit_row, column, value, format_units)
             # set propertes to Excel file
             writer.book.set_properties({
                 'title':    file_name,
                 'subject':  "SES Output in Next-Vis Format",
-                'author':   ("Next Vis " + NV_CONSTANTS.VERSION_NUMBER)
+                'author':   ("Next Vis " + NO_constants.VERSION_NUMBER)
             })
     except:
         NO_run.run_msg(gui, "ERROR creating Excel file "+ excel_results_path.name + " in MEMORY before writing. Contact Justin@NeverGray.biz for this strange error.")

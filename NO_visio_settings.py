@@ -1,3 +1,10 @@
+# Project Name: Next-Out
+# Description: List of different settings to display Visio templates.
+# Copyright (c) 2024 Justin Edenbaum, Never Gray
+#
+# This file is licensed under the MIT License.
+# You may obtain a copy of the license at https://opensource.org/licenses/MIT
+
 damper_closed={
     "LineColor_V": '#000000',
     "LineColor_F": 'THEMEGUARD(RGB(0,0,0))'
