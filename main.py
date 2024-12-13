@@ -5,13 +5,12 @@
 # This file is licensed under the MIT License.
 # You may obtain a copy of the license at https://opensource.org/licenses/MIT
 
-import multiprocessing
+import multiprocessing 
 import NO_gui
 
-def main(testing=False):
+def main():
     NO_gui.launch_window()
 
 if __name__ == "__main__":
-    multiprocessing.freeze_support() #TODO Experiement if this command is necessary
-    main(testing=False)
- 
+    multiprocessing.freeze_support() #TODO Maybe necessary for TKinter, second window
+    main()

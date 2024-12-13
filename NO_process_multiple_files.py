@@ -401,9 +401,9 @@ class Monitor_GUI(tk.Toplevel):
         if settings["file_type"] in ["input_file"]:
             self.process_settings["Simulation"] = True
         else:
-            self.process_settings["Simulation"] = True
+            self.process_settings["Simulation"] = False
         # Requirement for read_output to be performed
-        if settings["file_type"] == "next_in":
+        if settings["file_type"] == "output_file":
             self.process_settings["Read Output"] = True
         else:
             self.process_settings["Read Output"] = False

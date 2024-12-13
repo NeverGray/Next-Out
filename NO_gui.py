@@ -16,7 +16,6 @@ import NO_process_multiple_files
 import NO_run
 from NO_constants import VERSION_NUMBER
 
-# add requirement for program to be legit to run
 class Start_Screen(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -144,7 +143,7 @@ class Start_Screen(tk.Tk):
             command=self.update_output_options,
         )
         self.btn_file = ttk.Button(frm_ses, text="One file", command=self.single_file)
-        self.btn_files = ttk.Button(frm_ses, text="Many files", command=self.ses_files)
+        self.btn_files = ttk.Button(frm_ses, text="Many files", command=self.many_files)
         self.btn_folder = ttk.Button(frm_ses, text="Folder", command=self.ses_folder)
         self.ent_file = ttk.Entry(frm_ses, textvariable=self.path_file)
         self.ent_files = ttk.Entry(frm_ses, textvariable=self.path_files)
@@ -428,7 +427,7 @@ class Start_Screen(tk.Tk):
         except ValueError:
             pass
 
-    def ses_files(self, *args):  # Multiple files, not singular
+    def many_files(self, *args):  # Multiple files, not singular
         if self.file_type.get() == "input_file":
             filetypes_suffix = [
                 ("SES Input", ("*.INP", "*.SES")),
@@ -494,8 +493,8 @@ class Start_Screen(tk.Tk):
         pp_list.append(self.cbo_png.get())
         pp_list.append(self.cbo_svg.get())
         pp_list.append(self.cbo_visio_open_option.get())
-        interation_worksheets = []
-        interation_worksheets.append(self.iteration_worksheet_1.get())
+        # interation_worksheets = []
+        # interation_worksheets.append(self.iteration_worksheet_1.get())
         # interation_worksheets.append(self.iteration_worksheet_2)
         try:
             self.get_ses_file_str()
@@ -519,7 +518,7 @@ class Start_Screen(tk.Tk):
             "output": pp_list,
             "file_type": self.file_type.get(),
             "path_exe": self.path_exe.get(),
-            "iteration_worksheets": interation_worksheets,
+            #"iteration_worksheets": interation_worksheets,
             "summary_name": self.summary_name.get()
         }
 
@@ -716,13 +715,10 @@ class Start_Screen(tk.Tk):
         window.focus_force()
         window.grab_set()
 
-
 def launch_window():
     start_screen = Start_Screen()
     start_screen.mainloop()
 
 
 if __name__ == "__main__":
-    import main as main
-
-    main.main(False)
+    launch_window()

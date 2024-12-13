@@ -1,23 +1,40 @@
-Set-Location c:\bin
-.\python311\Scripts\Activate
+Set-Location "c:\bin\code"
+..\python313p1\Scripts\Activate.ps1
 Remove-Item "C:\Bin\code\*.py" -Force
 Remove-Item "C:\Bin\code\*.ini" -Force
-Copy-Item "C:\Users\msn\OneDrive - Never Gray\Software Development\Next-Vis\Python2021\*.py" "C:\bin\code\"
-Copy-Item "C:\Users\msn\OneDrive - Never Gray\Software Development\Next-Vis\Python2021\Icon4.ico" "C:\bin\code\"
-Remove-Item "C:\Bin\code\speed_test.py" -Force
-Remove-Item "C:\Bin\code\NO_constants.py" -Force
-#Use pyminify to obscurte and compress the code to smaller files. 
-pyminify code/ --in-place
-#The files below cannot be 'minified' because of UTF-8 charactor for degree. Therefore, copy them back over
-Copy-Item "C:\Users\msn\OneDrive - Never Gray\Software Development\Next-Vis\Python2021\NO_constants.py" "C:\bin\code\"
-Set-Location c:\bin\code
-#Below is code before update from 7 to 8 of pyarmor
-#pyarmor pack -e "--clean --onefile  --icon Icon4.ico --exclude matplotlib --exclude scipy --exclude unittest" main.py
-#pyarmor-7 pack -e "--noconsole --onefile  --icon Icon4.ico --exclude matplotlib --exclude scipy --exclude unittest" main.py
-#Below is the newer code to try packing the install
-pyinstaller -F main.py --noconsole --onefile  --icon Icon4.ico --exclude matplotlib --exclude scipy --exclude unittest
-# based on code on https://pyarmor.readthedocs.io/en/latest/tutorial/obfuscation.html
-pyarmor gen -O obfdist --enable-jit --mix-str --assert-call --private --pack dist/main.exe main.py
-Copy-Item "C:\bin\code\dist\main.exe" "C:\Simulations\_Exe"
-Remove-Item -Path "C:\simulations\_exe\Next-Sim Beta11.exe"
-Rename-Item -Path "C:\simulations\_exe\main.exe" -NewName "Next-Sim Beta11.exe"
+
+# Prompt the user for confirmation
+$response = Read-Host "Do you want to delete the Build and Dist folderss? (Yes/No)"
+
+# Check if the response is "Yes"
+if ($response -eq "Yes") {
+    Remove-Tiem "C:\Bin\code\dist" -Recurse -Force
+    Remove-Tiem "C:\Bin\code\build" -Recurse -Force
+    Write-Host "File deleted."
+}
+else {
+    Write-Host "Operation canceled."
+}
+Copy-Item "C:\Users\msn\OneDrive\Never Gray\Software Development\Next-Vis\Python2021\*.py" "C:\bin\code\"
+Copy-Item "C:\Users\msn\OneDrive\Never Gray\Software Development\Next-Vis\Python2021\NO_Icon.ico" "C:\bin\code\"
+pyinstaller -F main.py --noconsole --onefile  --icon NO_Icon.ico --exclude matplotlib --exclude scipy --exclude unittest
+
+# Rename main
+# Path to the Python file
+$filePath = "C:\bin\code\NO_constants.py"
+
+# Read the file content
+$fileContent = Get-Content -Path $filePath
+
+# Use a regex to find the VERSION_NUMBER line and extract the value
+if ($fileContent -match 'VERSION_NUMBER\s*=\s*"(.*?)"') {
+    $versionNumber = $($matches[1])  # Extract the first capture group
+    $versionNumber = $versionNumber.Replace('.', 'p')
+    Write-Host "Version Number: $versionNumber"
+}
+else {
+    Write-Host "VERSION_NUMBER not found in the file."
+    $versionNumber = "Test"
+}
+$newname = "Next-Out$versionNumber.exe"
+Rename-Item -Path "C:\bin\code\dist\main.exe" -NewName "$newname.exe"
