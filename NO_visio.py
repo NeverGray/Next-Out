@@ -455,7 +455,7 @@ def write_visio(vxmls, visio_template, new_visio ,gui=""):
             for name, vxml in vxmls.items():
                 temp_string = ET.tostring(vxml, encoding="utf-8", xml_declaration=True)
                 zappend.writestr(name, temp_string, compress_type=compression)
-        NO_run.run_msg(gui,f'Created Visio Diagram {new_visio.name}.')
+        NO_run.run_msg(gui,f'Created Visio diagram {new_visio.name}.')
     except:
         msg = "Error writing " + str(new_visio) + ". Try closing the file and process again."
         NO_run.run_msg(gui, msg)

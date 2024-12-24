@@ -369,6 +369,7 @@ class Start_Screen(tk.Tk):
             "self.iteration_worksheet_2": 'tk.StringVar(value="")',
             "self.summary_name": 'tk.StringVar(value="")',
         }
+        self.directory_cache = {}
         for key, value in self.screen_settings.items():
             exec(f"{key} = {value}")
         try:
@@ -377,8 +378,10 @@ class Start_Screen(tk.Tk):
             if path_of_file.is_file():
                 try:
                     with open("NO_settings.ini", "rb") as f:
-                        settings_2_load = pickle.load(f)
-                    for key, value in settings_2_load.items():
+                        data_to_save = pickle.load(f)
+                    self.directory_cache = data_to_save["directory_cache"]
+                    load_gui_settings = data_to_save["gui_settings"]
+                    for key, value in load_gui_settings.items():
                         if value != "":
                             exec(f'{key} = tk.StringVar(value="{value}")')
                 except:
@@ -389,27 +392,32 @@ class Start_Screen(tk.Tk):
 
     def get_visio_file(self, *args):
         try:
+            file_type = "Visio"
             filename = filedialog.askopenfilename(
-                title="Select Visio template file", filetypes=[("Visio", "*.vsdx")]
+                title="Select Visio template file", filetypes=[("Visio", "*.vsdx")],
+                initialdir=self.directory_cache.get(file_type, None),
             )
             self.path_visio.set(filename)
             self.cbo_visio.set("Visio")
+            self.directory_cache[file_type] = os.path.dirname(filename)
         except ValueError:
             pass
 
     # Function to return a path of a single file: input, output, or executable
-    def single_file(self, file_type="SES"):
+    def single_file(self, file_type=""):
         if file_type == "EXE":
             filetypes_suffix = [
                 ("SES Executable", "*.EXE"),
             ]
             title_text = "Select SES Executable to process input files"
         elif self.file_type.get() == "input_file":
+            file_type = self.file_type.get() 
             filetypes_suffix = [
                 ("SES Input", ("*.INP", "*.SES")),
             ]
             title_text = "Select one SES input File"
         else:
+            file_type = self.file_type.get() 
             filetypes_suffix = [
                 ("SES Output", ("*.PRN", "*.OUT")),
             ]
@@ -418,7 +426,11 @@ class Start_Screen(tk.Tk):
             filename = filedialog.askopenfilename(
                 title=title_text,
                 filetypes=filetypes_suffix,
+                #Use the previous directory for the specific file type
+                initialdir=self.directory_cache.get(file_type, None),
             )
+            #Save the directory selected for future selections
+            self.directory_cache[file_type] = os.path.dirname(filename)
             if file_type == "EXE":
                 self.path_exe.set(filename)
             else:
@@ -428,7 +440,8 @@ class Start_Screen(tk.Tk):
             pass
 
     def many_files(self, *args):  # Multiple files, not singular
-        if self.file_type.get() == "input_file":
+        file_type = self.file_type.get()
+        if file_type == "input_file":
             filetypes_suffix = [
                 ("SES Input", ("*.INP", "*.SES")),
             ]
@@ -442,32 +455,42 @@ class Start_Screen(tk.Tk):
             files = filedialog.askopenfilenames(
                 title=title_text,
                 filetypes=filetypes_suffix,
+                #Use the previous directory for many files
+                initialdir=self.directory_cache.get(file_type, None),
             )
             files_string = "; ".join(
                 files,
             )
             self.path_files.set(files_string)
             self.ses.set("Files")
+            #save the directory selected for many files for future selections
+            self.directory_cache[file_type] = os.path.dirname(files[0])
         except ValueError:
             pass
 
     def ses_folder(self, *args):
+        file_type = self.file_type.get()
         try:
             filename = filedialog.askdirectory(
-                title="Select folder with SES output Files", mustexist=True
+                title="Select folder with SES output Files", mustexist=True,
+                initialdir=self.directory_cache.get(file_type, None),
             )
             self.path_folder.set(filename)
             self.ses.set("Folder")
+            self.directory_cache[file_type] = filename
         except ValueError:
             pass
 
     def get_results_folder(self, *args):
+        file_type = "results"
         try:
             filename = filedialog.askdirectory(
-                title="Select folder to write post-processing results", mustexist=True
+                title="Select folder to write post-processing results", mustexist=True,
+                initialdir=self.directory_cache.get(file_type, None),
             )
             self.path_results_folder.set(filename)
             self.results_folder.set("selected")
+            self.directory_cache[file_type] = filename
         except ValueError:
             pass
 
@@ -683,6 +706,7 @@ class Start_Screen(tk.Tk):
             for child in widget.winfo_children():
                 self.configure_widget_state(child, state)
 
+    #Offer to save the current settings before exiting the program
     def on_closing(self):
         title_on_closing = "Quite Next Vis?"
         msg_1 = "Click 'Yes' to quit and save the most recent settings.\n"
@@ -694,11 +718,13 @@ class Start_Screen(tk.Tk):
             return
         elif answer:
             try:
-                settings_2_save = {}
+                GUI_settings_2_save = {}
                 for key, value in self.screen_settings.items():
-                    exec(f'settings_2_save["{key}"]= {key}.get()')
-                with open("NO_visio_settings.ini", "wb") as f:
-                    pickle.dump(settings_2_save, f)
+                    exec(f'GUI_settings_2_save["{key}"]= {key}.get()')
+                data_to_save = {}
+                data_to_save = {"gui_settings":GUI_settings_2_save, "directory_cache":self.directory_cache}
+                with open("NO_settings.ini", "wb") as f:
+                    pickle.dump(data_to_save, f)
                 self.destroy()
             except:
                 self.destroy()

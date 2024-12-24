@@ -27,7 +27,17 @@ logging.basicConfig(
 )
 
 UPDATE_FREQUENCY = 1000  # vALUE IN MILLISECONDS
-COLUMN_HEADERS = ("PID", "File", "Simulation", "Read Output", "Visio", "Excel", "Route")
+#COLUMN_HEADERS = ("PID", "File", "Simulation", "Read Output", "Visio", "Excel", "Route")
+DEFAULT_WIDTH = 10
+COLUMN_HEADERS_AND_WIDTH = {
+    "PID": DEFAULT_WIDTH ,
+    "File": 20,
+    "Simulation": DEFAULT_WIDTH , 
+    "Read Output": DEFAULT_WIDTH ,
+    "Visio": DEFAULT_WIDTH ,
+    "Excel": DEFAULT_WIDTH ,
+    "Route": DEFAULT_WIDTH 
+}
 STATUS_FONT_COLOR = {
     "-": "black",
     "Queued": "blue",
@@ -240,18 +250,20 @@ class Monitor_GUI(tk.Toplevel):
         self.processing_frame = ttk.LabelFrame(
             self.monitor_window, borderwidth=5, text="Processing", padding=p
         )
-        headers = COLUMN_HEADERS
+        headers = list(COLUMN_HEADERS_AND_WIDTH.keys())
         column_number = 10
+        self.column_width = {}
         for header in headers:
             self.entry = tk.Entry(
                 self.processing_frame,
-                width=self.c_width,
+                width=COLUMN_HEADERS_AND_WIDTH[header],
                 bg="DarkOrange1",
                 fg="Black",
                 font=("Arial", self.font_size),
             )
             self.entry.grid(row=10, column=column_number)
             self.entry.insert(tk.END, header)
+            self.column_width[column_number] = COLUMN_HEADERS_AND_WIDTH[header]
             column_number += 10
         # Done List
         self.done_frame = ttk.LabelFrame(
@@ -307,7 +319,7 @@ class Monitor_GUI(tk.Toplevel):
             column_number = 10
             self.entry = tk.Entry(
                 self.processing_frame,
-                width=self.c_width,
+                width=self.column_width[column_number],
                 fg="blue",
                 font=("Arial", self.font_size, ""),
             )
@@ -320,7 +332,7 @@ class Monitor_GUI(tk.Toplevel):
                 font_color_text = STATUS_FONT_COLOR.get(value, "black")
                 self.entry = tk.Entry(
                     self.processing_frame,
-                    width=self.c_width,
+                    width=self.column_width[column_number],
                     fg=font_color_text,
                     font=("Arial", self.font_size, ""),
                 )
