@@ -51,8 +51,6 @@ def create_train_truths(output_meta_data, data, simtime):
                 segments_with_trains_series = pd.concat([segments_with_trains_series,new_segments_series])
         segments_with_trains = segments_with_trains_series.unique().tolist()
         if len(segments_with_trains) > 0:
-            #train_false_table_segment = pd.Series(index = segments_with_trains, dtype = bool, name="train_present").fillna(value=True)
-            #train_truth_table_segment = ~train_false_table_segment
             train_truth_table_segment = pd.Series(index = segments_with_trains, dtype = bool, name="train_present").fillna(value=True)
         else:
             train_truth_table_segment = None
@@ -74,6 +72,7 @@ def create_segment_info(data, output_meta_data, simtime):
         segment_time_df["train_present"] = False
     fillin_values = {"active_fire":False, "train_present":False}
     segment_time_df.fillna(value=fillin_values, inplace=True)
+    #TODO There is Futurewarning regarding downcasting. 
     return segment_time_df
 
 if __name__ == "__main__":

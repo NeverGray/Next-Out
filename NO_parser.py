@@ -107,6 +107,9 @@ INPUT = {
     "f3a_2": re.compile(
         r"LINE SEGMENT TYPE.{72}\s*(?P<segment_type>\d+)\s+"
     ),
+    "f3a_pressure": re.compile(
+        r"CONSTANT PRESSURE ACROSS SEGMENT\s+(?P<pressure>.+)\s{3}PA\n"
+    ),
     "f12": re.compile(r"INPUT VERIFICATION OF CONTROL GROUP INFORMATION\s+FORM 12"),
     "f5a": re.compile(
         r"INPUT VERIFICATION FOR VENTILATION SHAFT\s+\d+\s\-\s*(?P<segment>\d+)\s+(?P<title>\S.+)+FORM"
@@ -194,8 +197,7 @@ INPUT = {
         re.VERBOSE,
     ),
 }
-# Search pattern to determine if fill is in IP (instead of SI by default)
-# Format of list is [[Line Number of text output, "Search String"]]
+# Text patterns to determine if output file is in IP (instead of default of SI)
 # Used in the function select_version
 IP_INDICATION = ["SES VER 4.", "Version 4.10", "OpenSES"]
 
@@ -402,7 +404,7 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
     data_te = []
     data_esc = []
     data_hsa = []
-    # Read output file into variable. OpenSES files require errors="replace" because of extended ASCII
+    # Read output file into "lines" variable. OpenSES files require errors="replace" because of extended ASCII
     with open(file_path, "r", errors="replace") as file_object:
         lines = file_object.readlines()
         # Get modified time of file https://thispointer.com/python-get-last-modification-date-time-of-a-file-os-stat-os-path-getmtime/
@@ -416,7 +418,8 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
     ambient_temperature = get_ambient_temperature(lines)
     
     # Read segment titles from Form 3 and Form 5 and types from form 3
-    segment_titles, form3_type = get_titles_and_form3(lines)
+    segment_titles, form3_type, form3_pressure = get_titles_and_form3(lines, version)
+    output_meta_data['form3_pressure'] = form3_pressure
     try:
         form4_df = get_form4(lines)
         if form4_df is not None:
@@ -426,7 +429,6 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
         NO_run.run_msg(gui, msg)
 
     # Read damper position and fan data from Form 5
-    # TODO Update to get open or closed status for Form 3. Combine with get_titles_and_form3.
     try:
         damper_position_dict, form5_fan_data_df = get_form5(lines)
         output_meta_data.update({"damper_position": damper_position_dict})
@@ -677,13 +679,14 @@ def get_segment_titles(lines):
         i += 1
     return segment_titles
 
-def get_titles_and_form3(lines):
+def get_titles_and_form3(lines, version="SI"):
     title_rx = INPUT["f3a"]
     time_rx = PIT["time"]
     time_match = None
     i = 0
     segment_titles = {}
     form3_type = {}
+    form3_pressure = {}
     while time_match is None and i < len(lines):
         title_match = title_rx.search(lines[i])
         time_match = time_rx.search(lines[i])
@@ -692,14 +695,20 @@ def get_titles_and_form3(lines):
             segment_titles.update(
                 {int(title_dict["segment"]): title_dict["title"].strip()}
             )
-            #Form 3 data
+            #Peform if this is a Form 3, Line Segement Type
             if title_dict['type'] == "LINE SEGMENT":
                 i +=2
-                form3_type.update(
-                    {int(title_dict["segment"]):int(INPUT['f3a_2'].search(lines[i])[1])}
-                )
+                segment_number = int(title_dict["segment"])
+                segment_type = int(INPUT['f3a_2'].search(lines[i])[1])
+                form3_type[segment_number]= segment_type
+                #If SI file, get constant pressure accross segment
+                if version == "SI":
+                    i +=12
+                    pressure = float(INPUT['f3a_pressure'].search(lines[i])[1])
+                    if pressure !=0: #If the pressure is not zero
+                        form3_pressure[segment_number] = pressure
         i += 1
-    return segment_titles, form3_type
+    return segment_titles, form3_type, form3_pressure
 
 def get_form4(lines):
     time_rx = PIT["time"] #signals start of simualtion and end of input
@@ -967,8 +976,8 @@ def to_dataframe2(
     return df
 
 def select_version(lines):
-    version = "SI"
-    for i in range(68):
+    version = "SI" #Default value unless function determines this is an IP File
+    for i in range(68): #Check first 69 lines
         for item in IP_INDICATION:
             if item in lines[i]:
                 version = "IP"
@@ -1110,7 +1119,6 @@ def percentage_parser(p_lines, time):
         i += 1
     return percent_list
 
-
 def te_parser(p_lines, time):
     i = 7
     te_list = []
@@ -1136,7 +1144,6 @@ def te_parser(p_lines, time):
             te_list.append(te_dict)
         i += 1
     return te_list
-
 
 def he_parser(p_lines, time):
     i = 6
@@ -1187,14 +1194,12 @@ def calculate_actual_airflow(SST, SSA, ambient_temperature, version):
     actual_airflow = absolute_Air_Temp*SSA['Airflow'] / absolute_ambient_temp
     return actual_airflow
 
-
-    
 if __name__ == "__main__":
-    directory_string = "C:\\simulations\\SI_TO_IP\\"
-    file_name = "sinorm-detailed.out"
+    directory_string = "C:\\simulations\\testing\\"
+    file_name = "WestPortalWind.out"
     path_string = directory_string + file_name
     file_path = Path(path_string)
-    d, output_meta_data = parse_file(file_path, gui="",conversion_setting="SI_TO_IP")
+    d, output_meta_data = parse_file(file_path, gui="",conversion_setting="SI")
     print('Finished')
 
     '''instructions for timing program

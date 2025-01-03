@@ -27,21 +27,23 @@ from pathlib import Path
 
 ns = {"Visio": "http://schemas.microsoft.com/office/visio/2012/main"}
 
+#Take inputted time of simuilation and returns a valid simulation time
 def valid_simtime(simtime, df, gui=""):
-    timeseries_index = df.index.unique(0)  # Creates a series of unique times
-    timeseries_list = timeseries_index.tolist()
+    timeseries_index = df.index.unique(0)  # Creates a series of unique times from data frame
+    timeseries_list = timeseries_index.tolist() #Crates a list form the index
     time = float(simtime)
-    if time == -1 or time > timeseries_list[-1]:
+    if time == -1 or time > timeseries_list[-1]: #If greater than last valid time
         time = timeseries_list[-1]
         #NO_run.run_msg(gui, f'Using last simulation time {time}')
     elif not time in timeseries_list:
         for x in timeseries_list:
-            if x - time > 0:
-                time = x
+            if x - time > 0: #Pick time greater than the selected time
+                time = x 
                 break
         NO_run.run_msg(gui, f"Could not find requested simulation time. Using {time}")
     return time
 
+#Get all the pages in a Visio file
 def get_visXML(visio_template):
     VZip = zipfile.ZipFile(visio_template)
     names = VZip.namelist()
@@ -53,8 +55,8 @@ def get_visXML(visio_template):
     return vxmls
 
 
-# code to modify XML file for emergency (or PIT) simualtions
-def emod_visXML(vxml, data, file_stem, simtime=0.00, output_meta_data={},gui=""):
+# Code to modify XML file for emergency (or PIT) simualtions, for each page
+def emod_visXML(vxml, data, file_stem, simtime=0.00, output_meta_data={}, gui=""):
     P1root = ET.fromstring(vxml)  # create XML element from the string
     ET.register_namespace(
         "", "http://schemas.microsoft.com/office/visio/2012/main"
@@ -62,8 +64,7 @@ def emod_visXML(vxml, data, file_stem, simtime=0.00, output_meta_data={},gui="")
     ET.register_namespace(
         "r", "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
     )
-    #TODO Move simtime outside of page file to speed up processing
-    simtime_df = data["SSA"].loc[simtime]
+    simtime_df = data["SSA"].loc[simtime] #Pull SSA for specfic timestep   
     # SimInfo-NV01 text fields
     sim_base_name = file_stem
     try:
@@ -73,7 +74,6 @@ def emod_visXML(vxml, data, file_stem, simtime=0.00, output_meta_data={},gui="")
             sim_base_name = sim_base_name + '_IP'
     except:
         NO_run.run_msg(gui, f'Error checking SES version')   
-
     file_time = output_meta_data.get("file_time") 
     shape_dict = {
         ".//Visio:Shape[@Name='NV01_SimNam']": sim_base_name,
@@ -144,6 +144,15 @@ def emod_visXML(vxml, data, file_stem, simtime=0.00, output_meta_data={},gui="")
                 update_tunnel_segment(shape, segment_time_df)       
             except:
                 NO_run.run_msg(gui, f'Error Updating Tunnel Segment')
+
+    # Update Pressure Segments
+    if P1root.find(".//Visio:Row[@N='Pressure_Segment']../..", ns) is not None:
+        for shape in P1root.findall(".//Visio:Row[@N='Pressure_Segment']../..", ns):
+            try:
+                update_pressure_segment(shape, output_meta_data['form3_pressure'])
+            except:
+                NO_run.run_msg(gui, f'Error Updating velocity_NV02')
+
     return P1root
 
 def update_temperature_NV02(simtime_df, SST_simtime, shape):
@@ -245,9 +254,9 @@ def update_velocity_NV02(simtime_df, shape):
 
 def NV02_text(value, child):
     if ET.iselement(child):
-        babe = child.find(".//Visio:Text", ns)
-        if ET.iselement(babe):
-            babe.text = value
+        baby = child.find(".//Visio:Text", ns)
+        if ET.iselement(baby):
+            baby.text = value
         else:
             ET.SubElement(child,"Text").text = value
 
@@ -300,10 +309,10 @@ def update_shape(shape, child_name, cell_n_v_dictionary):
     child = shape.find(child_string.format(child_name), ns)
     if ET.iselement(child):
         for n_value, v_value in cell_n_v_dictionary.items():
-            babe_string = ".//Visio:Cell[@N='{}']"
-            babe = child.find(babe_string.format(n_value),ns)
-            if ET.iselement(babe):
-                babe.set('V', v_value)
+            baby_string = ".//Visio:Cell[@N='{}']"
+            baby = child.find(baby_string.format(n_value),ns)
+            if ET.iselement(baby):
+                baby.set('V', v_value)
             else:
                 ET.SubElement(child,"Cell",N=n_value,V=v_value)
 
@@ -377,6 +386,27 @@ def update_jet_fan(shape, jet_fan_data, simtime, ns):
         shape_child = shape.find(".//Visio:Shape[@Name='Arrow_negative']", ns)
         shape_child = update_shape_NV01(shape_child,NO_visio_settings.line_black)
 
+def update_pressure_segment(shape, form3_pressure):
+    seg_id = int(shape.find(".//Visio:Row[@N='Pressure_Segment']/Visio:Cell", ns).get("V", default=-1))
+    pressure_value = form3_pressure.get(seg_id)
+    shape_properties = {}
+    if pressure_value is not None: #Modify the stencil to display a value
+        pressure_absolute_value = abs(round(pressure_value)) #Integer, no negative sign
+        pressure_text = f"{pressure_absolute_value}\nPA"
+        shape_properties["FillPattern_V"] = "1"
+        shape_properties.update(NO_visio_settings.line_black) #Line to black
+        shape_properties['FlipX_V']="0" 
+        if pressure_value < 0: #If pressure is negative, flip stencil
+            shape_properties['FlipX_V']="1"
+        #Make Text White
+        cell_data={"N": "Color", "V": "#ffffff", "F": "THEMEGUARD(RGB(0,0,0))"}
+        add_or_update_section(shape, section_name="Character", row_ix="0",cell_data=cell_data)
+    else:
+        pressure_text = ""
+        shape_properties["FillPattern_V"] = "0"
+        shape_properties.update(NO_visio_settings.line_white)
+    NV02_text(pressure_text, shape) # update 
+    update_shape_NV01(shape, shape_properties)
 
 def update_shape_NV01(shape, settings_dict):
     for key, value in settings_dict.items():
@@ -393,6 +423,23 @@ def update_shape_NV01(shape, settings_dict):
             shape.find(search_string,ns).set(value_setting,value)
     return shape
 
+# Function to find or create the Section
+def add_or_update_section(shape, section_name, row_ix, cell_data):
+    # Find the <Section> with the specified N attribute
+    section = shape.find(f"./Section[@N='{section_name}']")
+    if section is None: #Create new section
+        section = ET.SubElement(shape, "Section", {"N": section_name})
+    # Find the <Row> with the specified IX attribute
+    row = section.find(f"./Row[@IX='{row_ix}']")
+    if row is None: # Create <Row> if it doesn't exist
+        row = ET.SubElement(section, "Row", {"IX": row_ix})
+    # Update or create the <Cell> element
+    cell = row.find(f"./Cell[@N='{cell_data['N']}']")
+    if cell is None:
+        cell = ET.SubElement(row, "Cell", cell_data)
+    else:
+        # Update existing <Cell> attributes
+        cell.attrib.update(cell_data)
 
 def get_df_values(df, df_indexes, column_name):
     try:
@@ -414,23 +461,6 @@ def NV01_arrow(Shape, find_string, ns, flip):
     except:
         print("Error with NV01_arrow")
         return ShapeTemp
-
-def SimInfo_NV01(Shape, find_string, ns, value):
-    ShapeTemp = Shape
-    try:
-        ShapeChild = Shape.find(find_string, ns)
-        ShapeBabe = ShapeChild.find(".//Visio:Text", ns)
-        if ET.iselement(ShapeBabe):  # If element already exists, change the value
-            ShapeBabe.text = value  # Selects the NV01_Airflow ObjectShapeBabe=ShapeChild.find(".//Visio:Text",ns)
-        else:
-            ET.SubElement(
-                ShapeChild, "Text"
-            ).text = value  # Adds text element and value if elemnt doesn't exist
-        return Shape
-    except:
-        print("Error with SimInfo_NV01")
-        return ShapeTemp
-
 
 def write_visio(vxmls, visio_template, new_visio ,gui=""):
     # Sample Zip source code from https://stackoverflow.com/questions/513788/delete-file-from-zipfile-with-the-zipfile-module
@@ -460,6 +490,7 @@ def write_visio(vxmls, visio_template, new_visio ,gui=""):
         msg = "Error writing " + str(new_visio) + ". Try closing the file and process again."
         NO_run.run_msg(gui, msg)
 
+#Convert Visio files to other file formats
 def convert_visio(new_visio,settings_output,gui):
     try:
         #https://stackoverflow.com/questions/10214003/can-python-win32com-use-visio-or-any-program-without-popping-up-a-gui
@@ -504,7 +535,7 @@ def create_visio(settings, data, output_meta_data, gui=""):
     # Read in VISIO Template and update with SES OUtput
     vxmls = get_visXML(settings["visio_template"])  # gets the pages in the VISIO XML.
     file_stem = output_meta_data['file_path'].stem
-    for name, vxml in vxmls.items():
+    for name, vxml in vxmls.items(): #For each page in the visio file
         vxmls[name] = emod_visXML(
             vxmls[name], data, file_stem, settings["simtime"], output_meta_data, gui
         )
@@ -526,20 +557,19 @@ def create_visio(settings, data, output_meta_data, gui=""):
             NO_run.run_msg(gui, msg)
 
 if __name__ == "__main__":
-    one_output_file = ['C:/Simulations/Demonstration/SI Samples/siinfern-detailed.out']
-    two_output_files = ['C:/Simulations/Demonstration/SI Samples/siinfern-detailed.out', 'C:/Simulations/Demonstration/SI Samples/sinorm-detailed.out']
-    many_output_files = ['C:/Simulations/Demonstration/SI Samples\\coolpipe.out', 'C:/Simulations/Demonstration/SI Samples\\siinfern-detailed.out', 'C:/Simulations/Demonstration/SI Samples\\siinfern.out', 'C:/Simulations/Demonstration/SI Samples\\sinorm-detailed.out', 'C:/Simulations/Demonstration/SI Samples\\sinorm.out', 'C:/Simulations/Demonstration/SI Samples\\Test02R01.out', 'C:/Simulations/Demonstration/SI Samples\\Test06.out']
+    one_output_file = ['C:/Simulations/Testing/EastPortalWind.out']
+    #two_output_files = ['C:/Simulations/Demonstration/SI Samples/siinfern-detailed.out', 'C:/Simulations/Demonstration/SI Samples/sinorm-detailed.out']
+    #many_output_files = ['C:/Simulations/Demonstration/SI Samples\\coolpipe.out', 'C:/Simulations/Demonstration/SI Samples\\siinfern-detailed.out', 'C:/Simulations/Demonstration/SI Samples\\siinfern.out', 'C:/Simulations/Demonstration/SI Samples\\sinorm-detailed.out', 'C:/Simulations/Demonstration/SI Samples\\sinorm.out', 'C:/Simulations/Demonstration/SI Samples\\Test02R01.out', 'C:/Simulations/Demonstration/SI Samples\\Test06.out']
     #If using input file, change 'file_type' value to 'input_file
-    two_input_files = ['C:/Simulations/Demonstration/SI Samples/siinfern-detailed.inp', 'C:/Simulations/Demonstration/SI Samples/sinorm-detailed.inp']
-    many_input_files = ['C:/Simulations/Demonstration/SI Samples\\coolpipe.inp', 'C:/Simulations/Demonstration/SI Samples\\siinfern-detailed.inp', 'C:/Simulations/Demonstration/SI Samples\\siinfern.inp', 'C:/Simulations/Demonstration/SI Samples\\sinorm-detailed.inp', 'C:/Simulations/Demonstration/SI Samples\\sinorm.inp', 'C:/Simulations/Demonstration/SI Samples\\Test02R01.inp', 'C:/Simulations/Demonstration/SI Samples\\Test06.inp']
+    #two_input_files = ['C:/Simulations/Demonstration/SI Samples/siinfern-detailed.inp', 'C:/Simulations/Demonstration/SI Samples/sinorm-detailed.inp']
+    #many_input_files = ['C:/Simulations/Demonstration/SI Samples\\coolpipe.inp', 'C:/Simulations/Demonstration/SI Samples\\siinfern-detailed.inp', 'C:/Simulations/Demonstration/SI Samples\\siinfern.inp', 'C:/Simulations/Demonstration/SI Samples\\sinorm-detailed.inp', 'C:/Simulations/Demonstration/SI Samples\\sinorm.inp', 'C:/Simulations/Demonstration/SI Samples\\Test02R01.inp', 'C:/Simulations/Demonstration/SI Samples\\Test06.inp']
     settings = {
         'ses_output_str': one_output_file, 
-        'visio_template': 'C:/Simulations/Demonstration/Next Vis Samples1p21.vsdx', 
-        'results_folder_str': 'C:/Simulations/1p30 Testing', 
-        'simtime': -1, 
+        'visio_template': 'C:/Simulations/Testing/PortalWindTemplate004.vsdx',
+        'simtime': -1,
         'conversion': '', 
         'control': 'First', 
-        'output': ['Excel', 'Visio', '', '', 'Route', '', '', '', ''], 
+        'output': ['', 'Visio', 'visio_open', '', '', '', '', '', ''], 
         'file_type':'', #'input_file', 
         'path_exe': 'C:/Simulations/_Exe/SVSV6_32.exe'}
     NO_run.single_sim(settings)
