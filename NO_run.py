@@ -178,17 +178,15 @@ def ses_version_from_exe_string(path):
     return version
 
 if __name__ == "__main__":
-    directory_str = "C:\\simulations\\Iterations\\"
-    ses_output_list = directory_str + "Next Iteration Sheet Rev08.xlsx"
+    directory_str = "C:\\simulations\\test\\"
+    input_file_name = "test.inp"
     settings = {
-        "ses_output_str": [ses_output_list],
-        "results_folder_str": None,
-        "visio_template": None,
-        "simtime": 9999.0,
-        "conversion": "",
-        "control": "First",
-        "output": ["Excel"],
-        "file_type": "",
-        "path_exe": "C:\\simulations\\_EXE\\SESV6_32.exe",
-    }
+        'conversion': '',
+        'file_type': 'input_file',
+        'output': ['Excel', 'Visio', '', '', '', '', '', '', ''],
+        'path_exe': 'C:/Simulations/_Exe/SESV6_32.exe',
+        'results_folder_str': None,
+        'ses_output_str': [directory_str + input_file_name],
+        'simtime': -1,
+        'visio_template': 'C:/Simulations/Test/Test Template.vsdx'}
     single_sim(settings)

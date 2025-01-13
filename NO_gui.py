@@ -24,6 +24,8 @@ class Start_Screen(tk.Tk):
         py = "3"  # vertical padding
         px = "3"
         self.title("Next-Out " + VERSION_NUMBER)
+        style = ttk.Style()
+        style.theme_use('clam') #TODO Look at other styles
         # Call a function before closing the window.  See https://stackoverflow.com/questions/49220464/passing-arguments-in-tkinters-protocolwm-delete-window-function-on-python
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.ss = ttk.Frame(padding=p)  # start screen
@@ -33,7 +35,7 @@ class Start_Screen(tk.Tk):
             self.ss, borderwidth=5, text="Post Processing", padding=p
         )
         frm_conversion = ttk.LabelFrame(
-            self.left_column, borderwidth=5, text="Conversion", padding=p
+            self.left_column, borderwidth=5, text="Output Conversion", padding=p
         )
         frm_analysis = ttk.LabelFrame(
             self.left_column, borderwidth=5, text="Analysis*", padding=p
@@ -103,20 +105,20 @@ class Start_Screen(tk.Tk):
         analysis_label.grid(column=0, row=40, sticky="W", pady=py)
         # SES Files to Process
         frm_ses = ttk.LabelFrame(
-            self.ss, borderwidth=5, text="Files to Process", padding=p
+            self.ss, borderwidth=5, text="SES Files to Process", padding=p
         )
         frm_input_output = ttk.Frame(frm_ses)
         file_type = ttk.Label(frm_input_output, text="File Type to Process: ")
         rb_input_files = ttk.Radiobutton(
             frm_input_output,
-            text="SES Input      ",
+            text="Input         ",
             variable=self.file_type,
             value="input_file",
             command=self.update_frm_ses_exe,
         )
         rb_output_files = ttk.Radiobutton(
             frm_input_output,
-            text="SES Output     ",
+            text="Output         ",
             variable=self.file_type,
             value="output_file",
             command=self.update_frm_ses_exe,
@@ -367,7 +369,6 @@ class Start_Screen(tk.Tk):
             "self.path_results_folder": 'tk.StringVar(value="")',
             "self.iteration_worksheet_1": 'tk.StringVar(value="")',
             "self.iteration_worksheet_2": 'tk.StringVar(value="")',
-            "self.summary_name": 'tk.StringVar(value="")',
         }
         self.directory_cache = {}
         for key, value in self.screen_settings.items():
@@ -541,8 +542,6 @@ class Start_Screen(tk.Tk):
             "output": pp_list,
             "file_type": self.file_type.get(),
             "path_exe": self.path_exe.get(),
-            #"iteration_worksheets": interation_worksheets,
-            "summary_name": self.summary_name.get()
         }
 
         if self.validation(self.settings):
