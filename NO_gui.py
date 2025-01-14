@@ -25,7 +25,7 @@ class Start_Screen(tk.Tk):
         px = "3"
         self.title("Next-Out " + VERSION_NUMBER)
         style = ttk.Style()
-        style.theme_use('clam') #TODO Look at other styles
+        style.theme_use('winnative') #TODO Look at other styles
         # Call a function before closing the window.  See https://stackoverflow.com/questions/49220464/passing-arguments-in-tkinters-protocolwm-delete-window-function-on-python
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.ss = ttk.Frame(padding=p)  # start screen
@@ -564,6 +564,7 @@ class Start_Screen(tk.Tk):
                         self.settings["output"].remove("visio_open")
                         self.cbo_visio_open_option.set("")
                     self.open_monitor_gui()
+                    self.gui_text("Post processing completed.\n")
             except:
                 self.gui_text(
                     "Error after validation, before single_sim or multiple_sim. \n"
@@ -582,6 +583,7 @@ class Start_Screen(tk.Tk):
             if settings["visio_template"] == "":
                 msg = msg + "No Visio Template File is Specified. \n"
                 valid = False
+            #Check the time input is a number
             if self.rbo_time.get() == "user_time":
                 time = self.user_time.get()
                 if time.isnumeric():
@@ -730,6 +732,7 @@ class Start_Screen(tk.Tk):
         else:
             self.destroy()
 
+    #TODO Check if this can be deleted.
     def text_update(self, text):
         self.gui_text(text)
         self.ss.update
