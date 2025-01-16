@@ -8,8 +8,7 @@
 #import multiprocessing #TODO Testing if necessary
 import argparse
 import ast
-import ctypes
-import sys
+import multiprocessing #Needed for compiled (*.exe) version
 
 import NO_gui
 import NO_command_line
@@ -30,9 +29,11 @@ def main():
         app.mainloop()
     else:
         # Launch the GUI
+        # TODO Add multiprocessing.freeze_support() for more stability?
         NO_gui.launch_window()  # Assuming this is your GUI launch function
 
 if __name__ == "__main__":
+    multiprocessing.freeze_support() #May be needed for compiled (*.exe) version
     main()
     '''
     Use the text below in a terminal to test the command line options.
