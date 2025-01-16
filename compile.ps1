@@ -10,7 +10,7 @@ Remove-Item "C:\Bin\code\*.*" -Force
 $response = Read-Host "Do you want to delete the Build and Dist folders? (Yes/No)"
 
 # Check if the response is "Yes"
-if ($response -eq "Yes") {
+if ($response -eq "Yes" -or $response -eq "") {
     Remove-Item "C:\Bin\code\dist" -Recurse -Force
     Remove-Item "C:\Bin\code\build" -Recurse -Force
     Write-Host "File deleted."

@@ -703,11 +703,17 @@ def get_titles_and_form3(lines, version="SI"):
                 form3_type[segment_number]= segment_type
                 #If SI file, get constant pressure accross segment
                 if version == "SI":
-                    i +=12
-                    pressure = float(INPUT['f3a_pressure'].search(lines[i])[1])
-                    if pressure !=0: #If the pressure is not zero
-                        form3_pressure[segment_number] = pressure
-        i += 1
+                    i +=10
+                    i_max = i + 2 #Constant Pressure Across Segment is either 10 or 12 lines below 3A
+                    pressure_match = None
+                    while pressure_match is None and i <= i_max:
+                        pressure_match = INPUT['f3a_pressure'].search(lines[i])
+                        if pressure_match is not None:
+                            pressure = float(INPUT['f3a_pressure'].search(lines[i])[1])
+                            if pressure !=0: #If the pressure is not zero
+                                form3_pressure[segment_number] = pressure
+                        i += 2
+        i += 1 #TODO Update to a larger number to reduce lines searched. Need to know how many lines for Form 3 and 5, SI and IP to skip
     return segment_titles, form3_type, form3_pressure
 
 def get_form4(lines):
@@ -1195,8 +1201,8 @@ def calculate_actual_airflow(SST, SSA, ambient_temperature, version):
     return actual_airflow
 
 if __name__ == "__main__":
-    directory_string = "C:\\simulations\\testing\\"
-    file_name = "WestPortalWind.out"
+    directory_string = "C:\\simulations\\test\\"
+    file_name = "test.out"
     path_string = directory_string + file_name
     file_path = Path(path_string)
     d, output_meta_data = parse_file(file_path, gui="",conversion_setting="SI")
