@@ -498,6 +498,7 @@ def convert_visio(new_visio,settings_output,gui):
         doc = visio.Documents.Open(str(new_visio))
         if "visio_2_pdf" in settings_output:
             new_pdf = new_visio.with_suffix('.pdf')
+            NO_run.run_msg(gui,f'Creating PDF of {new_visio.name}')
             doc.ExportAsFixedFormat( 1, str(new_pdf), 1, 0)
             NO_run.run_msg(gui,f'Created PDF of {new_visio.name}')
         if ("visio_2_png" in settings_output) or ("visio_2_svg" in settings_output):   

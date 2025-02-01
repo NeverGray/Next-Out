@@ -62,17 +62,12 @@ def create_segment_info(data, output_meta_data, simtime):
     form4_truth_table_segment = create_form4_truths(output_meta_data, simtime)
     train_truth_table_segment = create_train_truths(output_meta_data, data, simtime)
     segment_time_df = data['SSA'].loc[(simtime)]
+    segment_time_df["active_fire"] = False #Make the default value false
     if form4_truth_table_segment is not None:
-        segment_time_df = segment_time_df.join(form4_truth_table_segment, how='left')
-    else:
-        segment_time_df["active_fire"] = False
+        segment_time_df.update(form4_truth_table_segment) #Change values to true if the segment is on fire
+    segment_time_df["train_present"] = False
     if train_truth_table_segment is not None:
-        segment_time_df = segment_time_df.join(train_truth_table_segment, how="left")
-    else:
-        segment_time_df["train_present"] = False
-    fillin_values = {"active_fire":False, "train_present":False}
-    segment_time_df.fillna(value=fillin_values, inplace=True)
-    #TODO There is Futurewarning regarding downcasting. 
+        segment_time_df.update(train_truth_table_segment)
     return segment_time_df
 
 if __name__ == "__main__":
@@ -83,7 +78,7 @@ if __name__ == "__main__":
     visio_template = "Next Vis Samples1p21.vsdx"
     file_path_string = "C:/simulations/NV_Tunnel_Fix/siinfern-detailed.out"
     visio_template_folder = "C:/simulations/NV_Tunnel_Fix"
-    results_folder_str = visio_template_folder
+    results_folder_str = ""
     settings = {
         "ses_output_str": [file_path_string],
         "visio_template": "/".join([visio_template_folder, visio_template]),

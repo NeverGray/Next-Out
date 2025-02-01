@@ -8,8 +8,9 @@
 		"[python]": {
 			"editor.defaultFormatter": "ms-python.black-formatter"
 		},
-		"python.formatting.provider": "none",
-		"python.defaultInterpreterPath": "C:\\bin\\python310\\Scripts\\python"
+		"python.formatting.provider": "black",
+		"python.defaultInterpreterPath": "C:\\bin\\python310\\Scripts\\python",
+		"editor.formatOnSave": true
 	},
 	"launch": {
 		"version": "0.2.0",

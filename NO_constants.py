@@ -5,7 +5,7 @@
 # This file is licensed under the MIT License.
 # You may obtain a copy of the license at https://opensource.org/licenses/MIT
 
-VERSION_NUMBER = "0.4b"
+VERSION_NUMBER = "0.5"
 #Column name : [SI Unit, IP Unit]
 COLUMN_UNITS={
     "Airflow":	["m^3/s","kcfm","SSA"], #SSA Values
