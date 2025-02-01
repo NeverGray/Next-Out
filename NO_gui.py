@@ -31,23 +31,23 @@ class Start_Screen(tk.Tk):
         self.ss = ttk.Frame(padding=p)  # start screen
         self.left_column = ttk.Frame(self.ss)
         # POST PROCESSING and Analysis Frames
-        frm_pp = ttk.LabelFrame(
+        frame_post_processing = ttk.LabelFrame(
             self.ss, borderwidth=5, text="Post Processing", padding=p
         )
-        frm_conversion = ttk.LabelFrame(
+        frame_output_conversion = ttk.LabelFrame(
             self.left_column, borderwidth=5, text="Output Conversion", padding=p
         )
-        frm_analysis = ttk.LabelFrame(
+        frame_analysis = ttk.LabelFrame(
             self.left_column, borderwidth=5, text="Analysis*", padding=p
         )
         # Initialize all setting variables. This process makes saving, than loading settings easier.
         self.load_settings()
         # Post Processing frame options
         cb_excel = ttk.Checkbutton(
-            frm_pp, text="Excel", variable=self.cbo_excel, onvalue="Excel", offvalue=""
+            frame_post_processing, text="Excel", variable=self.cbo_excel, onvalue="Excel", offvalue=""
         )
         cb_visio = ttk.Checkbutton(
-            frm_pp,
+            frame_post_processing,
             text="Visio",
             variable=self.cbo_visio,
             onvalue="Visio",
@@ -55,7 +55,7 @@ class Start_Screen(tk.Tk):
             command=self.update_post_processing_options,
         )
         cb_route = ttk.Checkbutton(
-            frm_pp,
+            frame_post_processing,
             text="Route Data",
             variable=self.cbo_route,
             onvalue="Route",
@@ -63,17 +63,17 @@ class Start_Screen(tk.Tk):
         )
         # Conversion frame options (radio buttons)
         rb_conversion_none = ttk.Radiobutton(
-            frm_conversion, text="None", variable=self.conversion, value=""
+            frame_output_conversion, text="None", variable=self.conversion, value=""
         )
         rb_IP_to_SI = ttk.Radiobutton(
-            frm_conversion, text="IP to SI", variable=self.conversion, value="IP_TO_SI"
+            frame_output_conversion, text="IP to SI", variable=self.conversion, value="IP_TO_SI"
         )
         rb_SI_to_IP = ttk.Radiobutton(
-            frm_conversion, text="SI to IP", variable=self.conversion, value="SI_TO_IP"
+            frame_output_conversion, text="SI to IP", variable=self.conversion, value="SI_TO_IP"
         )
         # Analysis frame options
         cb_average = ttk.Checkbutton(
-            frm_analysis,
+            frame_analysis,
             text="Staggered\nheadways\nmean, max, min",
             variable=self.cbo_average,
             onvalue="Average",
@@ -81,7 +81,7 @@ class Start_Screen(tk.Tk):
             command=self.update_post_processing_options,
         )
         self.cb_compare = ttk.Checkbutton(
-            frm_analysis,
+            frame_analysis,
             text="Compare two\noutputs",
             variable=self.cbo_compare,
             onvalue="Compare",
@@ -89,7 +89,7 @@ class Start_Screen(tk.Tk):
             command=self.update_post_processing_options,
         )
         analysis_label = ttk.Label(
-            frm_analysis, text="* Visio Template\nis disabled with\nAnalysis"
+            frame_analysis, text="* Visio Template\nis disabled with\nAnalysis"
         )
         # POST PROCESSING grid
         cb_excel.grid(column=0, row=0, sticky="W", pady=py)
@@ -104,55 +104,55 @@ class Start_Screen(tk.Tk):
         cb_average.grid(column=0, row=30, sticky="W", pady=py)
         analysis_label.grid(column=0, row=40, sticky="W", pady=py)
         # SES Files to Process
-        frm_ses = ttk.LabelFrame(
+        frame_ses_files = ttk.LabelFrame(
             self.ss, borderwidth=5, text="SES Files to Process", padding=p
         )
-        frm_input_output = ttk.Frame(frm_ses)
+        frm_input_output = ttk.Frame(frame_ses_files)
         file_type = ttk.Label(frm_input_output, text="File Type to Process: ")
         rb_input_files = ttk.Radiobutton(
             frm_input_output,
             text="Input         ",
             variable=self.file_type,
             value="input_file",
-            command=self.update_frm_ses_exe,
+            command=self.update_frame_ses_exe,
         )
         rb_output_files = ttk.Radiobutton(
             frm_input_output,
             text="Output         ",
             variable=self.file_type,
             value="output_file",
-            command=self.update_frm_ses_exe,
+            command=self.update_frame_ses_exe,
         )
         rb_file = ttk.Radiobutton(
-            frm_ses,
+            frame_ses_files,
             text="",
             variable=self.ses,
             value="File",
             command=self.update_output_options,
         )
         rb_files = ttk.Radiobutton(
-            frm_ses,
+            frame_ses_files,
             text="",
             variable=self.ses,
             value="Files",
             command=self.update_output_options,
         )
         rb_folder = ttk.Radiobutton(
-            frm_ses,
+            frame_ses_files,
             text="",
             variable=self.ses,
             value="Folder",
             command=self.update_output_options,
         )
-        self.btn_file = ttk.Button(frm_ses, text="One file", command=self.single_file)
-        self.btn_files = ttk.Button(frm_ses, text="Many files", command=self.many_files)
-        self.btn_folder = ttk.Button(frm_ses, text="Folder", command=self.ses_folder)
-        self.ent_file = ttk.Entry(frm_ses, textvariable=self.path_file)
-        self.ent_files = ttk.Entry(frm_ses, textvariable=self.path_files)
-        self.ent_folder = ttk.Entry(frm_ses, textvariable=self.path_folder)
+        self.btn_file = ttk.Button(frame_ses_files, text="One file", command=self.single_file)
+        self.btn_files = ttk.Button(frame_ses_files, text="Many files", command=self.many_files)
+        self.btn_folder = ttk.Button(frame_ses_files, text="Folder", command=self.ses_folder)
+        self.ent_file = ttk.Entry(frame_ses_files, textvariable=self.path_file)
+        self.ent_files = ttk.Entry(frame_ses_files, textvariable=self.path_files)
+        self.ent_folder = ttk.Entry(frame_ses_files, textvariable=self.path_folder)
         # SES Files Frame creation
         r = 0
-        frm_ses.grid(column=0, row=r)
+        frame_ses_files.grid(column=0, row=r)
         frm_input_output.grid(
             column=0, row=r, columnspan=3, sticky=["W"], pady=py, padx="0"
         )
@@ -177,70 +177,70 @@ class Start_Screen(tk.Tk):
         self.ent_folder.grid(
             column=2, row=r, columnspan=2, sticky=["EW"], pady=py, padx=px
         )
-        frm_ses.columnconfigure(2, weight=1)
+        frame_ses_files.columnconfigure(2, weight=1)
         # SES Executable for input files
-        self.frm_ses_exe = ttk.LabelFrame(
+        self.frame_ses_exe = ttk.LabelFrame(
             self.ss,
             borderwidth=5,
             text="SES Executable (for input files)",
             padding=p,
         )
         self.btn_exe = ttk.Button(
-            self.frm_ses_exe, text="SES EXE", command=lambda: self.single_file("EXE")
+            self.frame_ses_exe, text="SES EXE", command=lambda: self.single_file("EXE")
         )
         self.ent_file_exe = ttk.Entry(
-            self.frm_ses_exe,
+            self.frame_ses_exe,
             textvariable=self.path_exe,
         )
         # SES Executable Frame Creation
         r = 0
         self.btn_exe.grid(column=0, row=r, sticky=["W"], pady=py, padx=px)
         self.ent_file_exe.grid(column=1, row=r, sticky=["WE"], columnspan=2)
-        self.frm_ses_exe.columnconfigure(2, weight=1)
+        self.frame_ses_exe.columnconfigure(2, weight=1)
 
         # VISIO Template - Row 1
-        self.frm_visio = ttk.LabelFrame(
+        self.frame_visio = ttk.LabelFrame(
             self.ss, borderwidth=5, text="Visio Template", padding=p
         )
         btn_visio = ttk.Button(
-            self.frm_visio, text="Select", command=self.get_visio_file
+            self.frame_visio, text="Select", command=self.get_visio_file
         )
-        ent_visio = ttk.Entry(self.frm_visio, textvariable=self.path_visio)
+        ent_visio = ttk.Entry(self.frame_visio, textvariable=self.path_visio)
         # Visio Template - Row 2
-        lbl_time = ttk.Label(self.frm_visio, text="Simulation Time: ")
+        lbl_time = ttk.Label(self.frame_visio, text="Simulation Time: ")
         rb_end_time = ttk.Radiobutton(
-            self.frm_visio, text="End", variable=self.rbo_time, value="end"
+            self.frame_visio, text="End", variable=self.rbo_time, value="end"
         )
         rb_user_time = ttk.Radiobutton(
-            self.frm_visio, text="Specified", variable=self.rbo_time, value="user_time"
+            self.frame_visio, text="Specified", variable=self.rbo_time, value="user_time"
         )
-        self.ent_user_time = ttk.Entry(self.frm_visio, textvariable=self.user_time)
+        self.ent_user_time = ttk.Entry(self.frame_visio, textvariable=self.user_time)
         # Visio Template - Row 3
         self.cb_visio_open = ttk.Checkbutton(
-            self.frm_visio,
+            self.frame_visio,
             text="Open in Visio",
             variable=self.cbo_visio_open_option,
             onvalue="visio_open",
             offvalue="",
         )
         # Visio Template - Row 4
-        lbl_image = ttk.Label(self.frm_visio, text="More Image Outputs: ")
+        lbl_image = ttk.Label(self.frame_visio, text="More Image Outputs: ")
         cb_pdf = ttk.Checkbutton(
-            self.frm_visio,
+            self.frame_visio,
             text="PDF",
             variable=self.cbo_pdf,
             onvalue="visio_2_pdf",
             offvalue="",
         )
         cb_png = ttk.Checkbutton(
-            self.frm_visio,
+            self.frame_visio,
             text="PNG",
             variable=self.cbo_png,
             onvalue="visio_2_png",
             offvalue="",
         )
         cb_svg = ttk.Checkbutton(
-            self.frm_visio,
+            self.frame_visio,
             text="SVG",
             variable=self.cbo_svg,
             onvalue="visio_2_svg",
@@ -255,7 +255,7 @@ class Start_Screen(tk.Tk):
         rb_end_time.grid(column=1, row=r, sticky="W", pady=py)
         rb_user_time.grid(column=2, row=r, sticky="W", pady=py)
         self.ent_user_time.grid(column=3, row=r, sticky=["WE"], pady=py)
-        self.frm_visio.columnconfigure(3, weight=1)
+        self.frame_visio.columnconfigure(3, weight=1)
         r = 3
         self.cb_visio_open.grid(column=0, row=r, sticky="W", pady=py)
         r = 4
@@ -264,43 +264,45 @@ class Start_Screen(tk.Tk):
         cb_png.grid(column=2, row=r, sticky="W", pady=py)
         cb_svg.grid(column=3, row=r, sticky="W", pady=py)
         # Results Folder widgets
-        frm_results_folder = ttk.LabelFrame(
+        frame_results_folder = ttk.LabelFrame(
             self.ss, borderwidth=5, text="Folder to write results", padding=p
         )
         rb_ses = ttk.Radiobutton(
-            frm_results_folder,
-            text="Same as SES Output",
+            frame_results_folder,
+            text="Same as SES Input",
             variable=self.results_folder,
             value="ses output",
         )
-        rb_visio = ttk.Radiobutton(
-            frm_results_folder,
-            text="Same as Visio Template",
-            variable=self.results_folder,
-            value="visio template",
-        )
         rb_selected = ttk.Radiobutton(
-            frm_results_folder,
+            frame_results_folder,
             text="Selected",
             variable=self.results_folder,
             value="selected",
         )
         btn_results_folder = ttk.Button(
-            frm_results_folder, text="Select", command=self.get_results_folder
+            frame_results_folder, text="Select", command=self.get_results_folder
         )
         ent_results_folder = ttk.Entry(
-            frm_results_folder, textvariable=self.path_results_folder
+            frame_results_folder, textvariable=self.path_results_folder
         )
         # OUTPUT FILE LOCATION grid
         rb_ses.grid(column=0, row=0, sticky="W")
-        rb_visio.grid(column=1, row=0, sticky="W")
         rb_selected.grid(column=2, row=0, sticky="EW")
         btn_results_folder.grid(column=0, row=1, sticky="W")
         ent_results_folder.grid(column=1, row=1, sticky="WE", columnspan=2)
-        frm_results_folder.columnconfigure(2, weight=1)
+        frame_results_folder.columnconfigure(2, weight=1)
         # RUN button
         frm_run = ttk.Frame(self.ss, padding=p, borderwidth=5)
-        self.btn_run = ttk.Button(frm_run, text="Run", command=self.run)
+        #self.btn_run = ttk.Button(frm_run, text="Run", command=self.run)
+        self.btn_run = tk.Button(
+            frm_run,
+            text="Run",
+            command=self.run,
+            bg="#444444",  # Darker background color
+            fg="white",    # White text
+            activebackground="#222222",  # Darker shade when hovered
+            activeforeground="white"     # Text color when hovered
+        )
         self.btn_run.pack(expand=True, fill=tk.BOTH)
         # STATUS SCREEN
         frm_status = ttk.LabelFrame(self.ss, borderwidth=5, text="Status", padding=p)
@@ -317,31 +319,46 @@ class Start_Screen(tk.Tk):
         self.txt_status["yscrollcommand"] = self.ys_status.set
         self.txt_status.pack(side=tk.LEFT, expand=tk.TRUE, fill=tk.BOTH)
         self.ys_status.pack(side=tk.RIGHT, fill="y")
-        # START SCREEN grid
+        '''# START SCREEN grid
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
-        # root.rowconfigure(0, weight=1)
         self.ss.grid(column=0, row=0, sticky="EWNS")
         self.ss.columnconfigure(1, weight=1)
-        # TODO Adjust row configure to tightly pack items
         self.ss.rowconfigure(5, weight=1)
-        frm_conversion.pack(side="top", fill="x", pady=py, padx=px)
-        frm_analysis.pack(side="top", fill="x", pady=py, padx=px)
-        frm_pp.grid(column=0, row=0, sticky=["NSEW"], pady=py, padx=px)
+        frame_output_conversion.pack(side="top", fill="x", pady=py, padx=px)
+        frame_analysis.pack(side="top", fill="x", pady=py, padx=px)
+        frame_post_processing.grid(column=0, row=0, sticky=["NSEW"], pady=py, padx=px)
         self.left_column.grid(row=1, column=0, rowspan=3, sticky=["NEW"])
-        frm_ses.grid(column=1, row=0, sticky=["NSEW"], pady=py, padx=px)
-        self.frm_ses_exe.grid(column=1, row=1, sticky=["NSEW"], pady=py, padx=px)
-        self.frm_visio.grid(column=1, row=2, sticky=["WE"], pady=py, padx=px)
-        self.frm_visio.grid(column=1, row=2, sticky=["WE"], pady=py, padx=px)
-        frm_results_folder.grid(column=1, row=3, sticky=["WE"], pady=py, padx=px)
+        frame_ses_files.grid(column=1, row=0, sticky=["NSEW"], pady=py, padx=px)
+        self.frame_ses_exe.grid(column=1, row=1, sticky=["NSEW"], pady=py, padx=px)
+        self.frame_visio.grid(column=1, row=2, sticky=["WE"], pady=py, padx=px)
+        self.frame_visio.grid(column=1, row=2, sticky=["WE"], pady=py, padx=px)
+        frame_results_folder.grid(column=1, row=3, sticky=["WE"], pady=py, padx=px)
         frm_run.grid(column=0, columnspan=2, row=4, sticky=["WE"], pady=py, padx=px)
         frm_status.grid(
             column=0, row=6, columnspan=2, sticky=["WESN"], pady=py, padx=px
-        )
-        self.minsize(550, 385)  # Measured using paint.net
-        self.update_post_processing_options()
-        self.update_frm_ses_exe()
-        self.ss.update()
+        )'''
+        # START SCREEN grid
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1)
+        self.ss.grid(column=0, row=0, sticky="EWNS")
+        self.ss.columnconfigure(0, weight=1)
+        self.ss.rowconfigure(5, weight=1)
+
+        frame_output_conversion.pack(side="top", fill="x", pady=py, padx=px)
+        frame_analysis.pack(side="top", fill="x", pady=py, padx=px)
+
+        # Switch left-hand and right-hand elements
+        frame_post_processing.grid(column=1, row=0, sticky=["NSEW"], pady=py, padx=px)
+        self.left_column.grid(row=1, column=1, rowspan=3, sticky=["NEW"])
+        frame_ses_files.grid(column=0, row=0, sticky=["NSEW"], pady=py, padx=px)
+        self.frame_ses_exe.grid(column=0, row=1, sticky=["NSEW"], pady=py, padx=px)
+        self.frame_visio.grid(column=0, row=2, sticky=["WE"], pady=py, padx=px)
+        frame_results_folder.grid(column=0, row=3, sticky=["WE"], pady=py, padx=px)
+
+        frm_run.grid(column=0, columnspan=2, row=4, sticky=["WE"], pady=py, padx=px)
+        frm_status.grid(column=0, row=6, columnspan=2, sticky=["WESN"], pady=py, padx=px)
+
 
     def load_settings(self, *args):
         # Define all variable and default values for  GUI
@@ -646,13 +663,6 @@ class Start_Screen(tk.Tk):
         option = self.results_folder.get()
         if option == "selected":
             self.results_folder_str = self.path_results_folder.get()
-        elif option == "visio template":
-            visio_str = self.path_visio.get()
-            if visio_str != "":
-                visio_path = Path(visio_str)
-                self.results_folder_str = str(visio_path.parent)
-            else:
-                self.results_folder_str = None
         else:  # Default is same as SES output. Use empty string
             self.results_folder_str = None
 
@@ -674,15 +684,15 @@ class Start_Screen(tk.Tk):
         else:
             visio_state = "disable"
         # Disable all items in a frame: https://www.tutorialspoint.com/how-to-gray-out-disable-a-tkinter-frame
-        self.configure_widget_state(self.frm_visio, visio_state)
+        self.configure_widget_state(self.frame_visio, visio_state)
 
-    def update_frm_ses_exe(self, *args):
+    def update_frame_ses_exe(self, *args):
         multiple_files_state = "enable"
         if self.file_type.get() == "input_file":
             ses_exe_state = "enable"
         else:
             ses_exe_state = "disable"
-        self.configure_widget_state(self.frm_ses_exe, ses_exe_state)
+        self.configure_widget_state(self.frame_ses_exe, ses_exe_state)
         # Update file buttons
         self.btn_files.configure(state=multiple_files_state)
         self.btn_folder.configure(state=multiple_files_state)
