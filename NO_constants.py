@@ -5,7 +5,7 @@
 # This file is licensed under the MIT License.
 # You may obtain a copy of the license at https://opensource.org/licenses/MIT
 
-VERSION_NUMBER = "0.5"
+VERSION_NUMBER = "1.0"
 #Column name : [SI Unit, IP Unit]
 COLUMN_UNITS={
     "Airflow":	["m^3/s","kcfm","SSA"], #SSA Values
@@ -21,7 +21,7 @@ COLUMN_UNITS={
     "Radiation_to_Wall":["W","Btu/h","SST"],
     "Working_Fluid_Temp":["\u00B0C","\u00B0F","SST"],
     "Heat_Absorbed_by_Pipe":["W","Btu/h","SST"],
-    "Actual_Airflow_NV":["m^3/s","kcfm","SST"], #Next-vis calculated data
+    "Actual_Airflow_NV":["m^3/s","kcfm","SST"], #Next-Out calculated data
     "Train_Number":["#","#","TRA"],          #Train Information
     "Route_Number":["#","#","TRA"],
     "Train_Type_Number":["#","#","TRA"],

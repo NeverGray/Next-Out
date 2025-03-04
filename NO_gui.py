@@ -581,7 +581,6 @@ class Start_Screen(tk.Tk):
                         self.settings["output"].remove("visio_open")
                         self.cbo_visio_open_option.set("")
                     self.open_monitor_gui()
-                    self.gui_text("Post processing completed.\n")
             except:
                 self.gui_text(
                     "Error after validation, before single_sim or multiple_sim. \n"
@@ -722,7 +721,7 @@ class Start_Screen(tk.Tk):
         title_on_closing = "Quite Next Vis?"
         msg_1 = "Click 'Yes' to quit and save the most recent settings.\n"
         msg_2 = "Click 'No' to exit without saving.\n"
-        msg_3 = "Click 'Cancel' to return back to Next-Vis\n"
+        msg_3 = "Click 'Cancel' to return back to Next-Out\n"
         msg_all = msg_1 + msg_2 + msg_3
         answer = messagebox.askyesnocancel(title=title_on_closing, message=msg_all)
         if answer is None:

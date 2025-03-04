@@ -1,5 +1,5 @@
 # Project Name: Next-Out
-# Description: Perform SES simuilations. Post-processes and analyze output data.
+# Description: Perform SES simulations. Post-processes and analyze output data.
 # Copyright (c) 2024 Justin Edenbaum, Never Gray
 #
 # This file is licensed under the MIT License.

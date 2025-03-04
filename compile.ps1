@@ -1,9 +1,13 @@
-#Disable Windows Defender (or Other Antivirus Software) to properly create EXE File. 
-#Disconnect Wifi or internet connection because your computer is vunerable
-#Disable Real-time protection. Under Virus & Threat Protection>Virus & Threat protection settings>Manage Settings
+# Project Name: Next-Out
+# Description: Compile the Python code into an executable
+# Copyright (c) 2025 Justin Edenbaum, Never Gray
+#
+# This file is licensed under the MIT License.
+# You may obtain a copy of the license at https://opensource.org/licenses/MIT
+
 
 Set-Location "c:\bin\code"
-..\python313p1\Scripts\Activate.ps1
+..\python3p13\Scripts\Activate.ps1
 Remove-Item "C:\Bin\code\*.*" -Force
 
 # Prompt the user for confirmation

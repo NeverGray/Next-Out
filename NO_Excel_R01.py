@@ -103,7 +103,7 @@ def create_excel(settings, data, output_meta_data, gui=""):
             # set propertes to Excel file
             writer.book.set_properties({
                 'title':    file_name,
-                'subject':  "SES Output in Next-Vis Format",
+                'subject':  "SES Output in Next-Out Format",
                 'author':   ("Next Vis " + NO_constants.VERSION_NUMBER)
             })
     except:
