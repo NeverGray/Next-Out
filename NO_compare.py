@@ -14,6 +14,7 @@ from openpyxl.styles import Font
 import NO_Excel_R01 as NV_excel
 import NO_parser
 import NO_run
+import NO_file_manager
 
 
 def compare_outputs(settings, gui=""):
@@ -46,9 +47,9 @@ def compare_outputs(settings, gui=""):
     second_data = dictionary_to_list(second_df)
     num_df = len(base_data)
     suffix = base_output_meta_data['file_path'].suffix
-    base_path = NO_run.get_results_path2(settings, base_output_meta_data, suffix)
+    base_path = NO_file_manager.get_results_path2(settings, base_output_meta_data, suffix)
     suffix = second_output_meta_data['file_path'].suffix
-    second_path = NO_run.get_results_path2(settings, second_output_meta_data, suffix)
+    second_path = NO_file_manager.get_results_path2(settings, second_output_meta_data, suffix)
     if num_df != len(second_data):
         msg = "Error in Comparing two output files! " + base_path.name + "and" + second_path.name + "have different structures."
         NO_run.run_msg(gui, msg)
@@ -84,7 +85,7 @@ def compare_outputs(settings, gui=""):
             base_output_meta_data['file_path'] = Path(parent + '/' + file_name_4_path)
             output_meta_data = base_output_meta_data.copy()
             output_meta_data['ses_version'] = 'Unconfirmed'
-            compare_results_path = NO_run.get_results_path2(settings, output_meta_data, ".xlsx")
+            compare_results_path = NO_file_manager.get_results_path2(settings, output_meta_data, ".xlsx")
             p_e_text = (
                 "Percent Error = Absolute value of [(Difference) / ("
                 + base_path.name

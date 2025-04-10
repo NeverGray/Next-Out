@@ -91,8 +91,8 @@ class command_line_screen(tk.Tk):
         else:
             self.gui_text("Error with Validation of Settings")
 
-    # Function to check that settings allows a successful simulation and post-processing
-    #TODO Change Validation in NO_Gui to a standalone function that can be called here. 
+    # Function to check that settings allows a successful simulation and post-processing to start
+    #TODO Change Validation in NO_Gui to a standalone function that can be called here or in NO_run. 
     def validation(self, settings):
         try:
             valid = True

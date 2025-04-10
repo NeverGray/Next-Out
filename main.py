@@ -5,7 +5,6 @@
 # This file is licensed under the MIT License.
 # You may obtain a copy of the license at https://opensource.org/licenses/MIT
 
-#import multiprocessing #TODO Testing if necessary
 import argparse
 import ast
 import multiprocessing #Needed for compiled (*.exe) version
@@ -29,7 +28,7 @@ def main():
         app.mainloop()
     else:
         # Launch the GUI
-        # TODO Add multiprocessing.freeze_support() for more stability?
+        multiprocessing.freeze_support()
         NO_gui.launch_window()  # Assuming this is your GUI launch function
 
 if __name__ == "__main__":

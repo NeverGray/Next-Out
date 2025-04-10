@@ -8,19 +8,18 @@
 import subprocess
 from pathlib import Path
 
-import pandas as pd
-
 import NO_average
 import NO_average
 import NO_Excel_R01 as nve
-import NO_file_manager as nfm
-# Import of scripts
 import NO_parser
 import NO_route
 import NO_visio as nvv
+import NO_file_tools
+import NO_file_manager
 
 
 #Function to perform a single simulation
+#TODO Merge functionality of NO_run single_sim and NO_process_multiple_files single sim
 def single_sim(settings, gui=""):
     if "Compare" in settings["output"]:
         try:
@@ -51,22 +50,38 @@ def single_sim(settings, gui=""):
         run_msg(gui, msg)
         success = run_SES(settings["path_exe"], settings["ses_output_str"][0], gui)
         if success:
-            settings["ses_output_str"][0] = output_from_input(settings["ses_output_str"][0], settings["path_exe"], gui)
+            settings["ses_output_str"][0] = NO_file_manager.output_from_input(settings["ses_output_str"][0], settings["path_exe"])
+            settings["file_type"] = "output_file"
         else:
-            #TODO add name of simulation to MSG with f' type command
-            msg = "Post-processing is stopped"
+            msg = "Post-processing is stopped for " + settings["ses_output_str"][0] + ".\n"
             run_msg(gui, msg)
             return
-    #TODO Parse the first file if there are post-processing options selected
+    #Only parse the file if post-processing options are selected (not all blank values)
     all_blank_values = all(value == '' for value in settings['output'])
     if not all_blank_values: 
         file_path = Path(settings['ses_output_str'][0])
-        data, output_meta_data = NO_parser.parse_file(file_path, gui, settings['conversion'])
         file_name = file_path.name
+        if settings["file_type"] == "output_file": 
+            data, output_meta_data = NO_parser.parse_file(file_path, gui, settings['conversion'])
+            #Create no file if this is selected.
+            if "no_file" in settings["output"]:
+                try:
+                    NO_file_tools.create_no_file(data, output_meta_data)
+                    run_msg(gui, "Created NO File for " + file_name + ".")
+                except:
+                    run_msg(
+                        gui,
+                        "ERROR creating No File for "
+                        + file_name
+                        + "."
+                    )
+        elif settings["file_type"] == "no_file":
+            data, output_meta_data = NO_file_tools.read_no_file(file_path)
         if len(data) == 0:
             run_msg(gui, "Error parsing data")
             return
     else:
+        #Only simulations were selected and there is no further post processing
         return
     #Post-processing options (Excel, Route, and Visio)
     if "Visio" in settings["output"]:
@@ -104,22 +119,6 @@ def run_msg(gui, text):
     else:
         print("Run msg: " + text)
 
-def get_results_path2(settings, output_meta_data, suffix):
-    output_file_path = Path(output_meta_data['file_path'])
-    output_stem = output_file_path.stem
-    if output_meta_data['ses_version'] == "SI from IP":
-        results_name_str = output_stem + '_SI' + suffix
-    elif output_meta_data['ses_version'] == "IP from SI":
-        results_name_str = output_stem + '_IP' + suffix
-    else:
-        results_name_str = output_stem + suffix
-    results_folder_str = settings.get("results_folder_str")
-    if results_folder_str is None:
-        results_parent = output_file_path.parent
-    else:
-        results_parent = Path(results_folder_str)
-    results_path = results_parent/Path(results_name_str)
-    return results_path
 
 def run_SES(ses_exe_path, ses_input_file_path, gui =""):
     try: 
@@ -141,20 +140,6 @@ def run_SES(ses_exe_path, ses_input_file_path, gui =""):
             run_msg(gui,msg)
             return False 
 
-def output_from_input(ses_output_str, path_exe, gui=""):
-    #TODO Update to use file_path instead of strings, see NV_process_and_monitor_files's output_from_input
-    try:
-        if "SES41.exe".lower() in path_exe.lower():
-            extension = ".PRN"
-        else:
-            extension = ".OUT"
-        last_period_location = ses_output_str.rfind(".")
-        new_ses_output_str = ses_output_str[:last_period_location] + extension
-        return new_ses_output_str
-    except:
-        msg = "Error in 'output_from_input' when converting file strings"
-        run_msg(gui,msg)
-        return ses_output_str
 
 #Perform SES Simulations on input files for analyses using average or compare
 def average_or_compare_call_ses(settings, ses_output, gui=""):
@@ -162,20 +147,10 @@ def average_or_compare_call_ses(settings, ses_output, gui=""):
     run_msg(gui, msg)
     success = run_SES(settings["path_exe"], ses_output)
     if success:
-        ses_output = output_from_input(ses_output, settings["path_exe"], gui)
-        return ses_output
+        ses_output = NO_file_manager.output_from_input(ses_output, settings["path_exe"])
     else:
-        #Simulation Failed!
         ses_output = 'Simulation failed'
-        return False
-
-def ses_version_from_exe_string(path):
-    executable_name = Path(path).name
-    if executable_name.lower() in ["ses41.exe","openses.exe"]:
-        version = "IP"
-    else:
-        version = "SI"
-    return version
+    return ses_output
 
 if __name__ == "__main__":
     directory_str = "C:\\simulations\\test\\"
@@ -183,10 +158,10 @@ if __name__ == "__main__":
     settings = {
         'conversion': '',
         'file_type': 'input_file',
-        'output': ['Excel', 'Visio', '', '', '', '', '', '', ''],
+        'output': ['Excel', 'Visio', 'no_file', '', '', '', '', '', ''],
         'path_exe': 'C:/Simulations/_Exe/SESV6_32.exe',
         'results_folder_str': None,
         'ses_output_str': [directory_str + input_file_name],
         'simtime': -1,
-        'visio_template': 'C:/Simulations/Test/Test Template.vsdx'}
+        'visio_template': 'C:/Simulations/Test/Test.vsdx'}
     single_sim(settings)

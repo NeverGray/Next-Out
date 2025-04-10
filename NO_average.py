@@ -13,15 +13,11 @@ import pandas as pd
 import NO_Excel_R01 as NV_excel
 import NO_parser
 import NO_run
+import NO_file_tools
 
 
 def average_outputs(settings, gui=""):
     df_by_type = {}
-    first_iteration = True
-    if "Excel" in settings['output']: 
-        Excel = True
-    else:
-        Excel = False
     # For each ses_output, add dataframes to a Dictionary organized by data type ('SSA', 'SST', etc...) 
     num = len(settings['ses_output_str'])
     msg = f'Finding mean, max, and min of {num} output files.'
@@ -29,16 +25,26 @@ def average_outputs(settings, gui=""):
     i = 1
     for ses_output in settings['ses_output_str']:
         #Perform SES simulation if using an input file
+        #TODO - Use NO_process_multiple_files to run multiple simulations or read in output files
         if settings["file_type"] == "input_file":
             ses_output = NO_run.average_or_compare_call_ses(settings, ses_output, gui)
             if ses_output == 'Simulation failed':
                 msg = 'Simulation failed'
                 NO_run.run_msg(gui, msg)
                 return
-        ses_output_path = Path(ses_output)
-        data, output_meta_data = NO_parser.parse_file(ses_output_path, gui, settings['conversion'])
-        if Excel:
-            NV_excel.create_excel(settings, data, output_meta_data, gui)
+            ses_output_path = Path(ses_output)
+            data, output_meta_data = NO_parser.parse_file(ses_output_path, gui, settings['conversion'])
+        elif settings["file_type"] == "output_file":
+            ses_output_path = Path(ses_output)
+            data, output_meta_data = NO_parser.parse_file(ses_output_path, gui, settings['conversion'])
+        elif settings["file_type"] == "no_file":
+            ses_output_path = Path(ses_output)
+            data, output_meta_data = NO_file_tools.read_no_file(ses_output_path)
+        else:
+            msg = 'Something went wrong with averaging of the files.'
+            NO_run.run_msg(gui, msg)
+            return
+        first_iteration = True
         if first_iteration:
             # Create empty lists to append values to
             for key, value in data.items():
@@ -96,18 +102,18 @@ def average_outputs(settings, gui=""):
 if __name__ == "__main__":
     directory_str = 'C:/Simulations/Never Gray Way/'
     ses_output_list = [
-        directory_str + 'NG02-N001.inp', 
-        directory_str + 'NG02-N002.inp',
-        #directory_str + 'NG02-N003.inp',
-        #directory_str + 'NG02-N004.inp',
-        #directory_str + 'NG02-N005.inp', 
-        #directory_str + 'NG02-N006.inp',
-        #directory_str + 'NG02-N007.inp',
-        #directory_str + 'NG02-N008.inp',
-        #directory_str + 'NG02-N009.inp',
-        #directory_str + 'NG02-N010.inp',
-        #directory_str + 'NG02-N011.inp',   
-        #directory_str + 'NG02-N012.inp',    
+        directory_str + 'NG02-N001.no', 
+        directory_str + 'NG02-N002.no',
+        directory_str + 'NG02-N003.no',
+        directory_str + 'NG02-N004.no',
+        directory_str + 'NG02-N005.no', 
+        directory_str + 'NG02-N006.no',
+        directory_str + 'NG02-N007.no',
+        directory_str + 'NG02-N008.no',
+        directory_str + 'NG02-N009.no',
+        directory_str + 'NG02-N010.no',
+        directory_str + 'NG02-N011.no',   
+        directory_str + 'NG02-N012.no',    
         ]
     settings = {
         "ses_output_str": ses_output_list,
@@ -117,7 +123,7 @@ if __name__ == "__main__":
         "conversion": "tbd",
         "control": "First",
         "output": ["Average"],
-        "file_type": "input_file",
-        "path_exe": "C:\\simulations\\_EXE\\SVSV6_32.exe"
+        "file_type": "no_file",
+        "path_exe": "C:\\simulations\\_EXE\\SESV6_32.exe"
     }
     average_outputs(settings)
