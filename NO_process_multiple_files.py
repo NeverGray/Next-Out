@@ -19,6 +19,9 @@ import NO_Excel_R01 as nve
 import NO_parser
 import NO_route
 import NO_visio
+import NO_file_tools
+import NO_file_tools
+import NO_average
 from NO_constants import VERSION_NUMBER
 
 # logging.disable(logging.CRITICAL)
@@ -54,7 +57,7 @@ def single_process(
     processing_dictionary,
     done_list,
     pause_value,
-    parameter_value_list,
+    no_file_paths
 ):
     pause_check(pause_value)
     # Prepare to monitor process status
@@ -75,7 +78,7 @@ def single_process(
         successful_simulation = run_SES(settings["path_exe"], file_path.__str__())
         if successful_simulation:
             # Change file path to work on the output file
-            file_path = output_from_input(file_path, settings["path_exe"])
+            file_path = NO_file_tools.output_from_input(file_path, settings["path_exe"])
         else:
             logging.info(f"SES simulation failed for {name}")
             process_status[value_index["Simulation"]] = "Failed"
@@ -84,7 +87,7 @@ def single_process(
         logging.info(f"Finished running SES Simualtion {name}")
         process_status[value_index["Simulation"]] = "Done"
         processing_dictionary[pid] = process_status
-    # Parse output file
+    # Parse output file or read data from NO File
     if process_settings["Read Output"]:
         pause_check(pause_value)
         try:
@@ -92,9 +95,26 @@ def single_process(
             logging.info(f"Parsing {name}")
             process_status[value_index["Read Output"]] = "Processing"
             processing_dictionary[pid] = process_status
-            data, output_meta_data = NO_parser.parse_file(
-                file_path, gui="", conversion_setting=settings["conversion"]
-            )
+            if settings["file_type"] == "no_file":
+                # Read data from NO file
+                data, output_meta_data = NO_file_tools.read_no_file(file_path)
+                # Create a list of NO Files for averaging
+                no_file_paths.append(file_path) 
+            else:
+                #Parse the data from the output file
+                data, output_meta_data = NO_parser.parse_file(
+                    file_path, gui="", conversion_setting=settings["conversion"]
+                )
+                #Create NO File if it is an output
+                if "no_file" in settings["output"]:
+                    try:
+                        NO_file_tools.create_no_file(data, output_meta_data, settings)
+                        logging.info(f"Created NO File for {name}")
+                        # Create a list of NO Files for averaging
+                        no_file_path = NO_file_tools.get_results_path2(settings, output_meta_data, ".no")
+                        no_file_paths.append(no_file_path)
+                    except:
+                        logging.info(f"Error creating NO File for {name}")
             process_status[value_index["Read Output"]] = "Done"
             processing_dictionary[pid] = process_status
             logging.info(f"Finished Parsing {name}")
@@ -102,18 +122,6 @@ def single_process(
             process_status[value_index["Read Output"]] = "Failed"
             logging.info(f"Error Parsing {name}")
             return
-    '''  
-    if settings["file_type"] == "next_in":
-        try:
-            # TODO Add if statement to check if there is an iteration sheet
-            next_in_output = settings["next_in_output"]
-            parameter_value_list_for_run = next_in_output.lookup_parameters(
-                data, output_meta_data
-            )
-            parameter_value_list.extend(parameter_value_list_for_run)
-            logging.debug(f"Successfully extracted summary output for {name}")
-        except:
-            logging.debug(f"Error in extracting summary output for {name}")'''
 
     if process_settings["Visio"]:
         pause_check(pause_value)
@@ -183,20 +191,6 @@ def run_SES(ses_exe_path, ses_input_file_path, gui=""):
         return False
 
 
-def output_from_input(file_path, path_exe):
-    # TODO Select suffix based on SES type
-    try:
-        if "SES41.exe".lower() in path_exe.lower():
-            extension = ".PRN"
-        else:
-            extension = ".OUT"
-        new_file_path = file_path.with_suffix(extension)
-        return new_file_path
-    except:
-        logging.debug("Error in 'output_from_input' when converting file strings")
-        return file_path
-
-
 def pause_check(pause_value):
     while pause_value.get() == 1:
         time.sleep(1.0)
@@ -214,8 +208,7 @@ class Manager_Class:
         self.pause_value = self.manager.Value("i", 0)
         self.finished = self.manager.Value("i", 0)
         self.file_names = self.manager.list()
-        self.parameter_value_list = self.manager.list()
-
+        self.no_file_paths = self.manager.list() #List of NO files created for averaging
 
 class Monitor_GUI(tk.Toplevel):
     def __init__(self, parent, manager, start_screen_settings):
@@ -384,7 +377,7 @@ class Monitor_GUI(tk.Toplevel):
                         self.manager.processing_dictionary,
                         self.manager.done_files,
                         self.manager.pause_value,
-                        self.manager.parameter_value_list,
+                        self.manager.no_file_paths
                     ),
                 )
                 self.results.append(result)
@@ -395,9 +388,16 @@ class Monitor_GUI(tk.Toplevel):
         # This stops the self-updating process.
         self.update_monitor_window()
         self.update()
-        if len(self.manager.parameter_value_list) > 0:
-            self.create_summary_sheet()
         self.in_progress = False
+        # Average results from NO Files
+        if "Average" in self.settings["output"]: 
+            self.settings["file_type"] = "no_file"
+            #Load NO Files in sorted order
+            unsorted_no_file_paths = list(self.manager.no_file_paths)
+            no_file_paths = sorted(unsorted_no_file_paths)
+            logging.info(f"NO File Paths: {list(self.manager.no_file_paths)}")
+            self.settings["ses_output_str"] = no_file_paths
+            NO_average.average_outputs(self.settings, gui="")
         title_msg = "Post-processing complete."
         msg_1 = "Click 'Okay' to return to main screen."
         msg_all = msg_1
@@ -416,6 +416,8 @@ class Monitor_GUI(tk.Toplevel):
             self.process_settings["Simulation"] = False
         # Requirement for read_output to be performed
         if settings["file_type"] == "output_file":
+            self.process_settings["Read Output"] = True
+        elif "no_file" in settings["output"]:
             self.process_settings["Read Output"] = True
         else:
             self.process_settings["Read Output"] = False
@@ -515,11 +517,7 @@ if __name__ == "__main__":
         'run_ses_next_in': 'run_ses', 
         'iteration_worksheets': ['Iteration'],
         'summary_name': 'summary',
-        #'next_in_instance': <next_in.Next_In object at 0x000001B92B795BD0>,
-        #'next_in_path': WindowsPath('C:/Simulations/2023-12-28/Next-In 3p1 lite.xlsm'),
-        #'next_in_output': <next_in_output.Next_In_Output object at 0x000001B92DEAAE90>
     }
-    #Start window
     app = App(settings)
     app.mainloop()
     print("app.mainloop finished")

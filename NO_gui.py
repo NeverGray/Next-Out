@@ -11,9 +11,9 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
-import NO_file_manager
 import NO_process_multiple_files
 import NO_run
+import NO_compare
 from NO_constants import VERSION_NUMBER
 
 class Start_Screen(tk.Tk):
@@ -37,8 +37,8 @@ class Start_Screen(tk.Tk):
         frame_output_conversion = ttk.LabelFrame(
             self.left_column, borderwidth=5, text="Output Conversion", padding=p
         )
-        frame_analysis = ttk.LabelFrame(
-            self.left_column, borderwidth=5, text="Analysis*", padding=p
+        self.frame_analysis = ttk.LabelFrame(
+            self.left_column, borderwidth=5, text="Analysis", padding=p
         )
         # Initialize all setting variables. This process makes saving, than loading settings easier.
         self.load_settings()
@@ -52,13 +52,20 @@ class Start_Screen(tk.Tk):
             variable=self.cbo_visio,
             onvalue="Visio",
             offvalue="",
-            command=self.update_post_processing_options,
+            command=self.update_output_options,
         )
         cb_route = ttk.Checkbutton(
             frame_post_processing,
             text="Route Data",
             variable=self.cbo_route,
             onvalue="Route",
+            offvalue="",
+        )
+        self.cb_no_file = ttk.Checkbutton(
+            frame_post_processing,
+            text="NO File",
+            variable=self.cbo_no_file,
+            onvalue="no_file",
             offvalue="",
         )
         # Conversion frame options (radio buttons)
@@ -73,28 +80,29 @@ class Start_Screen(tk.Tk):
         )
         # Analysis frame options
         cb_average = ttk.Checkbutton(
-            frame_analysis,
-            text="Staggered\nheadways\nmean, max, min",
+            self.frame_analysis,
+            text="Staggered\nheadways\nmean, max, min*",
             variable=self.cbo_average,
             onvalue="Average",
             offvalue="",
-            command=self.update_post_processing_options,
+            command=self.update_output_options
         )
         self.cb_compare = ttk.Checkbutton(
-            frame_analysis,
+            self.frame_analysis,
             text="Compare two\noutputs",
             variable=self.cbo_compare,
             onvalue="Compare",
             offvalue="",
-            command=self.update_post_processing_options,
+            command=self.average_off
         )
         analysis_label = ttk.Label(
-            frame_analysis, text="* Visio Template\nis disabled with\nAnalysis"
+            self.frame_analysis, text="* NO File is enabled\n for faster Analysis"
         )
         # POST PROCESSING grid
         cb_excel.grid(column=0, row=0, sticky="W", pady=py)
         cb_visio.grid(column=0, row=10, sticky="W", pady=py)
         cb_route.grid(column=0, row=15, sticky="W", pady=py)
+        self.cb_no_file.grid(column=0, row=20, sticky="W", pady=py)  
         # Conversion grid
         rb_conversion_none.grid(column=0, row=10, sticky="W", pady=py)
         rb_IP_to_SI.grid(column=0, row=17, sticky="W", pady=py)
@@ -111,16 +119,23 @@ class Start_Screen(tk.Tk):
         file_type = ttk.Label(frm_input_output, text="File Type to Process: ")
         rb_input_files = ttk.Radiobutton(
             frm_input_output,
-            text="Input         ",
+            text="Input     ",
             variable=self.file_type,
             value="input_file",
             command=self.update_frame_ses_exe,
         )
         rb_output_files = ttk.Radiobutton(
             frm_input_output,
-            text="Output         ",
+            text="Output     ",
             variable=self.file_type,
             value="output_file",
+            command=self.update_frame_ses_exe,
+        )
+        rb_no_file_files = ttk.Radiobutton(
+            frm_input_output,
+            text="NO File     ",
+            variable=self.file_type,
+            value="no_file",
             command=self.update_frame_ses_exe,
         )
         rb_file = ttk.Radiobutton(
@@ -144,8 +159,8 @@ class Start_Screen(tk.Tk):
             value="Folder",
             command=self.update_output_options,
         )
-        self.btn_file = ttk.Button(frame_ses_files, text="One file", command=self.single_file)
-        self.btn_files = ttk.Button(frame_ses_files, text="Many files", command=self.many_files)
+        self.btn_file = ttk.Button(frame_ses_files, text="One file", command=self.select_files)
+        self.btn_files = ttk.Button(frame_ses_files, text="Many files", command=lambda: self.select_files(multiple=True))
         self.btn_folder = ttk.Button(frame_ses_files, text="Folder", command=self.ses_folder)
         self.ent_file = ttk.Entry(frame_ses_files, textvariable=self.path_file)
         self.ent_files = ttk.Entry(frame_ses_files, textvariable=self.path_files)
@@ -159,6 +174,7 @@ class Start_Screen(tk.Tk):
         file_type.pack(side="left")
         rb_input_files.pack(side="left")
         rb_output_files.pack(side="left")
+        rb_no_file_files.pack(side="left")
         r = 9
         rb_file.grid(column=0, row=r, sticky=["W"], pady=py, padx="0")
         self.btn_file.grid(column=1, row=r, sticky=["W"], pady=py, padx=px)
@@ -186,7 +202,7 @@ class Start_Screen(tk.Tk):
             padding=p,
         )
         self.btn_exe = ttk.Button(
-            self.frame_ses_exe, text="SES EXE", command=lambda: self.single_file("EXE")
+            self.frame_ses_exe, text="SES EXE", command=lambda: self.select_files("EXE")
         )
         self.ent_file_exe = ttk.Entry(
             self.frame_ses_exe,
@@ -203,7 +219,7 @@ class Start_Screen(tk.Tk):
             self.ss, borderwidth=5, text="Visio Template", padding=p
         )
         btn_visio = ttk.Button(
-            self.frame_visio, text="Select", command=self.get_visio_file
+            self.frame_visio, text="Select", command=lambda: self.select_files("Visio")
         )
         ent_visio = ttk.Entry(self.frame_visio, textvariable=self.path_visio)
         # Visio Template - Row 2
@@ -265,7 +281,7 @@ class Start_Screen(tk.Tk):
         cb_svg.grid(column=3, row=r, sticky="W", pady=py)
         # Results Folder widgets
         frame_results_folder = ttk.LabelFrame(
-            self.ss, borderwidth=5, text="Folder to write results", padding=p
+            self.ss, borderwidth=5, text="Folder to Post Processing", padding=p
         )
         rb_ses = ttk.Radiobutton(
             frame_results_folder,
@@ -319,34 +335,30 @@ class Start_Screen(tk.Tk):
         self.txt_status["yscrollcommand"] = self.ys_status.set
         self.txt_status.pack(side=tk.LEFT, expand=tk.TRUE, fill=tk.BOTH)
         self.ys_status.pack(side=tk.RIGHT, fill="y")
-        '''# START SCREEN grid
-        self.columnconfigure(0, weight=1)
-        self.rowconfigure(0, weight=1)
-        self.ss.grid(column=0, row=0, sticky="EWNS")
-        self.ss.columnconfigure(1, weight=1)
-        self.ss.rowconfigure(5, weight=1)
-        frame_output_conversion.pack(side="top", fill="x", pady=py, padx=px)
-        frame_analysis.pack(side="top", fill="x", pady=py, padx=px)
-        frame_post_processing.grid(column=0, row=0, sticky=["NSEW"], pady=py, padx=px)
-        self.left_column.grid(row=1, column=0, rowspan=3, sticky=["NEW"])
-        frame_ses_files.grid(column=1, row=0, sticky=["NSEW"], pady=py, padx=px)
-        self.frame_ses_exe.grid(column=1, row=1, sticky=["NSEW"], pady=py, padx=px)
-        self.frame_visio.grid(column=1, row=2, sticky=["WE"], pady=py, padx=px)
-        self.frame_visio.grid(column=1, row=2, sticky=["WE"], pady=py, padx=px)
-        frame_results_folder.grid(column=1, row=3, sticky=["WE"], pady=py, padx=px)
-        frm_run.grid(column=0, columnspan=2, row=4, sticky=["WE"], pady=py, padx=px)
-        frm_status.grid(
-            column=0, row=6, columnspan=2, sticky=["WESN"], pady=py, padx=px
-        )'''
         # START SCREEN grid
-        self.columnconfigure(0, weight=1)
-        self.rowconfigure(0, weight=1)
+        self.columnconfigure(0, weight=1)  # Allow horizontal expansion
+        self.rowconfigure(0, weight=1)    # Allow vertical expansion for the main frame
         self.ss.grid(column=0, row=0, sticky="EWNS")
         self.ss.columnconfigure(0, weight=1)
-        self.ss.rowconfigure(5, weight=1)
+
+        # Ensure all rows except the Status row do not expand
+        self.ss.rowconfigure(0, weight=0)  # Post Processing
+        self.ss.rowconfigure(1, weight=0)  # SES Files
+        self.ss.rowconfigure(2, weight=0)  # SES Executable
+        self.ss.rowconfigure(3, weight=0)  # Visio Template
+        self.ss.rowconfigure(4, weight=0)  # Run Button
+
+        # Ensure the Status row expands
+        self.ss.rowconfigure(6, weight=1)  # Status window row
+
+        # Place the Status window at the bottom and allow it to expand
+        frm_status.grid(column=0, row=6, columnspan=2, sticky="WENS", pady=py, padx=px)
+
+        # Ensure the Run button row does not expand
+        frm_run.grid(column=0, columnspan=2, row=4, sticky="WE", pady=py, padx=px)
 
         frame_output_conversion.pack(side="top", fill="x", pady=py, padx=px)
-        frame_analysis.pack(side="top", fill="x", pady=py, padx=px)
+        self.frame_analysis.pack(side="top", fill="x", pady=py, padx=px)
 
         # Switch left-hand and right-hand elements
         frame_post_processing.grid(column=1, row=0, sticky=["NSEW"], pady=py, padx=px)
@@ -356,16 +368,17 @@ class Start_Screen(tk.Tk):
         self.frame_visio.grid(column=0, row=2, sticky=["WE"], pady=py, padx=px)
         frame_results_folder.grid(column=0, row=3, sticky=["WE"], pady=py, padx=px)
 
-        frm_run.grid(column=0, columnspan=2, row=4, sticky=["WE"], pady=py, padx=px)
-        frm_status.grid(column=0, row=6, columnspan=2, sticky=["WESN"], pady=py, padx=px)
-
+        #Update the GUI to show the current settings
+        self.update_output_options()
+        self.update_frame_ses_exe()
 
     def load_settings(self, *args):
         # Define all variable and default values for  GUI
         self.screen_settings = {
             "self.cbo_visio": 'tk.StringVar(value="")',
-            "self.cbo_excel": 'tk.StringVar(value="Excel")',
+            "self.cbo_excel": 'tk.StringVar(value="")',
             "self.cbo_route": 'tk.StringVar(value="")',
+            "self.cbo_no_file": 'tk.StringVar(value="")',
             "self.conversion": 'tk.StringVar(value="")',
             "self.cbo_compare": 'tk.StringVar(value="")',
             "self.cbo_average": 'tk.StringVar(value="")',
@@ -408,81 +421,65 @@ class Start_Screen(tk.Tk):
             msg = "Error loading settings"
             messagebox.showinfo(message=msg)
 
-    def get_visio_file(self, *args):
-        try:
-            file_type = "Visio"
-            filename = filedialog.askopenfilename(
-                title="Select Visio template file", filetypes=[("Visio", "*.vsdx")],
-                initialdir=self.directory_cache.get(file_type, None),
-            )
-            self.path_visio.set(filename)
-            self.cbo_visio.set("Visio")
-            self.directory_cache[file_type] = os.path.dirname(filename)
-        except ValueError:
-            pass
+    # Function to return a paths of a single or multiple files
+    def select_files(self, file_type="", multiple=False):
+        file_type_config = {
+            "input_file": {
+                "filetypes_suffix": [("SES Input", ("*.INP", "*.SES"))],
+                "title_text": "Select SES Input File(s)",
+                "set_path": lambda filenames: self.path_file.set(filenames if not multiple else "; ".join(filenames)),
+            },
+            "output_file": {
+                "filetypes_suffix": [("SES Output", ("*.PRN", "*.OUT"))],
+                "title_text": "Select SES Output File(s)",
+                "set_path": lambda filenames: self.path_file.set(filenames if not multiple else "; ".join(filenames)),
+            },
+            "no_file": {
+                "filetypes_suffix": [("SES NO File", "*.NO")],
+                "title_text": "Select SES NO File(s)",
+                "set_path": lambda filenames: self.path_file.set(filenames if not multiple else "; ".join(filenames)),
+            },
+            "EXE": {
+                "filetypes_suffix": [("SES Executable", "*.EXE")],
+                "title_text": "Select SES Executable",
+                "set_path": lambda filenames: self.path_exe.set(filenames),
+            },
+            "Visio": {
+                "filetypes_suffix": [("Visio", "*.vsdx")],
+                "title_text": "Select Visio Template File",
+                "set_path": lambda filenames: self.path_visio.set(filenames),
+            },
+        }
 
-    # Function to return a path of a single file: input, output, or executable
-    def single_file(self, file_type=""):
-        if file_type == "EXE":
-            filetypes_suffix = [
-                ("SES Executable", "*.EXE"),
-            ]
-            title_text = "Select SES Executable to process input files"
-        elif self.file_type.get() == "input_file":
-            file_type = self.file_type.get() 
-            filetypes_suffix = [
-                ("SES Input", ("*.INP", "*.SES")),
-            ]
-            title_text = "Select one SES input File"
-        else:
-            file_type = self.file_type.get() 
-            filetypes_suffix = [
-                ("SES Output", ("*.PRN", "*.OUT")),
-            ]
-            title_text = "Select one SES Output File"
+        # Determine the file type configuration
+        file_type_key = file_type if file_type else self.file_type.get()
+        config = file_type_config.get(file_type_key, {})
+
         try:
-            filename = filedialog.askopenfilename(
-                title=title_text,
-                filetypes=filetypes_suffix,
-                #Use the previous directory for the specific file type
-                initialdir=self.directory_cache.get(file_type, None),
-            )
-            #Save the directory selected for future selections
-            self.directory_cache[file_type] = os.path.dirname(filename)
-            if file_type == "EXE":
-                self.path_exe.set(filename)
+            if multiple:
+                filenames = filedialog.askopenfilenames(
+                    title=config.get("title_text", "Select files"),
+                    filetypes=config.get("filetypes_suffix", []),
+                    initialdir=self.directory_cache.get(file_type_key, None),
+                )
+                if filenames:
+                    # Save the directory selected for future selections
+                    self.directory_cache[file_type_key] = os.path.dirname(filenames[0])
+                    self.path_files.set("; ".join(filenames))
+                    self.ses.set("Files")
             else:
-                self.path_file.set(filename)
-                self.ses.set("File")
-        except ValueError:
-            pass
-
-    def many_files(self, *args):  # Multiple files, not singular
-        file_type = self.file_type.get()
-        if file_type == "input_file":
-            filetypes_suffix = [
-                ("SES Input", ("*.INP", "*.SES")),
-            ]
-            title_text = "Select many SES input Files by holding Ctrl"
-        else:
-            filetypes_suffix = [
-                ("SES Output", ("*.PRN", "*.OUT")),
-            ]
-            title_text = "Select many SES output Files by holding Ctrl"
-        try:
-            files = filedialog.askopenfilenames(
-                title=title_text,
-                filetypes=filetypes_suffix,
-                #Use the previous directory for many files
-                initialdir=self.directory_cache.get(file_type, None),
-            )
-            files_string = "; ".join(
-                files,
-            )
-            self.path_files.set(files_string)
-            self.ses.set("Files")
-            #save the directory selected for many files for future selections
-            self.directory_cache[file_type] = os.path.dirname(files[0])
+                filename = filedialog.askopenfilename(
+                    title=config.get("title_text", "Select a file"),
+                    filetypes=config.get("filetypes_suffix", []),
+                    initialdir=self.directory_cache.get(file_type_key, None),
+                )
+                if filename:
+                    # Save the directory selected for future selections
+                    self.directory_cache[file_type_key] = os.path.dirname(filename)
+                    config["set_path"](filename)
+                    # If selecting a single input, output, or no file, set the ses variable to "File"
+                    if file_type_key in ["input_file", "output_file", "no_file"]:
+                        self.ses.set("File") #
         except ValueError:
             pass
 
@@ -490,7 +487,7 @@ class Start_Screen(tk.Tk):
         file_type = self.file_type.get()
         try:
             filename = filedialog.askdirectory(
-                title="Select folder with SES output Files", mustexist=True,
+                title="Select folder with files to process", mustexist=True,
                 initialdir=self.directory_cache.get(file_type, None),
             )
             self.path_folder.set(filename)
@@ -521,6 +518,8 @@ class Start_Screen(tk.Tk):
             pass
 
     def run(self, *args):
+        #Update options using logic in GUI
+        self.update_output_options
         self.btn_run["text"] = "In-progress"
         self.btn_run["state"] = tk.DISABLED
         self.ss.update()
@@ -530,26 +529,25 @@ class Start_Screen(tk.Tk):
         pp_list.append(self.cbo_compare.get())
         pp_list.append(self.cbo_average.get())
         pp_list.append(self.cbo_route.get())
+        pp_list.append(self.cbo_no_file.get())
         pp_list.append(self.cbo_pdf.get())
         pp_list.append(self.cbo_png.get())
         pp_list.append(self.cbo_svg.get())
-        pp_list.append(self.cbo_visio_open_option.get())
-        # interation_worksheets = []
-        # interation_worksheets.append(self.iteration_worksheet_1.get())
-        # interation_worksheets.append(self.iteration_worksheet_2)
+        # "Open Visio" should only be added if it is enabled by visio_open_off()
+        if self.cb_visio_open.cget("state") == "enable":
+            pp_list.append(self.cbo_visio_open_option.get())
         try:
-            self.get_ses_file_str()
+            self.get_files_2_process_in_str()
         except:
-            error_msg = "ERROR finding input or output file locations"
+            error_msg = "ERROR finding input, output, or NO Files"
             self.gui_text(error_msg)
         try:
             self.get_results_folder_str()
         except:
             error_msg = "ERROR with selected result folder"
             self.gui_text(error_msg)
-            self.results_folder_str = (
-                None  # Default to putting results in the same folder as the SES output
-            )
+            # Default to putting results in the same folder as the SES output
+            self.results_folder_str = (None)
         self.settings = {
             "ses_output_str": self.ses_output_str,
             "visio_template": self.path_visio.get(),
@@ -564,22 +562,16 @@ class Start_Screen(tk.Tk):
         if self.validation(self.settings):
             try:
                 # If only performing one individual simulation
-                if (
-                    len(self.settings["ses_output_str"]) == 1
-                    or ("Average" in pp_list)
-                    or ("Compare" in pp_list)
-                    ):
+                if len(self.settings["ses_output_str"]) == 1:
                     NO_run.single_sim(self.settings, gui=self)
                     self.gui_text("Post processing completed.\n")
+                elif "Compare" in self.settings["output"]:
+                    NO_compare.compare_outputs(self.settings, gui=self)
                 else:
                     # Launch process and monitor files when using multiple files
                     self.gui_text(
                         "Processing multiple files, openning monitor window."
                     )
-                    # Turn off opening visio for multiple files
-                    if "visio_open" in self.settings["output"]:
-                        self.settings["output"].remove("visio_open")
-                        self.cbo_visio_open_option.set("")
                     self.open_monitor_gui()
             except:
                 self.gui_text(
@@ -609,7 +601,7 @@ class Start_Screen(tk.Tk):
                     valid = False
         if len(settings["ses_output_str"]) == 0:
             msg = (
-                msg + "Files to process. Check if input or output files are present.\n"
+                msg + "No files to process. Check if input or output files are present.\n"
             )
             valid = False
         # Check if the folder for post-processing output exists
@@ -627,6 +619,39 @@ class Start_Screen(tk.Tk):
             elif not os.path.exists(self.path_exe.get()):
                 msg = msg + "Select an SES executable to perform simulations.\n"
                 valid = False
+        #Check if extensions for files to process are valid for settings
+        valid_extensions = {
+            "input_file": [".INP", ".SES"],
+            "output_file": [".OUT", ".PRN"],
+            "no_file": [".NO"],
+        }
+        # Get the selected file type
+        file_type = self.file_type.get()
+        # Get the valid extensions for the selected file type
+        allowed_extensions = valid_extensions.get(file_type, [])
+
+        # Check each file in ses_output_str
+        invalid_files = []
+        for file_path in self.settings["ses_output_str"]:
+            # Check if the file has a valid extension
+            if not any(file_path.upper().endswith(ext) for ext in allowed_extensions):
+                invalid_files.append(file_path)
+        # If there are invalid files, show an error message
+        if invalid_files:
+            msg_about_files = "The following files have invalid extensions for the selected file type:\n"
+            msg_about_files += "\n".join(invalid_files)
+            messagebox.showerror("Invalid File Types", msg_about_files)
+            valid = False
+            msg = msg + "Invalid file extensions to progress.\n"
+        if "Average" in settings["output"]:
+            if len(settings["ses_output_str"]) < 2:
+                msg = msg + "Need at least 2 files to for average analysis.\n"
+                valid = False
+            if "no_file" not in settings["output"]:
+                settings["output"].append("no_file")
+        if "Compare" in settings["output"] and len(settings["ses_output_str"]) != 2:
+            msg = msg + "Need excatly 2 files to compare files.\n"
+            valid = False
         if not valid:
             messagebox.showinfo(title="Error with settings", message=msg)
         return valid
@@ -638,23 +663,33 @@ class Start_Screen(tk.Tk):
         self.txt_status["state"] = tk.DISABLED
         self.ss.update()
 
-    def get_ses_file_str(self, *args):
+    #Get the string to process files
+    def get_files_2_process_in_str(self, *args):
+        file_type_suffix = {
+            "input_file": [".INP", ".SES"],
+            "output_file": [".OUT", ".PRN"],
+            "no_file": [".NO"],
+        }
+        self.ses_output_str = []
+
         if self.ses.get() == "File":
-            self.ses_output_str = []
             self.ses_output_str.append(self.path_file.get())
         elif self.ses.get() == "Folder":
-            self.ses_output_str = []
             folder_path = self.path_folder.get()
-            # Select all input files or output files
-            if self.file_type.get() == "input_file":
-                suffix = [".INP", ".SES"]
+            file_type = self.file_type.get()
+            suffixes = file_type_suffix.get(file_type, [])
+            all_files = []
+            with os.scandir(folder_path) as it:
+                for entry in it:  # For each item in the folder
+                    if entry.is_file() and entry.name.upper().endswith(tuple(suffix.upper() for suffix in suffixes)):
+                        all_files.append(entry.path)
+            if all_files:
+                self.ses_output_str = all_files
             else:
-                suffix = [".OUT", ".PRN"]
-            self.ses_output_str = NO_file_manager.find_all_files(
-                extensions=suffix, pathway=folder_path, with_path=True
-            )
-        else:
-            self.ses_output_str = []
+                self.ses_output_str = []
+                msg = "No files found in folder to process.\n"
+                self.gui_text(msg)
+        else:  # If the option is "Files" (not "File" or "Folder")
             files_string = self.path_files.get()
             self.ses_output_str = files_string.split("; ")
 
@@ -666,40 +701,62 @@ class Start_Screen(tk.Tk):
             self.results_folder_str = None
 
     def update_output_options(self, *args):
+        #TODO Update when "Open Visio can be selected or not"
         option = self.ses.get()
         if option == "File":
             self.cb_visio_open["state"] = tk.NORMAL
+            self.cbo_average.set("")
+            self.cbo_compare.set("")
+            analysis_state = "disabled"
         else:
             self.cb_visio_open["state"] = tk.DISABLED
             self.cbo_visio_open = tk.StringVar(value="")
-
-    def update_post_processing_options(self, *args):
-        if (
-            self.cbo_average.get() == ""
-            and self.cbo_compare.get() == ""
-            and self.cbo_visio.get() == "Visio"
-        ):
+            analysis_state = "enabled"
+        self.configure_widget_state(self.frame_analysis, analysis_state)
+        if self.cbo_visio.get() == "Visio":
             visio_state = "enable"
         else:
             visio_state = "disable"
         # Disable all items in a frame: https://www.tutorialspoint.com/how-to-gray-out-disable-a-tkinter-frame
         self.configure_widget_state(self.frame_visio, visio_state)
+        if self.cbo_average.get() == "Average":
+            self.cbo_compare.set("")  # Uncheck "Average"
+            self.cbo_no_file.set("no_file")  # Uncheck "Open Visio"
+        self.visio_open_off()   
+       
+    def average_off(self, *args):
+        if self.cbo_compare.get() == "Compare":
+            self.cbo_average.set("")  # Uncheck "Average"
+        self.visio_open_off()  
 
+    #Adjust if Visio_Open is enabled or disabled based on the current settings
+    def visio_open_off(self, *args):
+        visio_frame_state = self.cb_visio_open.cget("state")
+        if visio_frame_state == 'enable':
+            if self.ses.get() == "File":
+                self.cb_visio_open.configure(state=tk.NORMAL)
+            else:
+                self.cb_visio_open.configure(state=tk.DISABLED)
+
+    #TODO Evaluate if this function is needed anymore or can be combined into with update_output_options
     def update_frame_ses_exe(self, *args):
         multiple_files_state = "enable"
         if self.file_type.get() == "input_file":
             ses_exe_state = "enable"
         else:
             ses_exe_state = "disable"
+        if self.file_type.get() == "no_file":
+            self.cb_no_file.configure(state=tk.DISABLED)
+            #Conversions are only performed on input or output files
+            self.conversion.set("")
+        else:
+            self.cb_no_file.configure(state=tk.NORMAL)
         self.configure_widget_state(self.frame_ses_exe, ses_exe_state)
         # Update file buttons
         self.btn_files.configure(state=multiple_files_state)
         self.btn_folder.configure(state=multiple_files_state)
         self.ent_files.configure(state=multiple_files_state)
         self.ent_folder.configure(state=multiple_files_state)
-        # Old cold to erase entries
-        # self.path_file.set("")
-        # self.path_files.set("")
 
     # Change the state of the elements in a frame
     def configure_widget_state(self, widget, state):
@@ -740,11 +797,6 @@ class Start_Screen(tk.Tk):
                 self.destroy()
         else:
             self.destroy()
-
-    #TODO Check if this can be deleted.
-    def text_update(self, text):
-        self.gui_text(text)
-        self.ss.update
 
     def open_monitor_gui(self):
         manager = NO_process_multiple_files.Manager_Class()

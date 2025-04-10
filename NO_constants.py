@@ -5,7 +5,7 @@
 # This file is licensed under the MIT License.
 # You may obtain a copy of the license at https://opensource.org/licenses/MIT
 
-VERSION_NUMBER = "1.0"
+VERSION_NUMBER = "1.1"
 #Column name : [SI Unit, IP Unit]
 COLUMN_UNITS={
     "Airflow":	["m^3/s","kcfm","SSA"], #SSA Values
@@ -14,7 +14,7 @@ COLUMN_UNITS={
     "Sub":["#","#","SSA"],
     "Sensible":["W","Btu/s","SSA"],
     "Latent":["W","Btu/s","SSA"],
-    "Air_Temp":["\u00B0C","\u00B0F","SST"], #SST Values
+    "Air_Temp":["\u00B0C","\u00B0F","SST"], #Unicode \u00B0 are used for degree symbols
     "Humidity":["kg/kg","lb/lb","SST"],
     "Wall_Temp":["\u00B0C","\u00B0F","SST"],
     "Convection_to_Wall":["W","Btu/h","SST"],

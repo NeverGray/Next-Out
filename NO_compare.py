@@ -12,43 +12,46 @@ import pandas as pd
 from openpyxl.styles import Font
 
 import NO_Excel_R01 as NV_excel
+import NO_visio as nvv
+import NO_route
 import NO_parser
 import NO_run
-
+import NO_file_tools
 
 def compare_outputs(settings, gui=""):
-    if "Excel" in settings['output']: 
-        Excel = True
-    else:
-        Excel = False
-    base_file_str = settings['ses_output_str'][0]
-    second_file_str = settings['ses_output_str'][1]
     #IF these are input files, perform SES simulations
-    if settings["file_type"] == "input_file":
-        base_file_str = NO_run.average_or_compare_call_ses(settings, base_file_str, gui)
-        if base_file_str == 'Simulation failed':
-            msg = 'Simulation failed'
-            NO_run.run_msg(gui, msg)
-            return
-        second_file_str = NO_run.average_or_compare_call_ses(settings, second_file_str, gui)
-        if base_file_str == 'Simulation failed':
-            msg = 'Simulation failed'
-            NO_run.run_msg(gui, msg)
-            return
-    base_file = Path(base_file_str)
-    second_file = Path(second_file_str)
-    base_df, base_output_meta_data = NO_parser.parse_file(base_file, gui, settings['conversion'])
-    second_df, second_output_meta_data = NO_parser.parse_file(second_file, gui, settings['conversion'])
-    if Excel:
-        NV_excel.create_excel(settings, base_df, base_output_meta_data, gui)
-        NV_excel.create_excel(settings, second_df, second_output_meta_data, gui)   
+    if settings["file_type"] in ["input_file", "output_file"]:
+        if settings["file_type"] == "input_file":
+            for i in range(2):
+                msg = "Running SES Simulation for " + Path(settings["ses_output_str"][i]).name
+                NO_run.run_msg(gui, msg)
+                success = NO_run.run_SES(settings["path_exe"], settings["ses_output_str"][i], gui)
+                if success:
+                    settings["ses_output_str"][i] = NO_file_tools.output_from_input(settings["ses_output_str"][i], settings["path_exe"])
+                    settings["file_type"] = "output_file"
+                else:
+                    msg = "Post-processing is stopped for " + settings["ses_output_str"][i] + ".\n"
+                    NO_run.run_msg(gui, msg)
+                    return    
+        base_file = Path(settings["ses_output_str"][0])
+        second_file = Path(settings["ses_output_str"][1])
+        base_df, base_output_meta_data = NO_parser.parse_file(base_file, gui, settings['conversion'])
+        second_df, second_output_meta_data = NO_parser.parse_file(second_file, gui, settings['conversion'])
+        if 'no_file' in settings['output']:
+            NO_file_tools.create_no_file(base_df, base_output_meta_data, settings)
+            NO_file_tools.create_no_file(second_df, second_output_meta_data, settings)
+    elif settings["file_type"] == "no_file":
+        base_file = Path(settings["ses_output_str"][0])
+        second_file = Path(settings["ses_output_str"][1])
+        base_df, base_output_meta_data = NO_file_tools.read_no_file(base_file)
+        second_df, second_output_meta_data = NO_file_tools.read_no_file(second_file)
     base_data = dictionary_to_list(base_df)
     second_data = dictionary_to_list(second_df)
     num_df = len(base_data)
     suffix = base_output_meta_data['file_path'].suffix
-    base_path = NO_run.get_results_path2(settings, base_output_meta_data, suffix)
+    base_path = NO_file_tools.get_results_path2(settings, base_output_meta_data, suffix)
     suffix = second_output_meta_data['file_path'].suffix
-    second_path = NO_run.get_results_path2(settings, second_output_meta_data, suffix)
+    second_path = NO_file_tools.get_results_path2(settings, second_output_meta_data, suffix)
     if num_df != len(second_data):
         msg = "Error in Comparing two output files! " + base_path.name + "and" + second_path.name + "have different structures."
         NO_run.run_msg(gui, msg)
@@ -84,7 +87,7 @@ def compare_outputs(settings, gui=""):
             base_output_meta_data['file_path'] = Path(parent + '/' + file_name_4_path)
             output_meta_data = base_output_meta_data.copy()
             output_meta_data['ses_version'] = 'Unconfirmed'
-            compare_results_path = NO_run.get_results_path2(settings, output_meta_data, ".xlsx")
+            compare_results_path = NO_file_tools.get_results_path2(settings, output_meta_data, ".xlsx")
             p_e_text = (
                 "Percent Error = Absolute value of [(Difference) / ("
                 + base_path.name
@@ -195,6 +198,39 @@ def compare_outputs(settings, gui=""):
                 + ".xlsx. Close the file if opened."
             )
             NO_run.run_msg(gui, msg)
+    if "Excel" in settings['output']: 
+        try:
+
+            NV_excel.create_excel(settings, base_df, base_output_meta_data, gui)
+            NV_excel.create_excel(settings, second_df, second_output_meta_data, gui)
+        except:
+            msg = (
+                    "ERROR Creating Excel File for single file "
+                    + file_name
+                    + ".xlsx."
+                )
+            NO_run.run_msg(gui, msg)
+    if "Visio" in settings['output']:
+        try:
+ 
+            nvv.create_visio(settings, base_df, base_output_meta_data, gui)
+            nvv.create_visio(settings, second_df, second_output_meta_data, gui)
+        except:
+            msg = (
+                    "ERROR Creating Visio File for single file "
+                    + file_name
+                    + ".xlsx."
+                )
+            NO_run.run_msg(gui, msg)
+    if "Route" in settings["output"]:  # Route data
+        try:
+            NO_route.create_route_excel(settings, base_df, base_output_meta_data, gui)
+            NO_route.create_route_excel(settings, second_df, second_output_meta_data, gui)
+        except:
+            msg = "Error creating Route Data Excel Files"
+            NO_run.run_msg(gui,msg)
+    msg = "DONE! Compare and outputs complete."
+    NO_run.run_msg(gui,msg)
 
 def dictionary_to_list(dic):
     new_list = []

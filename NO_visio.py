@@ -15,6 +15,7 @@ import win32com.client
 import NO_run
 import NO_visio_settings
 import NO_tunnel_segment
+import NO_file_tools
 from NO_constants import DEGREE_SYMBOL
 
 try:
@@ -65,7 +66,6 @@ def emod_visXML(vxml, data, file_stem, simtime=0.00, output_meta_data={}, gui=""
         "r", "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
     )
     simtime_df = data["SSA"].loc[simtime] #Pull SSA for specfic timestep   
-    # SimInfo-NV01 text fields
     sim_base_name = file_stem
     try:
         if output_meta_data['ses_version'] == 'SI from IP':
@@ -127,7 +127,6 @@ def emod_visXML(vxml, data, file_stem, simtime=0.00, output_meta_data={}, gui=""
     
     # Temperature_NV02
     if P1root.find(".//Visio:Row[@N='Temperature_seg_NV02']../..", ns) is not None:
-        #TODO Reduce time by moving SST_simtime outside of this script
         SST_simtime = data['SST'].loc[simtime]
         for shape in P1root.findall(".//Visio:Row[@N='Temperature_seg_NV02']../..", ns):
             try:
@@ -137,7 +136,6 @@ def emod_visXML(vxml, data, file_stem, simtime=0.00, output_meta_data={}, gui=""
     
     # Update Tunnel Segments
     if P1root.find(".//Visio:Row[@N='Tunnel_Segment_NV01']../..", ns) is not None:
-        #TODO Reduce time by moving segment_time_df outside of this script
         segment_time_df = NO_tunnel_segment.create_segment_info(data, output_meta_data, simtime)
         for shape in P1root.findall(".//Visio:Row[@N='Tunnel_Segment_NV01']../..", ns):
             try:
@@ -530,7 +528,7 @@ def create_visio(settings, data, output_meta_data, gui=""):
     settings["simtime"] = valid_simtime(settings["simtime"], data["SSA"], gui)
     time_4_name = int(settings["simtime"])
     time_suffix = "-" + str(time_4_name) + ".vsdx"
-    settings["new_visio"] = NO_run.get_results_path2(settings, output_meta_data, time_suffix)
+    settings["new_visio"] = NO_file_tools.get_results_path2(settings, output_meta_data, time_suffix)
     msg = "Creating Visio diagram " + settings["new_visio"].name + " for simulation time " + str(settings["simtime"]) + "."
     NO_run.run_msg(gui, msg)
     # Read in VISIO Template and update with SES OUtput
