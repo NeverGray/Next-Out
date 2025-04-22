@@ -20,7 +20,7 @@ import NO_parser
 import NO_route
 import NO_visio
 import NO_file_tools
-import NO_file_manager
+import NO_file_tools
 from NO_constants import VERSION_NUMBER
 
 # logging.disable(logging.CRITICAL)
@@ -77,7 +77,7 @@ def single_process(
         successful_simulation = run_SES(settings["path_exe"], file_path.__str__())
         if successful_simulation:
             # Change file path to work on the output file
-            file_path = NO_file_manager.output_from_input(file_path, settings["path_exe"])
+            file_path = NO_file_tools.output_from_input(file_path, settings["path_exe"])
         else:
             logging.info(f"SES simulation failed for {name}")
             process_status[value_index["Simulation"]] = "Failed"
@@ -105,7 +105,7 @@ def single_process(
                 #Create NO File if it is an output
                 if "no_file" in settings["output"]:
                     try:
-                        NO_file_tools.create_no_file(data, output_meta_data)
+                        NO_file_tools.create_no_file(data, output_meta_data, settings)
                         logging.info(f"Created NO File for {name}")
                     except:
                         logging.info(f"Error creating NO File for {name}")

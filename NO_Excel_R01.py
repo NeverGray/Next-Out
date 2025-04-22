@@ -12,7 +12,7 @@ import pandas as pd
 
 import NO_constants
 import NO_run
-import NO_file_manager
+import NO_file_tools
 import xlsxwriter #Selected engine for pd.ExcelWriter
 
 SHEET_NAMES ={
@@ -31,7 +31,7 @@ SHEET_NAMES ={
 
 def create_excel(settings, data, output_meta_data, gui=""):
     file_name = str(output_meta_data['file_path'].name)
-    excel_results_path = NO_file_manager.get_results_path2(settings, output_meta_data, ".xlsx")
+    excel_results_path = NO_file_tools.get_results_path2(settings, output_meta_data, ".xlsx")
     # TODO Add error checker if excel file is open
     NO_run.run_msg(gui, "Creating Excel file " + excel_results_path.name)
     TITLES = {

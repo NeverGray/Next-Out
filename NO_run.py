@@ -15,7 +15,7 @@ import NO_parser
 import NO_route
 import NO_visio as nvv
 import NO_file_tools
-import NO_file_manager
+import NO_file_tools
 
 
 #Function to perform a single simulation
@@ -50,7 +50,7 @@ def single_sim(settings, gui=""):
         run_msg(gui, msg)
         success = run_SES(settings["path_exe"], settings["ses_output_str"][0], gui)
         if success:
-            settings["ses_output_str"][0] = NO_file_manager.output_from_input(settings["ses_output_str"][0], settings["path_exe"])
+            settings["ses_output_str"][0] = NO_file_tools.output_from_input(settings["ses_output_str"][0], settings["path_exe"])
             settings["file_type"] = "output_file"
         else:
             msg = "Post-processing is stopped for " + settings["ses_output_str"][0] + ".\n"
@@ -66,7 +66,7 @@ def single_sim(settings, gui=""):
             #Create no file if this is selected.
             if "no_file" in settings["output"]:
                 try:
-                    NO_file_tools.create_no_file(data, output_meta_data)
+                    NO_file_tools.create_no_file(data, output_meta_data, settings)
                     run_msg(gui, "Created NO File for " + file_name + ".")
                 except:
                     run_msg(
@@ -147,7 +147,7 @@ def average_or_compare_call_ses(settings, ses_output, gui=""):
     run_msg(gui, msg)
     success = run_SES(settings["path_exe"], ses_output)
     if success:
-        ses_output = NO_file_manager.output_from_input(ses_output, settings["path_exe"])
+        ses_output = NO_file_tools.output_from_input(ses_output, settings["path_exe"])
     else:
         ses_output = 'Simulation failed'
     return ses_output

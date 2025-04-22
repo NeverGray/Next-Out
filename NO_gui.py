@@ -335,11 +335,26 @@ class Start_Screen(tk.Tk):
         self.txt_status.pack(side=tk.LEFT, expand=tk.TRUE, fill=tk.BOTH)
         self.ys_status.pack(side=tk.RIGHT, fill="y")
         # START SCREEN grid
-        self.columnconfigure(0, weight=1)
-        self.rowconfigure(0, weight=1)
+        self.columnconfigure(0, weight=1)  # Allow horizontal expansion
+        self.rowconfigure(0, weight=1)    # Allow vertical expansion for the main frame
         self.ss.grid(column=0, row=0, sticky="EWNS")
         self.ss.columnconfigure(0, weight=1)
-        self.ss.rowconfigure(5, weight=1)
+
+        # Ensure all rows except the Status row do not expand
+        self.ss.rowconfigure(0, weight=0)  # Post Processing
+        self.ss.rowconfigure(1, weight=0)  # SES Files
+        self.ss.rowconfigure(2, weight=0)  # SES Executable
+        self.ss.rowconfigure(3, weight=0)  # Visio Template
+        self.ss.rowconfigure(4, weight=0)  # Run Button
+
+        # Ensure the Status row expands
+        self.ss.rowconfigure(6, weight=1)  # Status window row
+
+        # Place the Status window at the bottom and allow it to expand
+        frm_status.grid(column=0, row=6, columnspan=2, sticky="WENS", pady=py, padx=px)
+
+        # Ensure the Run button row does not expand
+        frm_run.grid(column=0, columnspan=2, row=4, sticky="WE", pady=py, padx=px)
 
         frame_output_conversion.pack(side="top", fill="x", pady=py, padx=px)
         self.frame_analysis.pack(side="top", fill="x", pady=py, padx=px)
@@ -351,9 +366,6 @@ class Start_Screen(tk.Tk):
         self.frame_ses_exe.grid(column=0, row=1, sticky=["NSEW"], pady=py, padx=px)
         self.frame_visio.grid(column=0, row=2, sticky=["WE"], pady=py, padx=px)
         frame_results_folder.grid(column=0, row=3, sticky=["WE"], pady=py, padx=px)
-
-        frm_run.grid(column=0, columnspan=2, row=4, sticky=["WE"], pady=py, padx=px)
-        frm_status.grid(column=0, row=6, columnspan=2, sticky=["WESN"], pady=py, padx=px)
 
         #Update the GUI to show the current settings
         self.update_output_options()

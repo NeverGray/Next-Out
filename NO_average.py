@@ -15,9 +15,9 @@ import NO_parser
 import NO_run
 import NO_file_tools
 
-
 def average_outputs(settings, gui=""):
     df_by_type = {}
+    first_iteration = True
     # For each ses_output, add dataframes to a Dictionary organized by data type ('SSA', 'SST', etc...) 
     num = len(settings['ses_output_str'])
     msg = f'Finding mean, max, and min of {num} output files.'
@@ -44,7 +44,6 @@ def average_outputs(settings, gui=""):
             msg = 'Something went wrong with averaging of the files.'
             NO_run.run_msg(gui, msg)
             return
-        first_iteration = True
         if first_iteration:
             # Create empty lists to append values to
             for key, value in data.items():
