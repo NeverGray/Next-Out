@@ -37,7 +37,7 @@ class Start_Screen(tk.Tk):
             self.left_column, borderwidth=5, text="Output Conversion", padding=p
         )
         self.frame_analysis = ttk.LabelFrame(
-            self.left_column, borderwidth=5, text="Analysis*", padding=p
+            self.left_column, borderwidth=5, text="Analysis", padding=p
         )
         # Initialize all setting variables. This process makes saving, than loading settings easier.
         self.load_settings()
@@ -80,11 +80,11 @@ class Start_Screen(tk.Tk):
         # Analysis frame options
         cb_average = ttk.Checkbutton(
             self.frame_analysis,
-            text="Staggered\nheadways\nmean, max, min",
+            text="Staggered\nheadways\nmean, max, min*",
             variable=self.cbo_average,
             onvalue="Average",
             offvalue="",
-            command=self.update_output_options,
+            command=self.update_output_options
         )
         self.cb_compare = ttk.Checkbutton(
             self.frame_analysis,
@@ -92,10 +92,10 @@ class Start_Screen(tk.Tk):
             variable=self.cbo_compare,
             onvalue="Compare",
             offvalue="",
-            command=self.update_output_options,
+            command=self.toggle_average
         )
         analysis_label = ttk.Label(
-            self.frame_analysis, text="* Visio Template\nis disabled with\nAnalysis"
+            self.frame_analysis, text="* NO File is enabled\n for faster Analysis"
         )
         # POST PROCESSING grid
         cb_excel.grid(column=0, row=0, sticky="W", pady=py)
@@ -476,7 +476,9 @@ class Start_Screen(tk.Tk):
                     # Save the directory selected for future selections
                     self.directory_cache[file_type_key] = os.path.dirname(filename)
                     config["set_path"](filename)
-                    self.ses.set("File")
+                    # If selecting a single input, output, or no file, set the ses variable to "File"
+                    if file_type_key in ["input_file", "output_file", "no_file"]:
+                        self.ses.set("File") #
         except ValueError:
             pass
 
@@ -557,9 +559,12 @@ class Start_Screen(tk.Tk):
                 # If only performing one individual simulation
                 if (
                     len(self.settings["ses_output_str"]) == 1
-                    or ("Average" in pp_list)
                     or ("Compare" in pp_list)
                     ):
+                    if ("Compare" in pp_list):
+                        if "visio_open" in self.settings["output"]:
+                            self.settings["output"].remove("visio_open")
+                            self.cbo_visio_open_option.set("")
                     NO_run.single_sim(self.settings, gui=self)
                     self.gui_text("Post processing completed.\n")
                 else:
@@ -645,6 +650,9 @@ class Start_Screen(tk.Tk):
         if "Average" in settings["output"] and len(settings["ses_output_str"]) < 2:
             msg = msg + "Need at least 2 files to for average analysis.\n"
             valid = False
+        if "Compare" in settings["output"] and len(settings["ses_output_str"]) != 2:
+            msg = msg + "Need excatly 2 files to compare files.\n"
+            valid = False
         if not valid:
             messagebox.showinfo(title="Error with settings", message=msg)
         return valid
@@ -705,16 +713,24 @@ class Start_Screen(tk.Tk):
             self.cbo_visio_open = tk.StringVar(value="")
             analysis_state = "enabled"
         self.configure_widget_state(self.frame_analysis, analysis_state)
-        if (
-            self.cbo_average.get() == ""
-            and self.cbo_compare.get() == ""
-            and self.cbo_visio.get() == "Visio"
-        ):
+        if self.cbo_visio.get() == "Visio":
             visio_state = "enable"
         else:
             visio_state = "disable"
         # Disable all items in a frame: https://www.tutorialspoint.com/how-to-gray-out-disable-a-tkinter-frame
         self.configure_widget_state(self.frame_visio, visio_state)
+        if self.cbo_average.get() == "Average":
+            self.cbo_compare.set("")  # Uncheck "Average"
+            self.cb_visio_open.configure(state=tk.DISABLED)
+        elif self.cbo_compare.get() == "":
+            self.cb_visio_open.configure(state=tk.NORMAL)
+       
+    def toggle_average(self, *args):
+        if self.cbo_compare.get() == "Compare":
+            self.cbo_average.set("")  # Uncheck "Average"
+            self.cb_visio_open.configure(state=tk.DISABLED)
+        elif self.cbo_average.get() == "":
+            self.cb_visio_open.configure(state=tk.NORMAL)
 
     #TODO Evaluate if this function is needed anymore or can be combined into with update_output_options
     def update_frame_ses_exe(self, *args):
@@ -725,6 +741,8 @@ class Start_Screen(tk.Tk):
             ses_exe_state = "disable"
         if self.file_type.get() == "no_file":
             self.cb_no_file.configure(state=tk.DISABLED)
+            #Conversions are only performed on input or output files
+            self.conversion.set("")
         else:
             self.cb_no_file.configure(state=tk.NORMAL)
         self.configure_widget_state(self.frame_ses_exe, ses_exe_state)

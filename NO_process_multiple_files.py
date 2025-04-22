@@ -21,6 +21,7 @@ import NO_route
 import NO_visio
 import NO_file_tools
 import NO_file_tools
+import NO_average
 from NO_constants import VERSION_NUMBER
 
 # logging.disable(logging.CRITICAL)
@@ -56,7 +57,7 @@ def single_process(
     processing_dictionary,
     done_list,
     pause_value,
-    parameter_value_list,
+    no_file_paths
 ):
     pause_check(pause_value)
     # Prepare to monitor process status
@@ -97,6 +98,8 @@ def single_process(
             if settings["file_type"] == "no_file":
                 # Read data from NO file
                 data, output_meta_data = NO_file_tools.read_no_file(file_path)
+                # Create a list of NO Files for averaging
+                no_file_paths.append(file_path) 
             else:
                 #Parse the data from the output file
                 data, output_meta_data = NO_parser.parse_file(
@@ -107,6 +110,9 @@ def single_process(
                     try:
                         NO_file_tools.create_no_file(data, output_meta_data, settings)
                         logging.info(f"Created NO File for {name}")
+                        # Create a list of NO Files for averaging
+                        no_file_path = NO_file_tools.get_results_path2(settings, output_meta_data, ".no")
+                        no_file_paths.append(no_file_path)
                     except:
                         logging.info(f"Error creating NO File for {name}")
             process_status[value_index["Read Output"]] = "Done"
@@ -202,8 +208,7 @@ class Manager_Class:
         self.pause_value = self.manager.Value("i", 0)
         self.finished = self.manager.Value("i", 0)
         self.file_names = self.manager.list()
-        self.parameter_value_list = self.manager.list()
-
+        self.no_file_paths = self.manager.list() #List of NO files created for averaging
 
 class Monitor_GUI(tk.Toplevel):
     def __init__(self, parent, manager, start_screen_settings):
@@ -372,7 +377,7 @@ class Monitor_GUI(tk.Toplevel):
                         self.manager.processing_dictionary,
                         self.manager.done_files,
                         self.manager.pause_value,
-                        self.manager.parameter_value_list,
+                        self.manager.no_file_paths
                     ),
                 )
                 self.results.append(result)
@@ -384,7 +389,15 @@ class Monitor_GUI(tk.Toplevel):
         self.update_monitor_window()
         self.update()
         self.in_progress = False
-        #TODO - Add command to average files
+        # Average results from NO Files
+        if "Average" in self.settings["output"]: 
+            self.settings["file_type"] = "no_file"
+            #Load NO Files in sorted order
+            unsorted_no_file_paths = list(self.manager.no_file_paths)
+            no_file_paths = sorted(unsorted_no_file_paths)
+            logging.info(f"NO File Paths: {list(self.manager.no_file_paths)}")
+            self.settings["ses_output_str"] = no_file_paths
+            NO_average.average_outputs(self.settings, gui="")
         title_msg = "Post-processing complete."
         msg_1 = "Click 'Okay' to return to main screen."
         msg_all = msg_1

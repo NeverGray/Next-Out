@@ -9,7 +9,7 @@ import subprocess
 from pathlib import Path
 
 import NO_average
-import NO_average
+import NO_compare
 import NO_Excel_R01 as nve
 import NO_parser
 import NO_route
@@ -23,12 +23,7 @@ import NO_file_tools
 def single_sim(settings, gui=""):
     if "Compare" in settings["output"]:
         try:
-            NO_average.compare_outputs(settings, gui)
-            if "Excel" in settings["output"]:
-                settings["output"].remove("Excel")
-            if "Visio" in settings["output"]:
-                settings["output"].remove("Visio")
-                run_msg(gui, "Unselect Comparsion to create Visio Templates")
+            NO_compare.compare_outputs(settings, gui)
             return
         except:
             run_msg(gui, "ERROR! Could not compare files.")
@@ -139,18 +134,6 @@ def run_SES(ses_exe_path, ses_input_file_path, gui =""):
                 )
             run_msg(gui,msg)
             return False 
-
-
-#Perform SES Simulations on input files for analyses using average or compare
-def average_or_compare_call_ses(settings, ses_output, gui=""):
-    msg = "Running SES Simulation for " + Path(ses_output).name
-    run_msg(gui, msg)
-    success = run_SES(settings["path_exe"], ses_output)
-    if success:
-        ses_output = NO_file_tools.output_from_input(ses_output, settings["path_exe"])
-    else:
-        ses_output = 'Simulation failed'
-    return ses_output
 
 if __name__ == "__main__":
     directory_str = "C:\\simulations\\test\\"

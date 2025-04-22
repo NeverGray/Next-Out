@@ -27,13 +27,16 @@ def average_outputs(settings, gui=""):
         #Perform SES simulation if using an input file
         #TODO - Use NO_process_multiple_files to run multiple simulations or read in output files
         if settings["file_type"] == "input_file":
-            ses_output = NO_run.average_or_compare_call_ses(settings, ses_output, gui)
-            if ses_output == 'Simulation failed':
-                msg = 'Simulation failed'
+            msg = "Running SES Simulation for " + Path(ses_output).name
+            NO_run.run_msg(gui, msg)
+            success = NO_run.run_SES(settings["path_exe"], ses_output, gui)
+            if success:
+                ses_output_path = NO_file_tools.output_from_input(ses_output, settings["path_exe"])
+                data, output_meta_data = NO_parser.parse_file(ses_output_path, gui, settings['conversion'])
+            else:
+                msg = "Post-processing is stopped for " + ses_output + ".\n"
                 NO_run.run_msg(gui, msg)
                 return
-            ses_output_path = Path(ses_output)
-            data, output_meta_data = NO_parser.parse_file(ses_output_path, gui, settings['conversion'])
         elif settings["file_type"] == "output_file":
             ses_output_path = Path(ses_output)
             data, output_meta_data = NO_parser.parse_file(ses_output_path, gui, settings['conversion'])
@@ -99,20 +102,10 @@ def average_outputs(settings, gui=""):
 
 
 if __name__ == "__main__":
-    directory_str = 'C:/Simulations/Never Gray Way/'
+    directory_str = 'C:\\Simulations\\Average Input Check\\'
     ses_output_list = [
-        directory_str + 'NG02-N001.no', 
-        directory_str + 'NG02-N002.no',
-        directory_str + 'NG02-N003.no',
-        directory_str + 'NG02-N004.no',
-        directory_str + 'NG02-N005.no', 
-        directory_str + 'NG02-N006.no',
-        directory_str + 'NG02-N007.no',
-        directory_str + 'NG02-N008.no',
-        directory_str + 'NG02-N009.no',
-        directory_str + 'NG02-N010.no',
-        directory_str + 'NG02-N011.no',   
-        directory_str + 'NG02-N012.no',    
+        directory_str + 'NG02-N001.inp', 
+        directory_str + 'NG02-N002.inp',   
         ]
     settings = {
         "ses_output_str": ses_output_list,
@@ -122,7 +115,7 @@ if __name__ == "__main__":
         "conversion": "tbd",
         "control": "First",
         "output": ["Average"],
-        "file_type": "no_file",
+        "file_type": "input_file",
         "path_exe": "C:\\simulations\\_EXE\\SESV6_32.exe"
     }
     average_outputs(settings)
