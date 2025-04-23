@@ -106,7 +106,7 @@ def single_sim(settings, gui=""):
         except:
             msg = "Error creating Route Data Excel Files"
             run_msg(gui,msg)
-
+    run_msg(gui,"DONE!")
 
 def run_msg(gui, text):
     if gui != "":

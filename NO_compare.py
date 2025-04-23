@@ -13,6 +13,7 @@ from openpyxl.styles import Font
 
 import NO_Excel_R01 as NV_excel
 import NO_visio as nvv
+import NO_route
 import NO_parser
 import NO_run
 import NO_file_tools
@@ -44,12 +45,6 @@ def compare_outputs(settings, gui=""):
         second_file = Path(settings["ses_output_str"][1])
         base_df, base_output_meta_data = NO_file_tools.read_no_file(base_file)
         second_df, second_output_meta_data = NO_file_tools.read_no_file(second_file)
-    if "Excel" in settings['output']: 
-        NV_excel.create_excel(settings, base_df, base_output_meta_data, gui)
-        NV_excel.create_excel(settings, second_df, second_output_meta_data, gui)   
-    if "Visio" in settings['output']:
-        nvv.create_visio(settings, base_df, base_output_meta_data, gui)
-        nvv.create_visio(settings, second_df, second_output_meta_data, gui)
     base_data = dictionary_to_list(base_df)
     second_data = dictionary_to_list(second_df)
     num_df = len(base_data)
@@ -203,6 +198,39 @@ def compare_outputs(settings, gui=""):
                 + ".xlsx. Close the file if opened."
             )
             NO_run.run_msg(gui, msg)
+    if "Excel" in settings['output']: 
+        try:
+
+            NV_excel.create_excel(settings, base_df, base_output_meta_data, gui)
+            NV_excel.create_excel(settings, second_df, second_output_meta_data, gui)
+        except:
+            msg = (
+                    "ERROR Creating Excel File for single file "
+                    + file_name
+                    + ".xlsx."
+                )
+            NO_run.run_msg(gui, msg)
+    if "Visio" in settings['output']:
+        try:
+ 
+            nvv.create_visio(settings, base_df, base_output_meta_data, gui)
+            nvv.create_visio(settings, second_df, second_output_meta_data, gui)
+        except:
+            msg = (
+                    "ERROR Creating Visio File for single file "
+                    + file_name
+                    + ".xlsx."
+                )
+            NO_run.run_msg(gui, msg)
+    if "Route" in settings["output"]:  # Route data
+        try:
+            NO_route.create_route_excel(settings, base_df, base_output_meta_data, gui)
+            NO_route.create_route_excel(settings, second_df, second_output_meta_data, gui)
+        except:
+            msg = "Error creating Route Data Excel Files"
+            NO_run.run_msg(gui,msg)
+    msg = "DONE! Compare and outputs complete."
+    NO_run.run_msg(gui,msg)
 
 def dictionary_to_list(dic):
     new_list = []

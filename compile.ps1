@@ -7,7 +7,7 @@
 
 
 Set-Location "c:\bin\code"
-..\python3p13\Scripts\Activate.ps1
+..\python3.13\Scripts\Activate.ps1
 Remove-Item "C:\Bin\code\*.*" -Force
 
 # Prompt the user for confirmation
@@ -25,3 +25,4 @@ else {
 Copy-Item "C:\Users\msn\OneDrive\Never Gray\Software Development\Next-Vis\Python2021\*.py" "C:\bin\code\"
 Copy-Item "C:\Users\msn\OneDrive\Never Gray\Software Development\Next-Vis\Python2021\NO_Icon.ico" "C:\bin\code\"
 pyinstaller -F main.py --noconsole --onefile  --icon NO_Icon.ico --exclude matplotlib --exclude scipy --exclude unittest
+Rename-Item -Path "C:\Bin\code\dist\main.exe" -NewName "Next-Out.exe"

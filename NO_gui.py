@@ -13,6 +13,7 @@ from tkinter import filedialog, messagebox, ttk
 
 import NO_process_multiple_files
 import NO_run
+import NO_compare
 from NO_constants import VERSION_NUMBER
 
 class Start_Screen(tk.Tk):
@@ -92,7 +93,7 @@ class Start_Screen(tk.Tk):
             variable=self.cbo_compare,
             onvalue="Compare",
             offvalue="",
-            command=self.toggle_average
+            command=self.average_off
         )
         analysis_label = ttk.Label(
             self.frame_analysis, text="* NO File is enabled\n for faster Analysis"
@@ -517,6 +518,8 @@ class Start_Screen(tk.Tk):
             pass
 
     def run(self, *args):
+        #Update options using logic in GUI
+        self.update_output_options
         self.btn_run["text"] = "In-progress"
         self.btn_run["state"] = tk.DISABLED
         self.ss.update()
@@ -530,7 +533,9 @@ class Start_Screen(tk.Tk):
         pp_list.append(self.cbo_pdf.get())
         pp_list.append(self.cbo_png.get())
         pp_list.append(self.cbo_svg.get())
-        pp_list.append(self.cbo_visio_open_option.get())
+        # "Open Visio" should only be added if it is enabled by visio_open_off()
+        if self.cb_visio_open.cget("state") == "enable":
+            pp_list.append(self.cbo_visio_open_option.get())
         try:
             self.get_files_2_process_in_str()
         except:
@@ -557,25 +562,16 @@ class Start_Screen(tk.Tk):
         if self.validation(self.settings):
             try:
                 # If only performing one individual simulation
-                if (
-                    len(self.settings["ses_output_str"]) == 1
-                    or ("Compare" in pp_list)
-                    ):
-                    if ("Compare" in pp_list):
-                        if "visio_open" in self.settings["output"]:
-                            self.settings["output"].remove("visio_open")
-                            self.cbo_visio_open_option.set("")
+                if len(self.settings["ses_output_str"]) == 1:
                     NO_run.single_sim(self.settings, gui=self)
                     self.gui_text("Post processing completed.\n")
+                elif "Compare" in self.settings["output"]:
+                    NO_compare.compare_outputs(self.settings, gui=self)
                 else:
                     # Launch process and monitor files when using multiple files
                     self.gui_text(
                         "Processing multiple files, openning monitor window."
                     )
-                    # Turn off opening visio for multiple files
-                    if "visio_open" in self.settings["output"]:
-                        self.settings["output"].remove("visio_open")
-                        self.cbo_visio_open_option.set("")
                     self.open_monitor_gui()
             except:
                 self.gui_text(
@@ -647,9 +643,12 @@ class Start_Screen(tk.Tk):
             messagebox.showerror("Invalid File Types", msg_about_files)
             valid = False
             msg = msg + "Invalid file extensions to progress.\n"
-        if "Average" in settings["output"] and len(settings["ses_output_str"]) < 2:
-            msg = msg + "Need at least 2 files to for average analysis.\n"
-            valid = False
+        if "Average" in settings["output"]:
+            if len(settings["ses_output_str"]) < 2:
+                msg = msg + "Need at least 2 files to for average analysis.\n"
+                valid = False
+            if "no_file" not in settings["output"]:
+                settings["output"].append("no_file")
         if "Compare" in settings["output"] and len(settings["ses_output_str"]) != 2:
             msg = msg + "Need excatly 2 files to compare files.\n"
             valid = False
@@ -702,6 +701,7 @@ class Start_Screen(tk.Tk):
             self.results_folder_str = None
 
     def update_output_options(self, *args):
+        #TODO Update when "Open Visio can be selected or not"
         option = self.ses.get()
         if option == "File":
             self.cb_visio_open["state"] = tk.NORMAL
@@ -721,16 +721,22 @@ class Start_Screen(tk.Tk):
         self.configure_widget_state(self.frame_visio, visio_state)
         if self.cbo_average.get() == "Average":
             self.cbo_compare.set("")  # Uncheck "Average"
-            self.cb_visio_open.configure(state=tk.DISABLED)
-        elif self.cbo_compare.get() == "":
-            self.cb_visio_open.configure(state=tk.NORMAL)
+            self.cbo_no_file.set("no_file")  # Uncheck "Open Visio"
+        self.visio_open_off()   
        
-    def toggle_average(self, *args):
+    def average_off(self, *args):
         if self.cbo_compare.get() == "Compare":
             self.cbo_average.set("")  # Uncheck "Average"
-            self.cb_visio_open.configure(state=tk.DISABLED)
-        elif self.cbo_average.get() == "":
-            self.cb_visio_open.configure(state=tk.NORMAL)
+        self.visio_open_off()  
+
+    #Adjust if Visio_Open is enabled or disabled based on the current settings
+    def visio_open_off(self, *args):
+        visio_frame_state = self.cb_visio_open.cget("state")
+        if visio_frame_state == 'enable':
+            if self.ses.get() == "File":
+                self.cb_visio_open.configure(state=tk.NORMAL)
+            else:
+                self.cb_visio_open.configure(state=tk.DISABLED)
 
     #TODO Evaluate if this function is needed anymore or can be combined into with update_output_options
     def update_frame_ses_exe(self, *args):
