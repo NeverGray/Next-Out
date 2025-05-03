@@ -662,6 +662,7 @@ def create_dictionary_from_list(df_list):
         df_dict.update({df.name: df})
     return df_dict
 
+#TODO - Confirm this can be deleted
 def get_segment_titles(lines):
     title_rx = INPUT["f3a"]
     time_rx = PIT["time"]
@@ -713,6 +714,7 @@ def get_titles_and_form3(lines, version="SI"):
                             if pressure !=0: #If the pressure is not zero
                                 form3_pressure[segment_number] = pressure
                         i += 2
+            #TODO Consider adding an if statement if this is a Form 5, then perform Form 5 parsing in get_form5
         i += 1 #TODO Update to a larger number to reduce lines searched. Need to know how many lines for Form 3 and 5, SI and IP to skip
     return segment_titles, form3_type, form3_pressure
 

@@ -245,10 +245,10 @@ def remove_columns(df_list):
     return df_list
 
 if __name__ == "__main__":
-    directory_str = 'C:/Simulations/OpenSES_PR22_Tests/'
+    directory_str = 'C:\\Simulations\\Test\\Compare\\'
     ses_output_list = [
-        directory_str + 'inferno4p2.out', 
-        directory_str + 'inferno4p2_pr22.out'
+        directory_str + 'sinorm-detailed.out', 
+        directory_str + 'sinorm-detailed-sup.out'
         ]
     settings = {
         "ses_output_str": ses_output_list,
@@ -259,7 +259,7 @@ if __name__ == "__main__":
         "control": "First",
         "output": ["Excel"],
         "file_type": "output_file",
-        "path_exe": "C:\\simulations\\_EXE\\SES41.exe"
+        "path_exe": "C:\\Simulations\\_EXE\\SESV6_32.exe"
     }
     import datetime
     now1 = datetime.datetime.now()
