@@ -497,6 +497,7 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
                 abbreviated = True
             if int(m2.group("sum")) > 1:
                 summary = True
+        i +=1
         if i > (len(lines) - 1):
             NO_run.run_msg(
                 gui,
