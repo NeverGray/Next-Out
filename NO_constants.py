@@ -22,6 +22,8 @@ COLUMN_UNITS={
     "Working_Fluid_Temp":["\u00B0C","\u00B0F","SST"],
     "Heat_Absorbed_by_Pipe":["W","Btu/h","SST"],
     "Actual_Airflow_NV":["m^3/s","kcfm","SST"], #Next-Out calculated data
+    "Section" :["#","#","SSP"],                 # SSP Values
+    "Pressure_change" : ["Pa", "IN. WG", "SSP"],
     "Train_Number":["#","#","TRA"],          #Train Information
     "Route_Number":["#","#","TRA"],
     "Train_Type_Number":["#","#","TRA"],
@@ -79,11 +81,11 @@ COLUMN_UNITS={
     "Min_Humidity_Time":["seconds","second","ST"],
     "Average_Humidity":["kg/kg","lb/lb","ST"],
     "Average_Dry_Bulb_NV":["\u00B0C","\u00B0F","ST"],
-    "Percentage_Above_T1":["%","%","PER"], #Start of PER values	
-    "Percentage_Above_T2":["%","%","PER"],	
-    "Percentage_Above_T3":["%","%","PER"],	
-    "Percentage_Above_T4":["%","%","PER"],	
-    "Percentage_Above_T5":["%","%","PER"],	
+    "Percentage_Above_T1":["%","%","PER"], #Start of PER values
+    "Percentage_Above_T2":["%","%","PER"],
+    "Percentage_Above_T3":["%","%","PER"],
+    "Percentage_Above_T4":["%","%","PER"],
+    "Percentage_Above_T5":["%","%","PER"],
     "Percentage_Above_T6":["%","%","PER"],
     "T1":["\u00B0C","\u00B0F","PER"],
     "T2":["\u00B0C","\u00B0F","PER"],
