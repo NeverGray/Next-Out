@@ -80,14 +80,15 @@ def compare_outputs(settings, gui=""):
         try:
             # Description of Stem from https://automatetheboringstuff.com/2e/chapter9/
             file_name = base_path.stem + "_to_" + second_path.stem
-            file_name = file_name[0:250] #make name isn't too long
+            file_name = file_name[0:250] #Reduce name to acceptable length (less than 255 with .xlsx added)
             file_name_4_path = file_name + ".xlsx"
             ses_output_str = settings['ses_output_str'][0]
             parent = str(Path(ses_output_str).parent)
-            base_output_meta_data['file_path'] = Path(parent + '/' + file_name_4_path)
-            output_meta_data = base_output_meta_data.copy()
-            output_meta_data['ses_version'] = 'Unconfirmed'
-            compare_results_path = NO_file_tools.get_results_path2(settings, output_meta_data, ".xlsx")
+            compare_file_path = Path(parent + '/' + file_name_4_path)
+            compare_output_meta_data = base_output_meta_data.copy()
+            compare_output_meta_data['file_path'] = compare_file_path
+            compare_output_meta_data['ses_version'] = 'Unconfirmed'
+            compare_results_path = NO_file_tools.get_results_path2(settings, compare_output_meta_data, ".xlsx")
             p_e_text = (
                 "Percent Error = Absolute value of [(Difference) / ("
                 + base_path.name
