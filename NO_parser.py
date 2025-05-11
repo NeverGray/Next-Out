@@ -26,6 +26,14 @@ PIT = {
     "time": re.compile(
         r"TIME.\s+(?P<Time>\d+.\d{2}).+SECONDS.+TRAIN"
     ),  # Find the first time Simulation
+    "p_data": re.compile(
+        r"""(
+        \s{3,5}
+        (?P<Section>\d{1,3})\s{1,5}  #section
+        (?P<Pressure_change>-?\d*\.\d{3,5})   #pressure_change
+        )""",
+        re.VERBOSE,
+    ),
     "detail_segment_1": re.compile(
         r"""(
         \s{9,}\d+\s-                        #Section #Added \s{9.} to stop processing heat sink summaries
