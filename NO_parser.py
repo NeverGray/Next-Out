@@ -933,7 +933,7 @@ def create_ss_dfs(
     df_train.name = "TRA"
     if duplicate_pit:
         [df_pit, df_ssp, df_train] = delete_duplicate_pit(df_pit, df_ssp, df_train)
-    df_ssp = df_ssp.reset_index()
+    df_ssp.name = "SSP"
     # Add title to segments in df_pit
     # TODO Add title name to PIT from segment_data to Segment number
     # Create df_ssa from a sub-set of the df_pit, which includes all sub-segments
