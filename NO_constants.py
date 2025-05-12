@@ -136,6 +136,7 @@ IP_TO_SI={
     "lbs/motor":	4.448222,
     "mph":	        1.609344,
     "mph/s":	    0.447
+    "IN. WG":       249.0889
 }
 #Added to allow minify to work on all other modules
 DEGREE_SYMBOL="\u00B0"
