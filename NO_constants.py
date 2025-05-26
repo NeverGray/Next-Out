@@ -5,7 +5,7 @@
 # This file is licensed under the MIT License.
 # You may obtain a copy of the license at https://opensource.org/licenses/MIT
 
-VERSION_NUMBER = "1.1"
+VERSION_NUMBER = "1.2"
 #Column name : [SI Unit, IP Unit]
 COLUMN_UNITS={
     "Airflow":	["m^3/s","kcfm","SSA"], #SSA Values
@@ -22,6 +22,8 @@ COLUMN_UNITS={
     "Working_Fluid_Temp":["\u00B0C","\u00B0F","SST"],
     "Heat_Absorbed_by_Pipe":["W","Btu/h","SST"],
     "Actual_Airflow_NV":["m^3/s","kcfm","SST"], #Next-Out calculated data
+    "Section" :["#","#","SSP"],                 # SSP Values
+    "Pressure_Change" : ["Pa", "IN. WG", "SSP"],
     "Train_Number":["#","#","TRA"],          #Train Information
     "Route_Number":["#","#","TRA"],
     "Train_Type_Number":["#","#","TRA"],
@@ -79,11 +81,11 @@ COLUMN_UNITS={
     "Min_Humidity_Time":["seconds","second","ST"],
     "Average_Humidity":["kg/kg","lb/lb","ST"],
     "Average_Dry_Bulb_NV":["\u00B0C","\u00B0F","ST"],
-    "Percentage_Above_T1":["%","%","PER"], #Start of PER values	
-    "Percentage_Above_T2":["%","%","PER"],	
-    "Percentage_Above_T3":["%","%","PER"],	
-    "Percentage_Above_T4":["%","%","PER"],	
-    "Percentage_Above_T5":["%","%","PER"],	
+    "Percentage_Above_T1":["%","%","PER"], #Start of PER values
+    "Percentage_Above_T2":["%","%","PER"],
+    "Percentage_Above_T3":["%","%","PER"],
+    "Percentage_Above_T4":["%","%","PER"],
+    "Percentage_Above_T5":["%","%","PER"],
     "Percentage_Above_T6":["%","%","PER"],
     "T1":["\u00B0C","\u00B0F","PER"],
     "T2":["\u00B0C","\u00B0F","PER"],
@@ -129,6 +131,7 @@ IP_TO_SI={
     "Btu/s-ft":	    3461.470,
     "fpm":	        0.00508,
     "ft":	        0.3048,
+    "IN. WG":       249.08976,
     "kcfm":	        0.471947,
     "lbs":	        4.448222E-3,
     "lbs/motor":	4.448222,

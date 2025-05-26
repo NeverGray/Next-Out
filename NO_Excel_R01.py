@@ -18,6 +18,7 @@ import xlsxwriter #Selected engine for pd.ExcelWriter
 SHEET_NAMES ={
     "SSA" :"Second-by-second Aerodynamic Data (SSA)",
     "SST" :"Second-by-second Thermodynamic data (SST)",
+    "SSP" : "Second-by-second Section Preassure Change Data (SSP)",
     "TRA" :"Second-by-second Train Data (TRA)",
     "SA"  :"Summary of Aerodynamic Data (SA)",
     "ST"  :"Summary of Thermodynamic Data (ST)",
@@ -97,8 +98,8 @@ def create_excel(settings, data, output_meta_data, gui=""):
                 for i in range(len(item.columns)):
                     column = i + freeze_column_max
                     worksheet.write(df_startrow, column, item.columns[i], format_value_header)
-                    if item.columns[i] in NO_constants.COLUMN_UNITS: 
-                        value = NO_constants.COLUMN_UNITS[item.columns[i]][unit_index]        
+                    if item.columns[i] in NO_constants.COLUMN_UNITS:
+                        value = NO_constants.COLUMN_UNITS[item.columns[i]][unit_index]
                         worksheet.write(unit_row, column, value, format_units)
             # set propertes to Excel file
             writer.book.set_properties({
