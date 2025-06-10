@@ -14,29 +14,26 @@ import NO_Excel_R01 as NV_excel
 
 
 def create_route_data(data, output_meta_data):
-    # Get number of sub-segments per segement, from SST last timestep
-    form8f_df = output_meta_data['form_8f']
+    # Get number of sub-segments per segment, from SST last timestep
+    form8f_df_segment = output_meta_data['form_8f_segment']
     time = data['SST'].index.get_level_values("Time").max()
-    data['SST'].loc[(time)].index #Give index on last timestep
-    sst_at_time = data['SST'].loc[(time)] #get last timestep
-    sub_count = sst_at_time.groupby(level=0).size() #Count of sub-segements
+    sst_at_time = data['SST'].loc[(time)]  # get last timestep for sub-segment
+    sub_count = sst_at_time.groupby(level=0).size() #Count of sub-segments
     # Create number of sub-segements per segement positive and negative
     sub_count_df_pos = sub_count.to_frame("Sub_Count")
     sub_count_df_neg = sub_count_df_pos.copy()
     sub_count_df_neg.index = -sub_count_df_neg.index
-    sub_count = pd.concat([sub_count_df_neg,sub_count_df_pos,])
-    sub_count.reindex
+    sub_count = pd.concat([sub_count_df_neg, sub_count_df_pos, ])
     # Merge number of sub-segments with route data
-    routes_df = sub_count.join(form8f_df, how="outer")
-    routes_df['Segement_Length'] = routes_df['Forward'] - routes_df['Backward']
-    routes_df['Sub_Length'] = routes_df['Segement_Length']/routes_df['Sub_Count']
-    #Create datafame with mid-points, segment, and sub-segments
-    route_numbers = routes_df.index.unique(level=0).to_list()
-    route_list = []
+    routes_sub_df = sub_count.join(form8f_df_segment, how="outer")
+    routes_sub_df['Segement_Length'] = routes_sub_df['Forward'] - routes_sub_df['Backward']
+    routes_sub_df['Sub_Length'] = routes_sub_df['Segement_Length'] / routes_sub_df['Sub_Count']
+    #Create dataframe with mid-points, section, segment, and sub-segments
+    route_numbers = routes_sub_df.index.unique(level=0).to_list()
+    route_sub_list = []
     for route_num in route_numbers:
-        route_stationing = routes_df.loc[route_num]
+        route_stationing = routes_sub_df.loc[route_num]
         for index, row in route_stationing.iterrows():
-            #print(index, row['Sub_Length'], row['Sub_Count'] )
             sub_length = row['Sub_Length']
             half_sub_length = 0.5 * sub_length
             sub_count = int(row['Sub_Count'])
@@ -54,38 +51,51 @@ def create_route_data(data, output_meta_data):
                     'Sub' : sub_number,
                     'Mid_Point': mid_point
                 }
-                route_list.append(route_dict)
-    route_mid_points = pd.DataFrame(route_list)
-    
+                route_sub_list.append(route_dict)
+    route_sub_mid_points = pd.DataFrame(route_sub_list)
+
+    # Create dataframe with section, mid-point
+    form8f_df_section = output_meta_data['form_8f_section']
+    form8f_df_section['Mid_Point'] = (form8f_df_section['Forward'] + form8f_df_section['Backward']) / 2
+    route_sec_mid_points = form8f_df_section.drop(columns = ["Backward", "Forward"])
+
     # Covert IP Mid_Points to SI Mid_Points if ip_to_si is selected.
     if output_meta_data['ses_version'] == 'SI from IP':
-        route_mid_points['Mid_Point'] = route_mid_points['Mid_Point']*NO_constants.IP_TO_SI['ft']
+        route_sub_mid_points['Mid_Point'] = route_sub_mid_points['Mid_Point']*NO_constants.IP_TO_SI['ft']
+        route_sec_mid_points['Mid_Point'] = route_sec_mid_points['Mid_Point']*NO_constants.IP_TO_SI['ft']
     # Covert SI Mid_Points to SI Mid_Points if ip_to_si is selected.
     elif output_meta_data['ses_version'] == 'IP from SI':
-        route_mid_points['Mid_Point'] = route_mid_points['Mid_Point']/NO_constants.IP_TO_SI['ft']
-    route_mid_points['Mid_Point'] = route_mid_points['Mid_Point'].round(1)
+        route_sub_mid_points['Mid_Point'] = route_sub_mid_points['Mid_Point']/NO_constants.IP_TO_SI['ft']
+        route_sec_mid_points['Mid_Point'] = route_sec_mid_points['Mid_Point']/NO_constants.IP_TO_SI['ft']
+    route_sub_mid_points['Mid_Point'] = route_sub_mid_points['Mid_Point'].round(1)
+    route_sec_mid_points['Mid_Point'] = route_sec_mid_points['Mid_Point'].round(1)
+
     # Index the dataframes on route number and mid_point of route
-    route_mid_points.set_index(['Route_Number','Segment','Sub'], inplace=True)
-    route_num_mid_points={}
+    route_sub_mid_points.set_index(['Route_Number','Segment','Sub'], inplace=True)
+    route_num_sub_mid_points={}
+    route_num_sec_mid_points={}
     #Create a dictionary of individual routes by numbers for each mid-points
     for route_num in route_numbers:
-        route_num_mid_points[route_num] = route_mid_points.loc[route_num]
-    df_key_2_route = ['SST','ST','SA','HSA'] #List of DFs to create for routes
+        route_num_sub_mid_points[route_num] = route_sub_mid_points.loc[route_num]
+        route_num_sec_mid_points[route_num] = route_sec_mid_points.loc[route_num]
+    df_key_2_route = ['SST','SSP','ST','SA','HSA'] #List of DFs to create for routes
     route_data = {} #Empty dictionary to collect data
     for key in df_key_2_route: #For every df type, perform the following
         if key in data.keys(): 
             if len(data[key]) > 0:
                 #For each DF type, export data for each route
-                for route_num in route_numbers: 
+                for route_num in route_numbers:
                     if key == 'SA': #SA is a special case
-                        df = pd.merge(data[key],route_num_mid_points[route_num],left_index=True,right_index=True,how="inner")
+                        df = pd.merge(data[key],route_num_sub_mid_points[route_num],left_index=True,right_index=True,how="inner")
+                    elif key == 'SSP':
+                        df = data[key].join(route_num_sec_mid_points[route_num],on=['Section'],how="inner")
                     else: #All other DFs can be joined as follows.
-                        df = data[key].join(route_num_mid_points[route_num],on=['Segment','Sub'],how="inner")
-                    format_df(route_num, df,key) #Format and sort the DF
+                        df = data[key].join(route_num_sub_mid_points[route_num],on=['Segment','Sub'],how="inner")
+                    format_df(route_num, df, key) #Format and sort the DF
                     route_data.update({df.name: df}) #Add it to the dictionary
     return route_data
 
-def format_df(route_num, df,df_key):
+def format_df(route_num, df, df_key):
     df.reset_index(inplace=True)
     df.set_index(['Time','Mid_Point'], inplace=True)
     df.sort_index(inplace=True)
