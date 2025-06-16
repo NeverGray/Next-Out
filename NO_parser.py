@@ -479,7 +479,7 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
     i = 0
     m = None
     while m is None and i < len(lines):
-        m = rx.match(lines[i])  # Find supplement output option line
+        m = rx.search(lines[i])  # Find supplement output option line
         if m is not None:
              if int(m.group("supplement_option")) in {3, 5}:
                  section_pressure = True
@@ -882,51 +882,17 @@ def get_form8fs(lines):
             route_number = int(title_dict['Route_Number'])
         elif form_8f_match is not None:
             form_8f_dict = form_8f_match.groupdict()
-            section = form_8f_dict.get('Section')
-            if section is not None:
-                current_section = int(section)
-
-            segment_record = {
-                "Route_Number": route_number,
-                "Segment": int(form_8f_dict["Segment"]),
-                "Backward": float(form_8f_dict["Backward"]),
-                "Forward": float(form_8f_dict["Forward"])
-            }
-            form8f_data_segment.append(segment_record)
-
-            section_record = {
-                "Route_Number": route_number,
-                "Section": abs(current_section),
-                "Backward": float(form_8f_dict["Backward"]),
-                "Forward": float(form_8f_dict["Forward"])
-            }
-            form8f_data_section.append(section_record)
-
+            form_8f_dict.update({"Route_Number": route_number})
+            form8f_data.append(form_8f_dict)
         i += 1
-
     # Convert from list to dataframes
-    if len(form8f_data_segment) > 0:
-        form8f_df_segment = pd.DataFrame(form8f_data_segment)
-        form8f_df_segment = form8f_df_segment.apply(pd.to_numeric, errors="coerce")
-        form8f_df_segment.set_index(['Route_Number', 'Segment'], inplace=True)
+    if len(form8f_data) > 0:
+        form8f_df = pd.DataFrame(form8f_data)
+        form8f_df = form8f_df.apply(pd.to_numeric, errors="coerce")
+        form8f_df.set_index(['Route_Number', 'Segment'], inplace=True)
     else:
-        form8f_df_segment = None
-
-    if form8f_data_section:
-        form8f_df_section = pd.DataFrame(form8f_data_section)
-        form8f_df_section = (
-            form8f_df_section.groupby(["Route_Number", "Section"], as_index=False)
-            .agg({
-                "Backward": "first",
-                "Forward": "last"
-            })
-        )
-        form8f_df_section = form8f_df_section.apply(pd.to_numeric, errors="coerce")
-        form8f_df_section.set_index(['Route_Number', 'Section'], inplace=True)
-    else:
-        form8f_df_section = None
-    return form8f_df_segment, form8f_df_section
-
+        form8f_df = None
+    return form8f_df
 
 def get_form9(lines):
     time_rx = PIT["time"]  # signals start of simualtion and end of input
