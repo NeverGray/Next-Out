@@ -5,7 +5,7 @@
 # This file is licensed under the MIT License.
 # You may obtain a copy of the license at https://opensource.org/licenses/MIT
 
-VERSION_NUMBER = "1.3.1"
+VERSION_NUMBER = "1.4.B"
 #Column name : [SI Unit, IP Unit]
 COLUMN_UNITS={
     "Airflow":	["m^3/s","kcfm","SSA"], #SSA Values
@@ -41,7 +41,25 @@ COLUMN_UNITS={
     "Grid_Temp_Decel":["\u00B0C","\u00B0F","TRA"],
     "Heat_Gen":["W/m","Btu/s-ft","TRA"],
     "Heat_Reject":["W/m","Btu/s-ft","TRA"],
-    "Max_Airflow":["m^3/s","kcfm","SA"], #SA Values
+    # Train Supplementary Data
+    "Mode"                        :["#",        "#",          "TRA"],
+    "Auxilaries"                  :["kW/train", "kW/train",    "TRA"],
+    "Propulsion_3rd_Rail"         :["kW/train", "kW/train",    "TRA"],
+    "Regenerated_3rd_Rail"        :["kW/train", "kW/train",    "TRA"],
+    "From_Flywheel_TRA"           :["kW/train", "kW/train",    "TRA"],
+    "Accel_Grid"                  :["kW/train", "Btu/s-train","TRA"],
+    "Decel_Grid"                  :["kW/train", "Btu/s-train","TRA"],
+    "Mech"                        :["kW/train", "Btu/s-train","TRA"],
+    "Propul_Sens"                 :["W/m",      "Btu/s-ft",   "TRA"],
+    "Aux_Sens"                    :["W/m",      "Btu/s-ft",   "TRA"],
+    "Aux_Latent"                  :["W/m",      "Btu/s-ft",   "TRA"],
+    "Train_Length_NO"             :["m",        "ft",         "TRA"],
+    "Propul_Sens_per_Train_NO"    :["kW/train", "Btu/s-train","TRA"],
+    "Aux_Sens_per_Train_NO"       :["kW/train", "Btu/s-train","TRA"],
+    "Aux_Latent_per_Train_NO"     :["kW/train", "Btu/s-train","TRA"],
+    "Calculated_Energy_NO"     :["kW/train", "Btu/s-train","TRA"],
+    # SA Values
+    "Max_Airflow":["m^3/s","kcfm","SA"],
     "Max_Airflow_Time":["seconds","second","SA"],
     "Min_Airflow":["m^3/s","kcfm","SA"],
     "Min_Airflow_Time":["seconds","second","SA"],
@@ -124,11 +142,12 @@ COLUMN_UNITS={
     "EC_Requirement_Latent":["W","Btu/h","ECS"],
     "EC_Requirement_Total":["W","Btu/h","ECS"]
 }
-#IP Unit : Conversion to SI
+# IP Unit : Conversion to SI
 IP_TO_SI={
     "Btu/h":	    0.2930711,
-    "Btu/s":	    1055.056,
-    "Btu/s-ft":	    3461.470,
+    "Btu/s":	    1055.056, 
+    "Btu/s-train":  1.055056, # Convert Btu/s-train to kW/train
+    "Btu/s-ft":	    3463.123, # Convert to watts per meter
     "fpm":	        0.00508,
     "ft":	        0.3048,
     "IN. WG":       249.08976,
@@ -136,7 +155,7 @@ IP_TO_SI={
     "lbs":	        4.448222E-3,
     "lbs/motor":	4.448222,
     "mph":	        1.609344,
-    "mph/s":	    0.447
+    "mph/s":	    0.447,
 }
-#Added to allow minify to work on all other modules
+# Added to allow minify to work on all other modules
 DEGREE_SYMBOL="\u00B0"

@@ -105,7 +105,7 @@ def create_excel(settings, data, output_meta_data, gui=""):
             writer.book.set_properties({
                 'title':    file_name,
                 'subject':  "SES Output in Next-Out Format",
-                'author':   ("Next Vis " + NO_constants.VERSION_NUMBER)
+                'author':   ("Next Out " + NO_constants.VERSION_NUMBER)
             })
     except:
         NO_run.run_msg(gui, "ERROR creating Excel file "+ excel_results_path.name + " in MEMORY before writing. Contact Justin@NeverGray.biz for this strange error.")

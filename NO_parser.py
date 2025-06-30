@@ -14,6 +14,7 @@ import pandas as pd
 
 import NO_conversion
 import NO_run
+import NO_parser_train_supplementary as train_supplementary
 
 ''' If you need to log errors, enable code.
 import logging
@@ -26,14 +27,6 @@ PIT = {
     "time": re.compile(
         r"TIME.\s+(?P<Time>\d+.\d{2}).+SECONDS.+TRAIN"
     ),  # Find the first time Simulation
-    "p_data": re.compile(
-        r"""(
-        \s{3,5}
-        (?P<Section>\d{1,3})\s{1,5}  #section
-        (?P<Pressure_Change>-?\d*\.\d{3,5})   #pressure_Change
-        )""",
-        re.VERBOSE,
-    ),
     "p_data": re.compile(
         r"""(
         \s{3,5}
@@ -100,6 +93,9 @@ PIT = {
         )""",
         re.VERBOSE,
     ),
+    # Train Supplementary Data
+    "train_sup": train_supplementary.train_sup,
+
     "sum_time": re.compile(
         r"SUMMARY OF SIMULATION FROM\s+\d+\.\d+\sTO\s+(?P<Time>\d+.\d{2})\sSECONDS"
     ),  # Find the first time Simulation
@@ -414,6 +410,7 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
     data_pit = []  # All Point in Time data
     pressure_pit = [] # Pressure change data
     data_train = []
+    data_train_sup = []
     wall_pit = []
     fluid_pit = []
     output_meta_data = {"file_path": file_path}
@@ -488,16 +485,14 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
         NO_run.run_msg(gui, msg)
 
     # Determine the supplementary option to check if sectional pressure changes data is present
-    section_pressure = False
     rx = INPUT["f1c"]
     i = 0
     m = None
     while m is None and i < len(lines):
         m = rx.search(lines[i])  # Find supplement output option line
         if m is not None:
-             if int(m.group("supplement_option")) in {3, 5}:
-                 section_pressure = True
-                 i = len(lines) + 1  # Exit while loop
+             supplementary_output_option = int(m.group("supplement_option"))
+             i = len(lines) + 1  # Exit while loop
         i += 1
 
     # Determine if there are abbreviated prints from Form 12.
@@ -547,8 +542,10 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
         PIT_for_search.pop("abb_segment_1")
     if version == "IP":
         PIT_for_search.pop("fluid")
-    if section_pressure == False:
+    if supplementary_output_option not in {3,5}: # Sectional pressure changes are present in 3 and 5
         PIT_for_search.pop("p_data")
+    if supplementary_output_option not in {2,3,4,5} or version == "SI": # Train information is present in 2 and 5
+        PIT_for_search.pop("train_sup")
     # Post process Point in Time information
     while i < len(lines):
         # Only search lines that are not blank
@@ -557,7 +554,7 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
             m = False
             for key, rx in PIT_for_search.items():  # change dictionary as necessary
                 # Use .match() only for 'p_data', .search() for everything else
-                if key == "p_data":
+                if key in {"p_data", "train_sup"}:
                     m = rx.match(lines[i])  # Match only if the pattern starts the line
                 else:
                     m = rx.search(lines[i])  # Search anywhere in the line
@@ -625,6 +622,14 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
                             if m is not None:
                                 m_dict = m.groupdict()
                                 m_dict["Time"] = time
+                    elif key == "train_sup":  # Create worksheet for train information
+                        while (m != None):
+                            data_train_sup.append(m_dict)
+                            i += 1
+                            m = rx.match(lines[i])
+                            if m is not None:
+                                m_dict = m.groupdict()
+                                m_dict["Time"] = time
                     elif key == "fluid":
                         fluid_pit.append(m_dict)
         i += 1
@@ -634,11 +639,13 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
         data_pit,
         pressure_pit,
         data_train,
+        data_train_sup,
         wall_pit,
         fluid_pit,
         duplicate_pit,
         segment_titles,
         version,
+        output_meta_data
     )
     # Add the actual airflow to the SST Dataframe
     actual_airflow = calculate_actual_airflow(df_sst, df_ssa, ambient_temperature, version)
@@ -715,24 +722,6 @@ def create_dictionary_from_list(df_list):
         if not df.empty:
             df_dict.update({df.name: df})
     return df_dict
-
-
-def get_segment_titles(lines):
-    title_rx = INPUT["f3a"]
-    time_rx = PIT["time"]
-    time_match = None
-    i = 0
-    segment_titles = {}
-    while time_match is None and i < len(lines):
-        title_match = title_rx.search(lines[i])
-        time_match = time_rx.search(lines[i])
-        if title_match is not None:
-            title_dict = title_match.groupdict()
-            segment_titles.update(
-                {int(title_dict["segment"]): title_dict["title"].strip()}
-            )
-        i += 1
-    return segment_titles
 
 def get_titles_and_form3(lines, version="SI"):
     title_rx = INPUT["f3a"]
@@ -974,7 +963,7 @@ def get_form9(lines):
 
 # Create dataframes for second-by-second information (AKA PIT or Point in Time)
 def create_ss_dfs(
-        data_pit, pressure_pit, data_train, wall_pit, fluid_pit, duplicate_pit, segment_titles, version
+        data_pit, pressure_pit, data_train, data_train_sup, wall_pit, fluid_pit, duplicate_pit, segment_titles, version, output_meta_data
 ):
     df_pit = to_dataframe2(data_pit)
     df_ssp = pd.DataFrame()
@@ -991,10 +980,13 @@ def create_ss_dfs(
     if version == "IP":
         df_pit["Airflow"] = df_pit["Airflow"] / 1000
     df_pit.name = "PIT"
-
-    df_train = to_dataframe2(data_train, ["Train_Number", "Route_Number", "Train_Type_Number"],
-                             ["Time", "Train_Number"])
-    df_train.name = "TRA"
+    if len(data_train)>0:
+        df_train = to_dataframe2(data_train, ["Train_Number", "Route_Number", "Train_Type_Number"],
+                                ["Time", "Train_Number"])
+        if len(data_train_sup) > 0: 
+            #If there is supplementary train data, add it to df_train
+            df_train = train_supplementary.add_train_sup(df_train, data_train_sup, output_meta_data)
+        df_train.name = "TRA"
     if duplicate_pit:
         [df_pit, df_ssp, df_train] = delete_duplicate_pit(df_pit, df_ssp, df_train)
     # Add title to segments in df_pit
@@ -1077,8 +1069,8 @@ def create_ss_dfs(
 
 def to_dataframe2(
         data,
-        to_integers=["Segment", "Sub"],
-        to_index=["Time", "Segment", "Sub"],
+        to_integers=["Segment", "Sub"], # Values that should be converted to integers
+        to_index=["Time", "Segment", "Sub"], # Values for the index
         groupby=[],
 ):
     # convert all values to numbers, remove non-numbers. Then turn Segments and Sub into integers
@@ -1331,7 +1323,7 @@ def calculate_actual_airflow(SST, SSA, ambient_temperature, version):
 
 if __name__ == "__main__":
     directory_string = "C:\\simulations\\test\\"
-    file_name = "test.out"
+    file_name = "test.PRN"
     path_string = directory_string + file_name
     file_path = Path(path_string)
     d, output_meta_data = parse_file(file_path, gui="", conversion_setting="SI")
