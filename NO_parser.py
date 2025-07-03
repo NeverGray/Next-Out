@@ -34,6 +34,14 @@ PIT = {
         )""",
         re.VERBOSE,
     ),
+    "p_data": re.compile(
+        r"""(
+        \s{3,5}
+        (?P<Section>\d{1,3})\s{1,5}  #section
+        (?P<Pressure_Change>-?\d*\.\d{3,5})   #pressure_Change
+        )""",
+        re.VERBOSE,
+    ),
     "detail_segment_1": re.compile(
         r"""(
         \s{9,}\d+\s-                        #Section #Added \s{9.} to stop processing heat sink summaries
@@ -112,6 +120,9 @@ INPUT = {
     "f1c": re.compile(
         r"SUPPLEMENTARY OUTPUT OPTION\s+(?P<supplement_option>\d)"
     ),
+    "f1c": re.compile(
+        r"SUPPLEMENTARY OUTPUT OPTION\s+(?P<supplement_option>\d)"
+    ),
     "f3a": re.compile(
         r"INPUT VERIFICATION FOR (?P<type>LINE SEGMENT|VENTILATION SHAFT)\s+\d+\s\-\s*(?P<segment>\d+)\s+(?P<title>\S.+)+FORM"
     ),
@@ -146,9 +157,9 @@ INPUT = {
         r"FIRE SOURCE EFFECTIVE AREA FOR RADIATION\s*(?P<raditation_area>-?\d+.\d*)\s{3}"
     ),
     "f5c_fan_type": re.compile(r"FAN TYPE\s+(?P<fan_type>\d+)\s+FORM 5C"),
-    "f5c_fan_on": re.compile(r"SIMULATION TIME AFTER WHICH FAN SWITCHES ON\s+(?P<fan_on>\d+)\s+SECONDS"),
-    "f5c_fan_off": re.compile(r"SIMULATION TIME AFTER WHICH FAN SWITCHES OFF\s+(?P<fan_off>\d+)\s+SECONDS"),
-    "f5c_fan_direction": re.compile(r"DIRECTION OF FAN OPERATION\s+(?P<fan_direction>\-?\d+)\s+"),
+    "f5c_fan_on":  re.compile(r"SIMULATION TIME AFTER WHICH FAN SWITCHES ON\s+(?P<fan_on>\d+)\s+SECONDS"),
+    "f5c_fan_off":  re.compile(r"SIMULATION TIME AFTER WHICH FAN SWITCHES OFF\s+(?P<fan_off>\d+)\s+SECONDS"),
+    "f5c_fan_direction":  re.compile(r"DIRECTION OF FAN OPERATION\s+(?P<fan_direction>\-?\d+)\s+"),
     "f5d_head_loss": re.compile(
         r"""(
         .{18}\..{15}.{15}\.\d+\s{12,} #Left hand side of line
@@ -882,17 +893,51 @@ def get_form8fs(lines):
             route_number = int(title_dict['Route_Number'])
         elif form_8f_match is not None:
             form_8f_dict = form_8f_match.groupdict()
-            form_8f_dict.update({"Route_Number": route_number})
-            form8f_data.append(form_8f_dict)
+            section = form_8f_dict.get('Section')
+            if section is not None:
+                current_section = int(section)
+
+            segment_record = {
+                "Route_Number": route_number,
+                "Segment": int(form_8f_dict["Segment"]),
+                "Backward": float(form_8f_dict["Backward"]),
+                "Forward": float(form_8f_dict["Forward"])
+            }
+            form8f_data_segment.append(segment_record)
+
+            section_record = {
+                "Route_Number": route_number,
+                "Section": abs(current_section),
+                "Backward": float(form_8f_dict["Backward"]),
+                "Forward": float(form_8f_dict["Forward"])
+            }
+            form8f_data_section.append(section_record)
+
         i += 1
+
     # Convert from list to dataframes
-    if len(form8f_data) > 0:
-        form8f_df = pd.DataFrame(form8f_data)
-        form8f_df = form8f_df.apply(pd.to_numeric, errors="coerce")
-        form8f_df.set_index(['Route_Number', 'Segment'], inplace=True)
+    if len(form8f_data_segment) > 0:
+        form8f_df_segment = pd.DataFrame(form8f_data_segment)
+        form8f_df_segment = form8f_df_segment.apply(pd.to_numeric, errors="coerce")
+        form8f_df_segment.set_index(['Route_Number', 'Segment'], inplace=True)
     else:
-        form8f_df = None
-    return form8f_df
+        form8f_df_segment = None
+
+    if form8f_data_section:
+        form8f_df_section = pd.DataFrame(form8f_data_section)
+        form8f_df_section = (
+            form8f_df_section.groupby(["Route_Number", "Section"], as_index=False)
+            .agg({
+                "Backward": "first",
+                "Forward": "last"
+            })
+        )
+        form8f_df_section = form8f_df_section.apply(pd.to_numeric, errors="coerce")
+        form8f_df_section.set_index(['Route_Number', 'Section'], inplace=True)
+    else:
+        form8f_df_section = None
+    return form8f_df_segment, form8f_df_section
+
 
 def get_form9(lines):
     time_rx = PIT["time"]  # signals start of simualtion and end of input
