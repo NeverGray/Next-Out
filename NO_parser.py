@@ -557,16 +557,21 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
                             match_dict = match.groupdict()
                             match_dict["Time"] = time
                             pressure_pit.append(match_dict)
-                    elif key == "detail_segment_1" or key == "abb_segment_1":
-                        if key == "abb_segment_1":
-                            # Code only includes information for segment 1 for abbreviated prints
-                            i += 1
-                            m_dict.update({"Sub": int(1.0)})
-                            s = lines[i]
-                            s = s[1:45].strip()  # HUmidity from one line below
-                            m_dict.update(
-                                {"Humidity": s}
-                            )  # Add humidity from one line below, only first segement
+                    elif key == "abb_segment_1":
+                        s = lines[i].split()  # splits only on whitespace
+                        s = [t for t in s if t != '-']
+                        Segment = s[1]
+                        temp = s[4:]
+                        k = i + 1
+                        h = lines[k].split()
+                        for j in range(len(temp)):
+                            m_copy = m_dict.copy()  # keep existing data
+                            m_copy.update({"Segment": Segment})
+                            m_copy.update({"Sub": str(j + 1)})
+                            m_copy.update({"Air_Temp": temp[j]})
+                            m_copy.update({"Humidity": h[j]})
+                            data_pit.append(m_copy)
+                    elif key == "detail_segment_1":
                         data_pit.append(m_dict)
                     elif key == "wall":
                         while (m != None):
