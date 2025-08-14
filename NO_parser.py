@@ -439,23 +439,10 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
     output_meta_data.update({"ses_version": version})
     ambient_temperature = get_ambient_temperature(lines)
     # Read segment titles from Form 3 and Form 5 and types from form 3
+    INPUT_for_search = INPUT.copy()
     segment_titles, form3_type, form3_pressure = get_titles_and_form3(lines, version)
     output_meta_data['form3_pressure'] = form3_pressure
-    
     # Determine the Fire Simulation Option
-    #TODO - Eliminate Form 4 search if there are no fires.
-    #TODO - Combine Form 1 Searches (F1C and F1G) until Form 2A or 2B appears.
-    rx = INPUT["f1g_fire"]
-    i = 0
-    m = None
-    while m is None and i < len(lines):
-        m = rx.search(lines[i])  # Find supplement output option line
-        if m is not None:
-            if int(m.group("fire_simulation_option")) == 0:
-                INPUT.pop("f4_flame")
-                INPUT.pop("f4_area")
-            i = len(lines) + 1  # Exit while loop
-        i += 1
    
     try:
         form4_df = get_form4(lines)
@@ -790,7 +777,20 @@ def get_form4(lines):
     next_form_rx = INPUT['f5a']  # signals start of form 5 and end of Form 4
     first_line_rx = INPUT["f4_location"]  # Start of Form 4
     key_prefix = 'f4_'
-    form4_data = form_parse(lines, time_rx, next_form_rx, first_line_rx, key_prefix)
+    #Adjust Form 4 input search dictionary based on the Fire Simulation Option
+    rx = INPUT["f1g_fire"]
+    i = 0
+    m = None
+    INPUT_for_search = INPUT.copy()  # Copy the INPUT dictionary to search for Form 4
+    while m is None and i < len(lines):
+        m = rx.search(lines[i])  # Find supplement output option line
+        if m is not None:
+            if int(m.group("fire_simulation_option")) == 0:
+                INPUT_for_search.pop("f4_flame")
+                INPUT_for_search.pop("f4_area")
+            i = len(lines) + 1  # Exit while loop
+        i += 1
+    form4_data = form_parse(lines, time_rx, next_form_rx, first_line_rx, key_prefix, input_search=INPUT_for_search)
     if len(form4_data) > 0:
         form4_df = pd.DataFrame(form4_data)
         form4_df = form4_df.apply(pd.to_numeric, errors="coerce")
@@ -857,7 +857,7 @@ def get_form7c(lines):
     form7c_data = form_parse(lines, time_rx, next_form_rx, first_line_rx, key_prefix)
     return form7c_data
 
-def form_parse(lines, time_rx, next_form_rx, first_line_rx, key_prefix, i=0):
+def form_parse(lines, time_rx, next_form_rx, first_line_rx, key_prefix, i=0,input_search=INPUT):
     end_of_form = False
     form_data = []
     while not end_of_form or i < len(lines):
@@ -869,7 +869,7 @@ def form_parse(lines, time_rx, next_form_rx, first_line_rx, key_prefix, i=0):
         first_line_match = first_line_rx.search(lines[i])
         if first_line_match is not None:
             form_row = {}
-            for key, value in INPUT.items():
+            for key, value in input_search.items():
                 if key_prefix in key:
                     match = value.search(lines[i])
                     while match is None and i < len(lines) -1:
