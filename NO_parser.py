@@ -120,8 +120,8 @@ INPUT = {
     "f1c": re.compile(
         r"SUPPLEMENTARY OUTPUT OPTION\s+(?P<supplement_option>\d)"
     ),
-    "f1c": re.compile(
-        r"SUPPLEMENTARY OUTPUT OPTION\s+(?P<supplement_option>\d)"
+    "f1g_fire": re.compile(
+        r"FIRE SIMULATION OPTION\s+(?P<fire_simulation_option>\d)"
     ),
     "f3a": re.compile(
         r"INPUT VERIFICATION FOR (?P<type>LINE SEGMENT|VENTILATION SHAFT)\s+\d+\s\-\s*(?P<segment>\d+)\s+(?P<title>\S.+)+FORM"
@@ -441,6 +441,22 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
     # Read segment titles from Form 3 and Form 5 and types from form 3
     segment_titles, form3_type, form3_pressure = get_titles_and_form3(lines, version)
     output_meta_data['form3_pressure'] = form3_pressure
+    
+    # Determine the Fire Simulation Option
+    #TODO - Eliminate Form 4 search if there are no fires.
+    #TODO - Combine Form 1 Searches (F1C and F1G) until Form 2A or 2B appears.
+    rx = INPUT["f1g_fire"]
+    i = 0
+    m = None
+    while m is None and i < len(lines):
+        m = rx.search(lines[i])  # Find supplement output option line
+        if m is not None:
+            if int(m.group("fire_simulation_option")) == 0:
+                INPUT.pop("f4_flame")
+                INPUT.pop("f4_area")
+            i = len(lines) + 1  # Exit while loop
+        i += 1
+   
     try:
         form4_df = get_form4(lines)
         if form4_df is not None:
@@ -494,6 +510,7 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
         if m is not None:
              if int(m.group("supplement_option")) in {3, 5}:
                  section_pressure = True
+                 i = len(lines) + 1  # Exit while loop
         i += 1
 
     # Determine if there are abbreviated prints from Form 12.
@@ -855,7 +872,7 @@ def form_parse(lines, time_rx, next_form_rx, first_line_rx, key_prefix, i=0):
             for key, value in INPUT.items():
                 if key_prefix in key:
                     match = value.search(lines[i])
-                    while match is None and i < len(lines):
+                    while match is None and i < len(lines) -1:
                         i += 1
                         match = value.search(lines[i])
                     form_row.update(match.groupdict())
