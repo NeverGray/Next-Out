@@ -40,7 +40,7 @@ def create_train_truths(output_meta_data, data, simtime):
             train_type_number = row['Train_Type_Number']
             length = output_meta_data['form9_df'].loc[train_type_number,'train_length']
             train_back = train_front - length
-            df = output_meta_data['form_8f'].loc[route]
+            df = output_meta_data['form_8f_segment'].loc[route]
             #Logic for presence of train is explained in "Logic for selection Rev1.pdf"
             criteria_train_front = (df['Forward'] >= train_front) & (train_front >= df['Backward'])
             criteria_train_middle = (train_front >= df['Forward']) & (train_back <= df['Backward'])
