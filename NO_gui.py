@@ -14,6 +14,8 @@ from tkinter import filedialog, messagebox, ttk
 import NO_process_multiple_files
 import NO_run
 import NO_compare
+import NO_summary
+import NO_summary_gui
 from NO_constants import VERSION_NUMBER
 
 class Start_Screen(tk.Tk):
@@ -42,6 +44,10 @@ class Start_Screen(tk.Tk):
         )
         # Initialize all setting variables. This process makes saving, than loading settings easier.
         self.load_settings()
+        
+        # Initialize summary options
+        self.summary_options = {}
+        self.cbo_summary = tk.StringVar(value="")
         # Post Processing frame options
         cb_excel = ttk.Checkbutton(
             frame_post_processing, text="Excel", variable=self.cbo_excel, onvalue="Excel", offvalue=""
@@ -53,6 +59,14 @@ class Start_Screen(tk.Tk):
             onvalue="Visio",
             offvalue="",
             command=self.update_output_options,
+        )
+        # Summary row frame for checkbox and button
+        frm_summary = ttk.Frame(frame_post_processing)
+        cb_summary = ttk.Checkbutton(
+            frm_summary, text="", variable=self.cbo_summary, onvalue="Summary", offvalue=""
+        )
+        btn_summary = ttk.Button(
+            frm_summary, text="Summary", command=self.open_summary_settings
         )
         cb_route = ttk.Checkbutton(
             frame_post_processing,
@@ -102,7 +116,10 @@ class Start_Screen(tk.Tk):
         cb_excel.grid(column=0, row=0, sticky="W", pady=py)
         cb_visio.grid(column=0, row=10, sticky="W", pady=py)
         cb_route.grid(column=0, row=15, sticky="W", pady=py)
-        self.cb_no_file.grid(column=0, row=20, sticky="W", pady=py)  
+        self.cb_no_file.grid(column=0, row=20, sticky="W", pady=py)
+        frm_summary.grid(column=0, row=25, sticky="W", pady=py)
+        cb_summary.pack(side="left", padx=(0, 5))
+        btn_summary.pack(side="left")
         # Conversion grid
         rb_conversion_none.grid(column=0, row=10, sticky="W", pady=py)
         rb_IP_to_SI.grid(column=0, row=17, sticky="W", pady=py)
@@ -335,6 +352,9 @@ class Start_Screen(tk.Tk):
         self.txt_status["yscrollcommand"] = self.ys_status.set
         self.txt_status.pack(side=tk.LEFT, expand=tk.TRUE, fill=tk.BOTH)
         self.ys_status.pack(side=tk.RIGHT, fill="y")
+        # Initialize summary options
+        self.summary_options = {}
+        
         # START SCREEN grid
         self.columnconfigure(0, weight=1)  # Allow horizontal expansion
         self.rowconfigure(0, weight=1)    # Allow vertical expansion for the main frame
@@ -379,6 +399,7 @@ class Start_Screen(tk.Tk):
             "self.cbo_excel": 'tk.StringVar(value="")',
             "self.cbo_route": 'tk.StringVar(value="")',
             "self.cbo_no_file": 'tk.StringVar(value="")',
+            "self.cbo_summary": 'tk.StringVar(value="")',
             "self.conversion": 'tk.StringVar(value="")',
             "self.cbo_compare": 'tk.StringVar(value="")',
             "self.cbo_average": 'tk.StringVar(value="")',
@@ -526,9 +547,10 @@ class Start_Screen(tk.Tk):
         pp_list = []
         pp_list.append(self.cbo_excel.get())
         pp_list.append(self.cbo_visio.get())
+        pp_list.append(self.cbo_summary.get())
+        pp_list.append(self.cbo_route.get())
         pp_list.append(self.cbo_compare.get())
         pp_list.append(self.cbo_average.get())
-        pp_list.append(self.cbo_route.get())
         pp_list.append(self.cbo_no_file.get())
         pp_list.append(self.cbo_pdf.get())
         pp_list.append(self.cbo_png.get())
@@ -557,6 +579,7 @@ class Start_Screen(tk.Tk):
             "output": pp_list,
             "file_type": self.file_type.get(),
             "path_exe": self.path_exe.get(),
+            "summary_options": self.summary_options  # Add summary options to settings
         }
 
         if self.validation(self.settings):
@@ -577,6 +600,11 @@ class Start_Screen(tk.Tk):
                 self.gui_text(
                     "Error after validation, before single_sim or multiple_sim. \n"
                 )
+            if "Summary" in self.settings["output"]:
+                try:
+                    NO_summary.create_excel_summary(self.settings, gui=self)
+                except:
+                    self.gui_text("Error summarizing.\n")
         else:
             self.gui_text("Error with Validation of Settings")
         self.btn_run["state"] = tk.NORMAL
@@ -774,6 +802,17 @@ class Start_Screen(tk.Tk):
                 self.configure_widget_state(child, state)
 
     #Offer to save the current settings before exiting the program
+    def open_summary_settings(self):
+        """Open the summary settings window and get the summary options"""
+        # Get the summary options from the dialog
+        self.summary_options = NO_summary_gui.launch_window(self)
+        
+        # Enable summary in the main settings if options were configured
+        if self.summary_options:
+            self.cbo_summary.set("Summary")
+        else:
+            self.cbo_summary.set("")
+
     def on_closing(self):
         title_on_closing = "Quite Next Vis?"
         msg_1 = "Click 'Yes' to quit and save the most recent settings.\n"
