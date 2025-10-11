@@ -5,7 +5,14 @@
 # This file is licensed under the MIT License.
 # You may obtain a copy of the license at https://opensource.org/licenses/MIT
 
-VERSION_NUMBER = "1.4.D" # Adjusting code
+VERSION_NUMBER = "1.4.D" # Faster Paser Code
+""" Veresion Log
+    1.3.1 Last released version
+    1.4.B Added Train Supplementary Data
+    1.4.C Summary feature and speed test
+    1.4.D Updated Parser for new output format"""
+
+
 #Column name : [SI Unit, IP Unit]
 COLUMN_UNITS={
     "Airflow":	["m^3/s","kcfm","SSA"], #SSA Values

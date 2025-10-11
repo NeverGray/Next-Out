@@ -62,7 +62,7 @@ PIT = {
     ),
     "wall": re.compile(
         r"""(
-        \d+\s-                        #Section
+        \s*\d+\s-                        #Section
         (?P<Segment>\s{0,2}\d+)+\s-\s+    #Segment
         (?P<Sub>\s{0,2}\d+)\s{1,13}       #Sub-segment
         (?P<Wall_Temp>-?\d+\.\d+)\s{1,17}  #Wall Surface Temperature
@@ -73,7 +73,7 @@ PIT = {
     ),
     "train": re.compile(
         r"""(
-        \s(?P<Train_Number>\d+)\s+    #Number
+        \s{0,2}(?P<Train_Number>\d+)\s+    #Number
         (?P<Route_Number>\d+)\s?         #RTE
         (?P<Train_Type_Number>\d+)\s+         #Train_Type_Number
         (?P<Location>\d+\.\d*)\s+  #Location
@@ -97,7 +97,7 @@ PIT = {
     "train_sup": train_supplementary.train_sup,
 
     "sum_time": re.compile(
-        r"SUMMARY OF SIMULATION FROM\s+\d+\.\d+\sTO\s+(?P<Time>\d+.\d{2})\sSECONDS"
+        r"\s{31}SUMMARY OF SIMULATION FROM\s+\d+\.\d+\sTO\s+(?P<Time>\d+.\d{2})\sSECONDS"
     ),  # Find the first time Simulation
     "fluid": re.compile(
         r"""(
@@ -114,7 +114,7 @@ PIT = {
 # Input data praser
 INPUT = {
     "f1c": re.compile(
-        r"SUPPLEMENTARY OUTPUT OPTION\s+(?P<supplement_option>\d)"
+        r"\s{28}SUPPLEMENTARY OUTPUT OPTION\s+(?P<supplement_option>\d)"
     ),
     "f1g_fire": re.compile(
         r"FIRE SIMULATION OPTION\s+(?P<fire_simulation_option>\d)"
@@ -167,26 +167,26 @@ INPUT = {
         re.VERBOSE
     ),
     "f7c_A": re.compile(
-        r"IMPULSE FAN TYPE\s{49,}(?P<fan_type>\d+)"
+        r"\s{23}IMPULSE FAN TYPE\s{49,}(?P<fan_type>\d+)"
     ),
     "f7c_B": re.compile(
-        r"FOR LINE SEGMENT TYPE\s{44,}(?P<segment_type>\d+)"
+        r"\s{23}FOR LINE SEGMENT TYPE\s{44,}(?P<segment_type>\d+)"
     ),
     "f7c_3": re.compile(
-        r"IMPULSE FAN NOZZLE DISCHARGE VELOCITY\s+(?P<discharge_velocity>-?\d+\.\d+)\s+"
+        r"\s{23}IMPULSE FAN NOZZLE DISCHARGE VELOCITY\s+(?P<discharge_velocity>-?\d+\.\d+)\s+"
     ),
     "f7c_4": re.compile(
-        r"SIMULATION TIME AFTER WHICH IMPULSE FAN SWITCHES ON\s+(?P<jet_fan_on>-?\d+\.\d+)\s+"
+        r"\s{23}SIMULATION TIME AFTER WHICH IMPULSE FAN SWITCHES ON\s+(?P<jet_fan_on>-?\d+\.\d+)\s+"
     ),
     "f7c_5": re.compile(
-        r"SIMULATION TIME AFTER WHICH IMPULSE FAN SWITCHES OFF\s+(?P<jet_fan_off>-?\d+\.\d+)\s+"
+        r"\s{23}SIMULATION TIME AFTER WHICH IMPULSE FAN SWITCHES OFF\s+(?P<jet_fan_off>-?\d+\.\d+)\s+"
     ),
     "f8a": re.compile(
         r"INPUT VERIFICATION FOR TRAIN ROUTE\s+(?P<Route_Number>\d+)\s+(?P<Title>\S.+)FORM"
     ),
     "f8f": re.compile(
         r"""(
-        ^\s*
+        ^\s{27,29}
         (?:(?P<Section>-?\d+)\s+)?
         (?P<Segment>-?\d+)\s+
         (?P<Backward>\d+\.\d+)\s+TO\s+
@@ -201,11 +201,11 @@ INPUT = {
         r"TOTAL LENGTH OF TRAIN\s+(?P<train_length>\d+\.\d+)\s"
     ),
     "f12": re.compile(
-        r"INPUT VERIFICATION OF CONTROL GROUP INFORMATION"
+        r"\s{34}INPUT VERIFICATION OF CONTROL GROUP INFORMATION"
     ),
     "sum_op": re.compile(
         r"""(
-        \d+\s+     #Group Number
+        \s+\d+\s+     #Group Number
         \d+\s+     #Number of intervals
         \d+.\d+\s+ #Interval length
         (?P<abb>\d+)\s+ #Number of abbreviated prints
@@ -221,7 +221,7 @@ IP_INDICATION = ["SES VER 4.", "Version 4.10", "OpenSES"]
 
 SUM = {
     "sum_time": re.compile(
-        r"SUMMARY OF SIMULATION FROM\s+\d+\.\d+\sTO\s+(?P<Time>\d+.\d{2})\sSECONDS"
+        r"\s{31}SUMMARY OF SIMULATION FROM\s+\d+\.\d+\sTO\s+(?P<Time>\d+.\d{2})\sSECONDS"
     ),  # Find the first time Simulation
     "train_energy": re.compile(r"\s{50,}TRAIN ENERGY SUMMARY"),
     "heat_sink": re.compile(r"\s{50,}SES HEAT SINK ANALYSIS")
@@ -296,30 +296,30 @@ SUMMARY_OF_SIMULATION = {
         re.VERBOSE,
     ),
     "percentage": re.compile(
-        r"P E R C E N T A G E  O F  T I M E  T E M P E R A T U R E  I S  A B O V E"
+        r"\s{41}P E R C E N T A G E  O F  T I M E  T E M P E R A T U R E  I S  A B O V E"
     ),
     "V_E": re.compile(
-        r"EXCEEDS\s+(?P<Outflow_Velocity_Exceedance>-?\d+\.\d+).+(?:\d+)\s-\s*(?P<Segment>\d+)\s{57,}(?P<Percentage_of_Velocity_Exceedance>-?\d+\.\d*)$"
+        r"\s{3}EXCEEDS\s+(?P<Outflow_Velocity_Exceedance>-?\d+\.\d+).+(?:\d+)\s-\s*(?P<Segment>\d+)\s{57,}(?P<Percentage_of_Velocity_Exceedance>-?\d+\.\d*)$"
     ),
     "HTPB": re.compile(
-        r"TRAIN PROPULSION AND BRAKING SYSTEM HEAT\s+(?P<Train_Propulsion_and_Braking_Heat>-?\d+\.\d*)$"
+        r"\s{6}TRAIN PROPULSION AND BRAKING SYSTEM HEAT\s+(?P<Train_Propulsion_and_Braking_Heat>-?\d+\.\d*)$"
     ),
     "HTA": re.compile(
-        r"TRAIN AUXILIARY SYSTEM AND PASSENGER HEAT\s+(?P<Train_Aux_and_Passenger_Sensible>-?\d+\.\d*)\s+(?P<Train_Aux_and_Passenger_Latent>-?\d+\.\d*)$"
+        r"\s{6}TRAIN AUXILIARY SYSTEM AND PASSENGER HEAT\s+(?P<Train_Aux_and_Passenger_Sensible>-?\d+\.\d*)\s+(?P<Train_Aux_and_Passenger_Latent>-?\d+\.\d*)$"
     ),
     "HSS": re.compile(
-        r"SEGMENT STEADY-STATE HEAT SOURCES\s+(?P<Steady_State_Heat_Sensible>-?\d+\.\d*)\s+(?P<Steady_State_Heat_Latent>-?\d+\.\d*)$"
+        r"\s{6}SEGMENT STEADY-STATE HEAT SOURCES\s+(?P<Steady_State_Heat_Sensible>-?\d+\.\d*)\s+(?P<Steady_State_Heat_Latent>-?\d+\.\d*)$"
     ),
     "HU": re.compile(
-        r"SEGMENT UNSTEADY-STATE HEAT SOURCES, EVAPORATION AND VISCOUS HEATING\s+(?P<Unsteady_State_Heat_Sensible>-?\d+\.\d*)\s+(?P<Unsteady_State_Heat_Latent>-?\d+\.\d*)$"
+        r"\s{6}SEGMENT UNSTEADY-STATE HEAT SOURCES, EVAPORATION AND VISCOUS HEATING\s+(?P<Unsteady_State_Heat_Sensible>-?\d+\.\d*)\s+(?P<Unsteady_State_Heat_Latent>-?\d+\.\d*)$"
     ),
     "HE": re.compile(
-        r"SEGMENT ENVIRONMENTAL CONTROL SYSTEM\s+(?P<Environental_Control_System_Sensible>-?\d+\.\d*)\s+(?P<Environental_Control_System_Latent>-?\d+\.\d*)$"
+        r"\s{6}SEGMENT ENVIRONMENTAL CONTROL SYSTEM\s+(?P<Environental_Control_System_Sensible>-?\d+\.\d*)\s+(?P<Environental_Control_System_Latent>-?\d+\.\d*)$"
     ),
     "HC": re.compile(
-        r"SEGMENT COOLING PIPES\s+(?P<Cooling_Pipes_Sensible>-?\d+\.\d?)\s+(?P<Cooling_Pipes_Latent>-?\d+\.\d*)$"
+        r"\s{6}SEGMENT COOLING PIPES\s+(?P<Cooling_Pipes_Sensible>-?\d+\.\d?)\s+(?P<Cooling_Pipes_Latent>-?\d+\.\d*)$"
     ),
-    "HS": re.compile(r"HEAT SINK\s+(?P<Heat_Sink>-?\d+\.\d*)$")
+    "HS": re.compile(r"\s{6}HEAT SINK\s+(?P<Heat_Sink>-?\d+\.\d*)$")
 }
 
 PERCENTAGE = {
@@ -353,22 +353,22 @@ PERCENTAGE = {
 }
 
 TES = {
-    "es": re.compile(r"\s+ENERGY SECTOR\s*(?P<Energy_Sector>-?\d+)$"),
-    "et": re.compile(r"\s+PROPULSION ENERGY FROM THIRD RAIL\s+(?P<From_Third_Rail>-?\d*\.\d*)\s+"),
+    "es": re.compile(r"\s{54}ENERGY SECTOR\s*(?P<Energy_Sector>-?\d+)$"),
+    "et": re.compile(r"\s{6}PROPULSION ENERGY FROM THIRD RAIL\s+(?P<From_Third_Rail>-?\d*\.\d*)\s+"),
     "ef": re.compile(
-        r"\s+EQUIVALENT THIRD RAIL PROPULSION ENERGY FROM FLYWHEEL\s+(?P<From_Flywheel>-?\d*\.\d*)\s+"
+        r"\s{6}EQUIVALENT THIRD RAIL PROPULSION ENERGY FROM FLYWHEEL\s+(?P<From_Flywheel>-?\d*\.\d*)\s+"
     ),
-    "ea": re.compile(r"\s+AUXILIARY ENERGY\s+(?P<Auxiliary_Energy>-?\d*\.\d*)\s+"),
+    "ea": re.compile(r"\s{6}AUXILIARY ENERGY\s+(?P<Auxiliary_Energy>-?\d*\.\d*)\s+"),
     "er": re.compile(
-        r"\s+REGENERATED ENERGY ACCEPTED BY THIRD RAIL\s+(?P<Regenerated_Energy_to_Third_Rail>-?\d*\.\d*)\s+"
+        r"\s{6}REGENERATED ENERGY ACCEPTED BY THIRD RAIL\s+(?P<Regenerated_Energy_to_Third_Rail>-?\d*\.\d*)\s+"
     ),
 }
 
 HE = {
-    "ZN": re.compile(r"ZONE NUMBER\s*(?P<ZN>\d+)($|\s\s-)"),
+    "ZN": re.compile(r"[-\s]*ZONE NUMBER\s*(?P<ZN>\d+)($|\s\s-)"),
     "uncontrolled": re.compile(
         r"""(
-            \d+\s-                        #Section
+            \s{0,2}\d+\s-                        #Section
             (?P<Segment>\s{0,2}\d+)+\s-\s+    #Segment
             (?P<Sub>\s{0,2}\d+)\s{1,12}       #Sub-segment
             (?P<Morning_Wall_Temp>-?\d+\.\d+)\s+       #Morning Wall Temperature
@@ -382,7 +382,7 @@ HE = {
     ),
     "controlled": re.compile(
         r"""(
-            \d+\s-                        #Section
+            \s{0,2}\d+\s-                        #Section
             (?P<Segment>\s{0,2}\d+)+\s-\s+    #Segment
             (?P<Sub>\s{0,2}\d+)\s{1,8}       #Sub-segment
             (?P<Trains_and_Misc_Sensible>\s{0,2}-?\d+)\s{1,8}       #Sensible heat load from trains and misc
@@ -489,7 +489,7 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
     i = 0
     m = None
     while m is None and i < len(lines):
-        m = rx.search(lines[i])  # Find supplement output option line
+        m = rx.match(lines[i])  # Find supplement output option line
         if m is not None:
              supplementary_output_option = int(m.group("supplement_option"))
              i = len(lines) + 1  # Exit while loop
@@ -500,7 +500,7 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
     rx = INPUT["f12"]  # Matching string for Form 12 Output
     i = 0  # Start at first line
     while m is None and i < len(lines):
-        m = rx.search(lines[i])
+        m = rx.match(lines[i])
         i += 1
         assert i < (len(lines) - 1), "Cannot find Form 12! Line variable " + str(i)
     summary = False
@@ -509,8 +509,8 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
     rx2 = INPUT["sum_op"]
     m = None
     while m is None and i < len(lines):
-        m = rx.search(lines[i])  # Find time variable for start of simulation output
-        m2 = rx2.search(lines[i])
+        m = rx.match(lines[i])  # Find time variable for start of simulation output
+        m2 = rx2.match(lines[i])
         if m2 is not None:
             if int(m2.group("abb")) > 0:
                 abbreviated = True
@@ -552,13 +552,8 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
         if lines[i] != "\n":
             # at each line check for a match with a regex
             m = False
-            for key, rx in PIT_for_search.items():  # change dictionary as necessary
-                # Use .match() only for 'p_data', .search() for everything else
-                if key in {"p_data", "train_sup"}:
-                    m = rx.match(lines[i])  # Match only if the pattern starts the line
-                else:
-                    m = rx.search(lines[i])  # Search anywhere in the line
-
+            for key, rx in PIT_for_search.items():  # change dictionary as necessary            
+                m = rx.match(lines[i])  # Match only if the pattern starts the line               
                 if m is not None:
                     m_dict = m.groupdict()  # Extract named groups into a dictionary
                     m_dict["Time"] = time  # Add or update the "Time" key with the current time
@@ -574,22 +569,27 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
                             match_dict = match.groupdict()
                             match_dict["Time"] = time
                             pressure_pit.append(match_dict)
-                    elif key == "detail_segment_1" or key == "abb_segment_1":
-                        if key == "abb_segment_1":
-                            # Code only includes information for segment 1 for abbreviated prints
-                            i += 1
-                            m_dict.update({"Sub": int(1.0)})
-                            s = lines[i]
-                            s = s[1:45].strip()  # HUmidity from one line below
-                            m_dict.update(
-                                {"Humidity": s}
-                            )  # Add humidity from one line below, only first segement
+                    elif key == "abb_segment_1":
+                        s = lines[i].split()  # splits only on whitespace
+                        s = [t for t in s if t != '-']
+                        Segment = s[1]
+                        temp = s[4:]
+                        k = i + 1
+                        h = lines[k].split()
+                        for j in range(len(temp)):
+                            m_copy = m_dict.copy()  # keep existing data
+                            m_copy.update({"Segment": Segment})
+                            m_copy.update({"Sub": str(j + 1)})
+                            m_copy.update({"Air_Temp": temp[j]})
+                            m_copy.update({"Humidity": h[j]})
+                            data_pit.append(m_copy)
+                    elif key == "detail_segment_1":
                         data_pit.append(m_dict)
                     elif key == "wall":
                         while (m != None):
                             wall_pit.append(m_dict)
                             i += 1
-                            m = rx.search(lines[i])
+                            m = rx.match(lines[i])
                             if m is not None:
                                 m_dict = m.groupdict()
                                 m_dict["Time"] = time
@@ -605,7 +605,7 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
                             assert end_line < (
                                 len(lines)
                             ), "Error with Train Energy Summary, Line " + str(i)
-                            m_sum = PIT["time"].search(lines[end_line + 1])
+                            m_sum = PIT["time"].match(lines[end_line + 1])
                             if (m_sum is not None) or (
                                     end_line > len(lines) - 3
                             ):  # Train Energy does not continue
@@ -618,7 +618,7 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
                         while (m != None):
                             data_train.append(m_dict)
                             i += 1
-                            m = rx.search(lines[i])
+                            m = rx.match(lines[i])
                             if m is not None:
                                 m_dict = m.groupdict()
                                 m_dict["Time"] = time
@@ -723,6 +723,24 @@ def create_dictionary_from_list(df_list):
             df_dict.update({df.name: df})
     return df_dict
 
+
+def get_segment_titles(lines):
+    title_rx = INPUT["f3a"]
+    time_rx = PIT["time"]
+    time_match = None
+    i = 0
+    segment_titles = {}
+    while time_match is None and i < len(lines):
+        title_match = title_rx.match(lines[i])
+        time_match = time_rx.match(lines[i])
+        if title_match is not None:
+            title_dict = title_match.groupdict()
+            segment_titles.update(
+                {int(title_dict["segment"]): title_dict["title"].strip()}
+            )
+        i += 1
+    return segment_titles
+
 def get_titles_and_form3(lines, version="SI"):
     title_rx = INPUT["f3a"]
     time_rx = PIT["time"]
@@ -732,8 +750,8 @@ def get_titles_and_form3(lines, version="SI"):
     form3_type = {}
     form3_pressure = {}
     while time_match is None and i < len(lines):
-        title_match = title_rx.search(lines[i])
-        time_match = time_rx.search(lines[i])
+        title_match = title_rx.match(lines[i])
+        time_match = time_rx.match(lines[i])
         if title_match is not None:
             title_dict = title_match.groupdict()
             segment_titles.update(
@@ -743,7 +761,7 @@ def get_titles_and_form3(lines, version="SI"):
             if title_dict['type'] == "LINE SEGMENT":
                 i += 2
                 segment_number = int(title_dict["segment"])
-                segment_type = int(INPUT['f3a_2'].search(lines[i])[1])
+                segment_type = int(INPUT['f3a_2'].match(lines[i])[1])
                 form3_type[segment_number] = segment_type
                 # If SI file, get constant pressure accross segment
                 if version == "SI":
@@ -751,9 +769,9 @@ def get_titles_and_form3(lines, version="SI"):
                     i_max = i + 2  # Constant Pressure Across Segment is either 10 or 12 lines below 3A
                     pressure_match = None
                     while pressure_match is None and i <= i_max:
-                        pressure_match = INPUT['f3a_pressure'].search(lines[i])
+                        pressure_match = INPUT['f3a_pressure'].match(lines[i])
                         if pressure_match is not None:
-                            pressure = float(INPUT['f3a_pressure'].search(lines[i])[1])
+                            pressure = float(INPUT['f3a_pressure'].match(lines[i])[1])
                             if pressure != 0:  # If the pressure is not zero
                                 form3_pressure[segment_number] = pressure
                         i += 2
@@ -801,10 +819,10 @@ def get_form5(lines):
     # Default dictionary values if the Form 5C fan direction is 0, and not activated
     fan_dict_off = {'fan_on': '0', 'fan_off': '0', 'fan_direction': '1'}
     while time_match is None and i < len(lines):
-        title_match = title_rx.search(lines[i])
-        head_loss_match = f5d_head_loss.search(lines[i])
-        time_match = time_rx.search(lines[i])
-        fan_type_match = INPUT['f5c_fan_type'].search(lines[i])
+        title_match = title_rx.match(lines[i])
+        head_loss_match = f5d_head_loss.match(lines[i])
+        time_match = time_rx.match(lines[i])
+        fan_type_match = INPUT['f5c_fan_type'].match(lines[i])
         if title_match is not None:
             title_dict = title_match.groupdict()
             segment_number = int(title_dict["segment"])
@@ -815,12 +833,12 @@ def get_form5(lines):
             fan_dict = {'Segment': segment_number}
             fan_dict.update(fan_type_match.groupdict())
             i += 2
-            if INPUT['f5c_fan_on'].search(lines[i]) is not None:
-                fan_dict.update(INPUT['f5c_fan_on'].search(lines[i]).groupdict())
+            if INPUT['f5c_fan_on'].match(lines[i]) is not None:
+                fan_dict.update(INPUT['f5c_fan_on'].match(lines[i]).groupdict())
                 i += 2
-                fan_dict.update(INPUT['f5c_fan_off'].search(lines[i]).groupdict())
+                fan_dict.update(INPUT['f5c_fan_off'].match(lines[i]).groupdict())
                 i += 2
-                fan_dict.update(INPUT['f5c_fan_direction'].search(lines[i]).groupdict())
+                fan_dict.update(INPUT['f5c_fan_direction'].match(lines[i]).groupdict())
             else:  # If DIRECTION OF FAN OPERATION is zero (off), there is no fan on and off
                 fan_dict.update(fan_dict_off)
             form5_fan_data.append(fan_dict)
@@ -850,20 +868,20 @@ def form_parse(lines, time_rx, next_form_rx, first_line_rx, key_prefix, i=0,inpu
     end_of_form = False
     form_data = []
     while not end_of_form or i < len(lines):
-        time_match = time_rx.search(lines[i])
-        next_form_match = next_form_rx.search(lines[i])
+        time_match = time_rx.match(lines[i])
+        next_form_match = next_form_rx.match(lines[i])
         if (next_form_match is not None) or (time_match is not None):
             end_of_form = True
             break
-        first_line_match = first_line_rx.search(lines[i])
+        first_line_match = first_line_rx.match(lines[i])
         if first_line_match is not None:
             form_row = {}
             for key, value in input_search.items():
                 if key_prefix in key:
                     match = value.search(lines[i])
-                    while match is None and i < len(lines) -1:
+                    while match is None and i < len(lines) - 1:
                         i += 1
-                        match = value.search(lines[i])
+                        match = value.match(lines[i])
                     form_row.update(match.groupdict())
             form_data.append(form_row)
         i += 1
@@ -891,9 +909,9 @@ def get_form8fs(lines):
     form8f_data_segment = []
     form8f_data_section = []
     while form_9a_match is None and i < len(lines):
-        title_match = title_rx.search(lines[i])
-        form_8f_match = form_8f.search(lines[i])
-        form_9a_match = form_9a_start.search(lines[i])
+        title_match = title_rx.match(lines[i])
+        form_8f_match = form_8f.match(lines[i])
+        form_9a_match = form_9a_start.match(lines[i])
         if title_match is not None:
             title_dict = title_match.groupdict()
             route_number = int(title_dict['Route_Number'])
@@ -943,7 +961,6 @@ def get_form8fs(lines):
     else:
         form8f_df_section = None
     return form8f_df_segment, form8f_df_section
-
 
 
 def get_form9(lines):
@@ -1108,7 +1125,7 @@ def get_ambient_temperature(lines):
     rx = re.compile(r"AMBIENT AIR DRY-BULB TEMPERATURE\s+(?P<ambient_temperature>-?\d+.\d)\s+DEG")
     for i in range(69, 202):
         if lines[i] != "":
-            match = rx.search(lines[i])
+            match = rx.match(lines[i])
             if match is not None:
                 value = float(match['ambient_temperature'])
                 return value
@@ -1122,7 +1139,7 @@ def sum_parser(lines, time):  # Parser for summary portion of output, between ti
         if lines[i] != "\n":
             for key, rx in SUM.items():
                 # using .match searched the beginning of the line
-                m = rx.search(lines[i])
+                m = rx.match(lines[i])
                 if m is not None:
                     m_dict = m.groupdict()
                     m_dict["Time"] = time
@@ -1152,7 +1169,7 @@ def sum_parser(lines, time):  # Parser for summary portion of output, between ti
                         # Find the lines containing the percentage of time data
                         while (not end_found):
                             if "\f" in lines[end_line]:
-                                m = SUM["train_energy"].search(lines[end_line + 1])
+                                m = SUM["train_energy"].match(lines[end_line + 1])
                                 if m is None:  # Train Energy does not continue
                                     end_found = True
                                     i = end_line
@@ -1190,7 +1207,7 @@ def summary_of_simulation_parser(p_lines, time):
     while i < len(p_lines):
         if p_lines[i] != "\n":
             for key, rx in SUMMARY_OF_SIMULATION.items():
-                m = rx.search(p_lines[i])
+                m = rx.match(p_lines[i])
                 if m is not None:
                     m_dict = m.groupdict()
                     m_dict["Time"] = time
@@ -1223,12 +1240,12 @@ def summary_of_simulation_parser(p_lines, time):
     return True
 
 def percentage_parser(p_lines, time):
-    m = PERCENTAGE["percent_temperature"].search(p_lines[0])
+    m = PERCENTAGE["percent_temperature"].match(p_lines[0])
     ta = m.groupdict()
     i = 3
     percent_list = []
     while i < len(p_lines):
-        m = PERCENTAGE["percent_time"].search(p_lines[i])
+        m = PERCENTAGE["percent_time"].match(p_lines[i])
         line_dict = {}
         line_dict["Time"] = time
         line_dict.update(m.groupdict())
@@ -1242,22 +1259,22 @@ def te_parser(p_lines, time):
     te_list = []
     te_dict = {}
     while i < len(p_lines):
-        m = TES["es"].search(p_lines[i])
+        m = TES["es"].match(p_lines[i])
         if m:
             te_dict = {}  # reset values in te_dict
             te_dict["Time"] = time
             te_dict.update(m.groupdict())
             i += 3
-            m = TES["et"].search(p_lines[i])
+            m = TES["et"].match(p_lines[i])
             te_dict.update(m.groupdict())
             i += 2
-            m = TES["ef"].search(p_lines[i])
+            m = TES["ef"].match(p_lines[i])
             te_dict.update(m.groupdict())
             i += 2
-            m = TES["ea"].search(p_lines[i])
+            m = TES["ea"].match(p_lines[i])
             te_dict.update(m.groupdict())
             i += 2
-            m = TES["er"].search(p_lines[i])
+            m = TES["er"].match(p_lines[i])
             te_dict.update(m.groupdict())
             te_list.append(te_dict)
         i += 1
@@ -1270,7 +1287,7 @@ def he_parser(p_lines, time):
     heu_list = []  # list heat sink analysis
     while i < len(p_lines):
         for key, rx in HE.items():  # change dictionary as necessary
-            m = rx.search(p_lines[i])  # using .match searched the beginning of the line
+            m = rx.match(p_lines[i])  # using .match searched the beginning of the line
             if m is not None:
                 he_dict = {}  # reset dictionary
                 he_dict = m.groupdict()
@@ -1323,7 +1340,7 @@ def calculate_actual_airflow(SST, SSA, ambient_temperature, version):
 
 if __name__ == "__main__":
     directory_string = "C:\\simulations\\test\\"
-    file_name = "test.PRN"
+    file_name = "test.out"
     path_string = directory_string + file_name
     file_path = Path(path_string)
     d, output_meta_data = parse_file(file_path, gui="", conversion_setting="SI")
