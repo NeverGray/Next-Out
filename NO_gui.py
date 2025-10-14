@@ -27,7 +27,8 @@ class Start_Screen(tk.Tk):
         px = "3"
         self.title("Next-Out " + VERSION_NUMBER)
         style = ttk.Style()
-        style.theme_use('winnative') #TODO Look at other styles
+        style.theme_use('winnative')
+
         # Call a function before closing the window.  See https://stackoverflow.com/questions/49220464/passing-arguments-in-tkinters-protocolwm-delete-window-function-on-python
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.ss = ttk.Frame(padding=p)  # start screen
@@ -44,9 +45,6 @@ class Start_Screen(tk.Tk):
         )
         # Initialize all setting variables. This process makes saving, than loading settings easier.
         self.load_settings()
-        
-        # Initialize summary options
-        self.summary_options = {}
         self.cbo_summary = tk.StringVar(value="")
         # Post Processing frame options
         cb_excel = ttk.Checkbutton(
@@ -66,7 +64,7 @@ class Start_Screen(tk.Tk):
             frm_summary, text="", variable=self.cbo_summary, onvalue="Summary", offvalue=""
         )
         btn_summary = ttk.Button(
-            frm_summary, text="Summary", command=self.open_summary_settings
+            frm_summary, text="Summary", command=self.open_summary_gui
         )
         cb_route = ttk.Checkbutton(
             frame_post_processing,
@@ -352,8 +350,6 @@ class Start_Screen(tk.Tk):
         self.txt_status["yscrollcommand"] = self.ys_status.set
         self.txt_status.pack(side=tk.LEFT, expand=tk.TRUE, fill=tk.BOTH)
         self.ys_status.pack(side=tk.RIGHT, fill="y")
-        # Initialize summary options
-        self.summary_options = {}
         
         # START SCREEN grid
         self.columnconfigure(0, weight=1)  # Allow horizontal expansion
@@ -417,11 +413,13 @@ class Start_Screen(tk.Tk):
             "self.cbo_png": 'tk.StringVar(value="")',
             "self.cbo_svg": 'tk.StringVar(value="")',
             "self.results_folder": 'tk.StringVar(value="ses output")',
-            "self.path_results_folder": 'tk.StringVar(value="")',
-            "self.iteration_worksheet_1": 'tk.StringVar(value="")',
-            "self.iteration_worksheet_2": 'tk.StringVar(value="")',
+            "self.path_results_folder": 'tk.StringVar(value="")'
         }
         self.directory_cache = {}
+        self.summary_settings = {
+            'lookup_fire_data':False,
+            'segments_2_lookup':[]
+        }
         for key, value in self.screen_settings.items():
             exec(f"{key} = {value}")
         try:
@@ -432,6 +430,7 @@ class Start_Screen(tk.Tk):
                     with open("NO_settings.ini", "rb") as f:
                         data_to_save = pickle.load(f)
                     self.directory_cache = data_to_save["directory_cache"]
+                    self.summary_settings = data_to_save.get("summary_settings", self.summary_settings)
                     load_gui_settings = data_to_save["gui_settings"]
                     for key, value in load_gui_settings.items():
                         if value != "":
@@ -555,6 +554,7 @@ class Start_Screen(tk.Tk):
         pp_list.append(self.cbo_pdf.get())
         pp_list.append(self.cbo_png.get())
         pp_list.append(self.cbo_svg.get())
+        pp_list = [item for item in pp_list if item]  # Remove empty strings
         # "Open Visio" should only be added if it is enabled by visio_open_off()
         if self.cb_visio_open.cget("state") == "enable":
             pp_list.append(self.cbo_visio_open_option.get())
@@ -574,12 +574,13 @@ class Start_Screen(tk.Tk):
             "ses_output_str": self.ses_output_str,
             "visio_template": self.path_visio.get(),
             "results_folder_str": self.results_folder_str,
-            "simtime": -1,  # Updated in validation
-            "conversion": self.conversion.get(),  # Determine what type of conversion is needed
+            "simtime": -1,
+            "conversion": self.conversion.get(),
             "output": pp_list,
             "file_type": self.file_type.get(),
             "path_exe": self.path_exe.get(),
-            "summary_options": self.summary_options  # Add summary options to settings
+            "lookup_fire_data": self.summary_settings.get('lookup_fire_data', False),  # Add this
+            "segments_2_lookup": self.summary_settings.get('segments_2_lookup', [])    # Add this
         }
 
         if self.validation(self.settings):
@@ -590,7 +591,7 @@ class Start_Screen(tk.Tk):
                     self.gui_text("Post processing completed.\n")
                 elif "Compare" in self.settings["output"]:
                     NO_compare.compare_outputs(self.settings, gui=self)
-                else:
+                elif self.parallel_process_files:
                     # Launch process and monitor files when using multiple files
                     self.gui_text(
                         "Processing multiple files, openning monitor window."
@@ -603,8 +604,9 @@ class Start_Screen(tk.Tk):
             if "Summary" in self.settings["output"]:
                 try:
                     NO_summary.create_excel_summary(self.settings, gui=self)
-                except:
-                    self.gui_text("Error summarizing.\n")
+                except Exception as e:
+                    error_msg = f"Error with summary creation: {str(e)}\n"
+                    self.gui_text(error_msg)
         else:
             self.gui_text("Error with Validation of Settings")
         self.btn_run["state"] = tk.NORMAL
@@ -655,6 +657,10 @@ class Start_Screen(tk.Tk):
         }
         # Get the selected file type
         file_type = self.file_type.get()
+        if file_type == "no_file" and settings['output'] == ['Summary']:
+            self.parallel_process_files = False
+        else:
+            self.parallel_process_files = True  # Changed from self.parallel_processing_needed
         # Get the valid extensions for the selected file type
         allowed_extensions = valid_extensions.get(file_type, [])
 
@@ -800,21 +806,23 @@ class Start_Screen(tk.Tk):
         elif "frame" in widget_class.lower():
             for child in widget.winfo_children():
                 self.configure_widget_state(child, state)
+    
+
 
     #Offer to save the current settings before exiting the program
-    def open_summary_settings(self):
+    def open_summary_gui(self):
         """Open the summary settings window and get the summary options"""
-        # Get the summary options from the dialog
-        self.summary_options = NO_summary_gui.launch_window(self)
-        
-        # Enable summary in the main settings if options were configured
-        if self.summary_options:
+        # Get updated settings back
+        self.summary_settings = NO_summary_gui.launch_window(self, self.summary_settings)
+
+        # Enable summary checkbox if options were configured
+        if self.summary_settings.get('lookup_fire_data', False) or len(self.summary_settings.get('segments_2_lookup', [])) > 0:
             self.cbo_summary.set("Summary")
         else:
             self.cbo_summary.set("")
 
     def on_closing(self):
-        title_on_closing = "Quite Next Vis?"
+        title_on_closing = "Quit Next Vis?"
         msg_1 = "Click 'Yes' to quit and save the most recent settings.\n"
         msg_2 = "Click 'No' to exit without saving.\n"
         msg_3 = "Click 'Cancel' to return back to Next-Out\n"
@@ -828,7 +836,10 @@ class Start_Screen(tk.Tk):
                 for key, value in self.screen_settings.items():
                     exec(f'GUI_settings_2_save["{key}"]= {key}.get()')
                 data_to_save = {}
-                data_to_save = {"gui_settings":GUI_settings_2_save, "directory_cache":self.directory_cache}
+                data_to_save = {
+                    "gui_settings":GUI_settings_2_save, 
+                    "summary_settings":self.summary_settings,
+                    "directory_cache":self.directory_cache}
                 with open("NO_settings.ini", "wb") as f:
                     pickle.dump(data_to_save, f)
                 self.destroy()

@@ -9,7 +9,7 @@ import gzip
 import logging
 import pickle
 import pandas as pd
-from pathlib import Path
+from pathlib import Path, PosixPath
 
 def output_from_input(file_path_string, path_exe):
     file_path = Path(file_path_string)
@@ -28,9 +28,10 @@ def output_from_input(file_path_string, path_exe):
 def get_results_path2(settings, output_meta_data, suffix):
     output_file_path = Path(output_meta_data['file_path'])
     output_stem = output_file_path.stem
-    if output_meta_data['ses_version'] == "SI from IP":
+    ses_version = output_meta_data.get('SES_version', '')
+    if ses_version == "SI from IP":
         results_name_str = output_stem + '_SI' + suffix
-    elif output_meta_data['ses_version'] == "IP from SI":
+    elif ses_version == "IP from SI":
         results_name_str = output_stem + '_IP' + suffix
     else:
         results_name_str = output_stem + suffix
@@ -59,7 +60,8 @@ def create_no_file(data, output_meta_data, settings=None):
     logging.info(f"{no_file_path} created.")
 
 # Read the data and output_meta_data from the no file, a zipped pickle file
-def read_no_file(no_file_path):
+def read_no_file(file_path):
+    no_file_path = get_file_path_with_suffix(file_path, '.no')
     with gzip.open(no_file_path, 'rb') as file:
         no_file = pickle.load(file)
     data = no_file['data']
@@ -69,6 +71,15 @@ def read_no_file(no_file_path):
         if isinstance(df, pd.DataFrame):  # Ensure the value is a DataFrame
             df.name = key  # Set the name attribute of the DataFrame
     return data, output_meta_data
+
+def get_file_path_with_suffix(file_path, suffix='.no'):
+    # Convert any file path to use the specified suffix/extension.
+    # Ensure suffix starts with a period
+    if not suffix.startswith('.'):
+        suffix = '.' + suffix
+    
+    path = Path(file_path)
+    return path.with_suffix(suffix)
 
 if __name__ == "__main__":
     import NO_parser
