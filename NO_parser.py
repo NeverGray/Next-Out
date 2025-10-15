@@ -575,6 +575,11 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
                         Segment = s[1]
                         temp = s[4:]
                         k = i + 1
+                        # Check if there is a page break in IP files
+                        second_line = re.compile(r"\s{37}").match(lines[k]) 
+                        while second_line is None:
+                            k += 1
+                            second_line = re.compile(r"\s{37}").match(lines[k])
                         h = lines[k].split()
                         for j in range(len(temp)):
                             m_copy = m_dict.copy()  # keep existing data
@@ -1003,7 +1008,9 @@ def create_ss_dfs(
         if len(data_train_sup) > 0: 
             #If there is supplementary train data, add it to df_train
             df_train = train_supplementary.add_train_sup(df_train, data_train_sup, output_meta_data)
-        df_train.name = "TRA"
+    else:
+        df_train = pd.DataFrame()       
+    df_train.name = "TRA"
     if duplicate_pit:
         [df_pit, df_ssp, df_train] = delete_duplicate_pit(df_pit, df_ssp, df_train)
     # Add title to segments in df_pit
@@ -1340,7 +1347,7 @@ def calculate_actual_airflow(SST, SSA, ambient_temperature, version):
 
 if __name__ == "__main__":
     directory_string = "C:\\simulations\\test\\"
-    file_name = "test.out"
+    file_name = "siinfern.out"
     path_string = directory_string + file_name
     file_path = Path(path_string)
     d, output_meta_data = parse_file(file_path, gui="", conversion_setting="SI")
