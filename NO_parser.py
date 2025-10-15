@@ -166,6 +166,7 @@ INPUT = {
         )""",
         re.VERBOSE
     ),
+    "f6": re.compile(r"NODE NUMBER\s"),
     "f7c_A": re.compile(
         r"\s{23}IMPULSE FAN TYPE\s{49,}(?P<fan_type>\d+)"
     ),
@@ -402,10 +403,9 @@ HE = {
     ),
 }
 
-# TODO Eliminate NumExpr detected 16 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 8.
 def parse_file(file_path, gui="", conversion_setting=""):  # Parser
     file_name = file_path.name
-    NO_run.run_msg(gui, "Importing data from " + file_name + ".")
+    NO_run.run_msg(gui, "Parsing data from " + file_name + ".")
     # Variables for all referenced functions
     data_pit = []  # All Point in Time data
     pressure_pit = [] # Pressure change data
@@ -427,7 +427,6 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
     # Read output file into "lines" variable. OpenSES files require errors="replace" because of extended ASCII
     with open(file_path, "r", errors="replace") as file_object:
         lines = file_object.readlines()
-        # Get modified time of file https://thispointer.com/python-get-last-modification-date-time-of-a-file-os-stat-os-path-getmtime/
         file_time_seconds = os.path.getmtime(file_path)
         file_time_str = datetime.datetime.fromtimestamp(file_time_seconds).strftime('%Y-%m-%d, %H:%M:%S')
         output_meta_data.update({"file_time": file_time_str})
@@ -435,8 +434,7 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
     version = select_version(lines)
     output_meta_data.update({"ses_version": version})
     ambient_temperature = get_ambient_temperature(lines)
-    # Read segment titles from Form 3 and Form 5 and types from form 3
-    INPUT_for_search = INPUT.copy()
+    # Read segment titles from Form 3 and Form 5 and types from Form 3
     segment_titles, form3_type, form3_pressure = get_titles_and_form3(lines, version)
     output_meta_data['form3_pressure'] = form3_pressure
     # Determine the Fire Simulation Option
@@ -526,13 +524,6 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
             )
             return []
         assert i < (len(lines)), "Cannot find first time! Line variable " + str(i)
-    if abbreviated:  # First time an abbreviated print is read
-        NO_run.run_msg(
-            gui,
-            "Warning - "
-            + file_name
-            + " has abbreviated prints. Use detailed prints for more thermal data.",
-        )
     time = float(m.group("Time"))  # Finds first line with simulation output with Time.
     # To reduce search times, eliminate items from search dictionaries
     PIT_for_search = PIT.copy()
@@ -748,15 +739,15 @@ def get_segment_titles(lines):
 
 def get_titles_and_form3(lines, version="SI"):
     title_rx = INPUT["f3a"]
-    time_rx = PIT["time"]
-    time_match = None
+    form_6_start = INPUT["f6"]
+    form_6_match = None
     i = 0
     segment_titles = {}
     form3_type = {}
     form3_pressure = {}
-    while time_match is None and i < len(lines):
+    while form_6_match is None and i < len(lines):
         title_match = title_rx.match(lines[i])
-        time_match = time_rx.match(lines[i])
+        form_6_match = form_6_start.match(lines[i])
         if title_match is not None:
             title_dict = title_match.groupdict()
             segment_titles.update(
@@ -1347,7 +1338,7 @@ def calculate_actual_airflow(SST, SSA, ambient_temperature, version):
 
 if __name__ == "__main__":
     directory_string = "C:\\simulations\\test\\"
-    file_name = "siinfern.out"
+    file_name = "test.out"
     path_string = directory_string + file_name
     file_path = Path(path_string)
     d, output_meta_data = parse_file(file_path, gui="", conversion_setting="SI")

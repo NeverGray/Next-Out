@@ -62,7 +62,7 @@ def single_sim(settings, gui=""):
             if "H5_file" in settings["output"]:
                 try:
                     NO_file_tools.save_h5_file(data, output_meta_data, settings)
-                    run_msg(gui, "Created NO File for " + file_name + ".")
+                    run_msg(gui, "Created H5 File for " + file_name + ".")
                 except:
                     run_msg(
                         gui,

@@ -109,12 +109,12 @@ def single_process(
                 if "H5_file" in settings["output"]:
                     try:
                         NO_file_tools.save_h5_file(data, output_meta_data, settings)
-                        logging.info(f"Created NO File for {name}")
+                        logging.info(f"Created H5 File for {name}")
                         # Create a list of NO Files for averaging
                         no_file_path = NO_file_tools.get_results_path2(settings, output_meta_data, ".no")
                         no_file_paths.append(no_file_path)
                     except:
-                        logging.info(f"Error creating NO File for {name}")
+                        logging.info(f"Error creating H5 File for {name}")
             process_status[value_index["Read Output"]] = "Done"
             processing_dictionary[pid] = process_status
             logging.info(f"Finished Parsing {name}")
