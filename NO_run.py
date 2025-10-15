@@ -59,9 +59,9 @@ def single_sim(settings, gui=""):
         if settings["file_type"] == "output_file": 
             data, output_meta_data = NO_parser.parse_file(file_path, gui, settings['conversion'])
             #Create no file if this is selected.
-            if "no_file" in settings["output"]:
+            if "H5_file" in settings["output"]:
                 try:
-                    NO_file_tools.create_no_file(data, output_meta_data, settings)
+                    NO_file_tools.save_h5_file(data, output_meta_data, settings)
                     run_msg(gui, "Created NO File for " + file_name + ".")
                 except:
                     run_msg(
@@ -70,8 +70,8 @@ def single_sim(settings, gui=""):
                         + file_name
                         + "."
                     )
-        elif settings["file_type"] == "no_file":
-            data, output_meta_data = NO_file_tools.read_no_file(file_path)
+        elif settings["file_type"] == "H5_file":
+            data, output_meta_data = NO_file_tools.read_h5_file(file_path)
         if len(data) == 0:
             run_msg(gui, "Error parsing data")
             return
@@ -141,7 +141,7 @@ if __name__ == "__main__":
     settings = {
         'conversion': '',
         'file_type': 'input_file',
-        'output': ['Excel', 'Visio', 'no_file', '', '', '', '', '', ''],
+        'output': ['Excel', 'Visio', "H5_file", '', '', '', '', '', ''],
         'path_exe': 'C:/Simulations/_Exe/SESV6_32.exe',
         'results_folder_str': None,
         'ses_output_str': [directory_str + input_file_name],

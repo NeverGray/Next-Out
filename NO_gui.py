@@ -6,7 +6,8 @@
 # You may obtain a copy of the license at https://opensource.org/licenses/MIT
 
 import os
-import pickle
+import tomllib
+import tomli_w
 import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
@@ -75,9 +76,9 @@ class Start_Screen(tk.Tk):
         )
         self.cb_no_file = ttk.Checkbutton(
             frame_post_processing,
-            text="NO File",
+            text="H5 File",
             variable=self.cbo_no_file,
-            onvalue="no_file",
+            onvalue="H5_file",
             offvalue="",
         )
         # Conversion frame options (radio buttons)
@@ -108,7 +109,7 @@ class Start_Screen(tk.Tk):
             command=self.average_off
         )
         analysis_label = ttk.Label(
-            self.frame_analysis, text="* NO File is enabled\n for faster Analysis"
+            self.frame_analysis, text="* H5 File is enabled\n for faster Analysis"
         )
         # POST PROCESSING grid
         cb_excel.grid(column=0, row=0, sticky="W", pady=py)
@@ -148,9 +149,9 @@ class Start_Screen(tk.Tk):
         )
         rb_no_file_files = ttk.Radiobutton(
             frm_input_output,
-            text="NO File     ",
+            text="H5 File     ",
             variable=self.file_type,
-            value="no_file",
+            value="H5_file",
             command=self.update_frame_ses_exe,
         )
         rb_file = ttk.Radiobutton(
@@ -423,22 +424,22 @@ class Start_Screen(tk.Tk):
         for key, value in self.screen_settings.items():
             exec(f"{key} = {value}")
         try:
-            settings_file_name = "NO_settings.ini"
+            settings_file_name = "NO_settings.toml"
             path_of_file = Path(settings_file_name)
             if path_of_file.is_file():
                 try:
-                    with open("NO_settings.ini", "rb") as f:
-                        data_to_save = pickle.load(f)
-                    self.directory_cache = data_to_save["directory_cache"]
+                    with open(settings_file_name, "rb") as f:
+                        data_to_save = tomllib.load(f)
+                    self.directory_cache = data_to_save.get("directory_cache", {})
                     self.summary_settings = data_to_save.get("summary_settings", self.summary_settings)
-                    load_gui_settings = data_to_save["gui_settings"]
+                    load_gui_settings = data_to_save.get("gui_settings", {})
                     for key, value in load_gui_settings.items():
                         if value != "":
                             exec(f'{key} = tk.StringVar(value="{value}")')
-                except:
-                    msg = f"Error loading {str(path_of_file)}."
-        except:
-            msg = "Error loading settings"
+                except Exception as e:
+                    msg = f"Error loading {str(path_of_file)}: {str(e)}"
+        except Exception as e:
+            msg = f"Error loading settings: {str(e)}"
             messagebox.showinfo(message=msg)
 
     # Function to return a paths of a single or multiple files
@@ -454,9 +455,9 @@ class Start_Screen(tk.Tk):
                 "title_text": "Select SES Output File(s)",
                 "set_path": lambda filenames: self.path_file.set(filenames if not multiple else "; ".join(filenames)),
             },
-            "no_file": {
-                "filetypes_suffix": [("SES NO File", "*.NO")],
-                "title_text": "Select SES NO File(s)",
+            "H5_file": {
+                "filetypes_suffix": [("H5 Files", "*.H5")],
+                "title_text": "Select H5 File(s)",
                 "set_path": lambda filenames: self.path_file.set(filenames if not multiple else "; ".join(filenames)),
             },
             "EXE": {
@@ -498,7 +499,7 @@ class Start_Screen(tk.Tk):
                     self.directory_cache[file_type_key] = os.path.dirname(filename)
                     config["set_path"](filename)
                     # If selecting a single input, output, or no file, set the ses variable to "File"
-                    if file_type_key in ["input_file", "output_file", "no_file"]:
+                    if file_type_key in ["input_file", "output_file", "H5_file"]:
                         self.ses.set("File") #
         except ValueError:
             pass
@@ -561,7 +562,7 @@ class Start_Screen(tk.Tk):
         try:
             self.get_files_2_process_in_str()
         except:
-            error_msg = "ERROR finding input, output, or NO Files"
+            error_msg = "ERROR finding input, output, or H5 Files"
             self.gui_text(error_msg)
         try:
             self.get_results_folder_str()
@@ -653,11 +654,11 @@ class Start_Screen(tk.Tk):
         valid_extensions = {
             "input_file": [".INP", ".SES"],
             "output_file": [".OUT", ".PRN"],
-            "no_file": [".NO"],
+            "H5_file": [".H5"],
         }
         # Get the selected file type
         file_type = self.file_type.get()
-        if file_type == "no_file" and settings['output'] == ['Summary']:
+        if file_type == "H5_file" and settings['output'] == ['Summary']:
             self.parallel_process_files = False
         else:
             self.parallel_process_files = True  # Changed from self.parallel_processing_needed
@@ -681,8 +682,8 @@ class Start_Screen(tk.Tk):
             if len(settings["ses_output_str"]) < 2:
                 msg = msg + "Need at least 2 files to for average analysis.\n"
                 valid = False
-            if "no_file" not in settings["output"]:
-                settings["output"].append("no_file")
+            if "H5_file" not in settings["output"]:
+                settings["output"].append("H5_file")
         if "Compare" in settings["output"] and len(settings["ses_output_str"]) != 2:
             msg = msg + "Need excatly 2 files to compare files.\n"
             valid = False
@@ -702,7 +703,7 @@ class Start_Screen(tk.Tk):
         file_type_suffix = {
             "input_file": [".INP", ".SES"],
             "output_file": [".OUT", ".PRN"],
-            "no_file": [".NO"],
+            "H5_file": [".H5"],
         }
         self.ses_output_str = []
 
@@ -755,7 +756,7 @@ class Start_Screen(tk.Tk):
         self.configure_widget_state(self.frame_visio, visio_state)
         if self.cbo_average.get() == "Average":
             self.cbo_compare.set("")  # Uncheck "Average"
-            self.cbo_no_file.set("no_file")  # Uncheck "Open Visio"
+            self.cbo_no_file.set("H5_file")  # Uncheck "Open Visio"
         self.visio_open_off()   
        
     def average_off(self, *args):
@@ -779,7 +780,7 @@ class Start_Screen(tk.Tk):
             ses_exe_state = "enable"
         else:
             ses_exe_state = "disable"
-        if self.file_type.get() == "no_file":
+        if self.file_type.get() == "H5_file":
             self.cb_no_file.configure(state=tk.DISABLED)
             #Conversions are only performed on input or output files
             self.conversion.set("")
@@ -840,10 +841,11 @@ class Start_Screen(tk.Tk):
                     "gui_settings":GUI_settings_2_save, 
                     "summary_settings":self.summary_settings,
                     "directory_cache":self.directory_cache}
-                with open("NO_settings.ini", "wb") as f:
-                    pickle.dump(data_to_save, f)
+                with open("NO_settings.toml", "wb") as f:
+                    tomli_w.dump(data_to_save, f)
                 self.destroy()
-            except:
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to save settings: {str(e)}")
                 self.destroy()
         else:
             self.destroy()

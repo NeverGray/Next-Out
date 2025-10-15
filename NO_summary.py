@@ -8,7 +8,7 @@
 from pathlib import Path
 import pandas as pd
 
-from NO_file_tools import read_no_file
+from NO_file_tools import read_h5_file
 from NO_visio import valid_simtime
 from NO_run import run_msg 
 
@@ -27,7 +27,7 @@ def summarize_segment_data(settings, gui=""):
     for no_file_path_str in settings['ses_output_str']:
         try:
             no_file_path = Path(no_file_path_str)
-            data, output_meta_data = read_no_file(no_file_path)
+            data, output_meta_data = read_h5_file(no_file_path)
             requested_time = settings.get('sim_time', -1)
             segment_slices = []
             fire_slices = []

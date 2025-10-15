@@ -5,8 +5,6 @@
 # This file is licensed under the MIT License.
 # You may obtain a copy of the license at https://opensource.org/licenses/MIT
 
-import os
-import pickle
 import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
@@ -169,7 +167,7 @@ def launch_window(parent=None, settings=None):
 if __name__ == "__main__":
     import NO_summary
     settings = {'conversion': '',
-    'file_type': 'no_file',
+    'file_type': "H5_file",
     'output': ['', '', 'Summary', '', '', '', '', '', '', ''],
     'path_exe': '',
     'results_folder_str': None,

@@ -95,9 +95,9 @@ def single_process(
             logging.info(f"Parsing {name}")
             process_status[value_index["Read Output"]] = "Processing"
             processing_dictionary[pid] = process_status
-            if settings["file_type"] == "no_file":
+            if settings["file_type"] == "H5_file":
                 # Read data from NO file
-                data, output_meta_data = NO_file_tools.read_no_file(file_path)
+                data, output_meta_data = NO_file_tools.read_h5_file(file_path)
                 # Create a list of NO Files for averaging
                 no_file_paths.append(file_path) 
             else:
@@ -106,9 +106,9 @@ def single_process(
                     file_path, gui="", conversion_setting=settings["conversion"]
                 )
                 #Create NO File if it is an output
-                if "no_file" in settings["output"]:
+                if "H5_file" in settings["output"]:
                     try:
-                        NO_file_tools.create_no_file(data, output_meta_data, settings)
+                        NO_file_tools.save_h5_file(data, output_meta_data, settings)
                         logging.info(f"Created NO File for {name}")
                         # Create a list of NO Files for averaging
                         no_file_path = NO_file_tools.get_results_path2(settings, output_meta_data, ".no")
@@ -391,7 +391,7 @@ class Monitor_GUI(tk.Toplevel):
         self.in_progress = False
         # Average results from NO Files
         if "Average" in self.settings["output"]: 
-            self.settings["file_type"] = "no_file"
+            self.settings["file_type"] = "H5_file"
             #Load NO Files in sorted order
             unsorted_no_file_paths = list(self.manager.no_file_paths)
             no_file_paths = sorted(unsorted_no_file_paths)
@@ -417,7 +417,7 @@ class Monitor_GUI(tk.Toplevel):
         # Requirement for read_output to be performed
         if settings["file_type"] == "output_file":
             self.process_settings["Read Output"] = True
-        elif "no_file" in settings["output"]:
+        elif "H5_file" in settings["output"]:
             self.process_settings["Read Output"] = True
         else:
             self.process_settings["Read Output"] = False

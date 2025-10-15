@@ -40,9 +40,9 @@ def average_outputs(settings, gui=""):
         elif settings["file_type"] == "output_file":
             ses_output_path = Path(ses_output)
             data, output_meta_data = NO_parser.parse_file(ses_output_path, gui, settings['conversion'])
-        elif settings["file_type"] == "no_file":
+        elif settings["file_type"] == "H5_file":
             ses_output_path = Path(ses_output)
-            data, output_meta_data = NO_file_tools.read_no_file(ses_output_path)
+            data, output_meta_data = NO_file_tools.read_h5_file(ses_output_path)
         else:
             msg = 'Something went wrong with averaging of the files.'
             NO_run.run_msg(gui, msg)

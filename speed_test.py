@@ -39,7 +39,7 @@ if __name__ == "__main__":
         'results_folder_str': None, 
         'simtime': -1, 
         'conversion': '', 
-        'output': ['Excel', 'no_file', '', '', '', '', '', '', '']
+        'output': ['Excel', "H5_file", '', '', '', '', '', '', '']
     }
     wall_time_dict = dict()
     out_files = get_output_files(directory_str)

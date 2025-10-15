@@ -37,14 +37,14 @@ def compare_outputs(settings, gui=""):
         second_file = Path(settings["ses_output_str"][1])
         base_df, base_output_meta_data = NO_parser.parse_file(base_file, gui, settings['conversion'])
         second_df, second_output_meta_data = NO_parser.parse_file(second_file, gui, settings['conversion'])
-        if 'no_file' in settings['output']:
-            NO_file_tools.create_no_file(base_df, base_output_meta_data, settings)
-            NO_file_tools.create_no_file(second_df, second_output_meta_data, settings)
-    elif settings["file_type"] == "no_file":
+        if "H5_file" in settings['output']:
+            NO_file_tools.save_h5_file(base_df, base_output_meta_data, settings)
+            NO_file_tools.save_h5_file(second_df, second_output_meta_data, settings)
+    elif settings["file_type"] == "H5_file":
         base_file = Path(settings["ses_output_str"][0])
         second_file = Path(settings["ses_output_str"][1])
-        base_df, base_output_meta_data = NO_file_tools.read_no_file(base_file)
-        second_df, second_output_meta_data = NO_file_tools.read_no_file(second_file)
+        base_df, base_output_meta_data = NO_file_tools.read_h5_file(base_file)
+        second_df, second_output_meta_data = NO_file_tools.read_h5_file(second_file)
     base_data = dictionary_to_list(base_df)
     second_data = dictionary_to_list(second_df)
     num_df = len(base_data)

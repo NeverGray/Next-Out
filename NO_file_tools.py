@@ -5,9 +5,8 @@
 # This file is licensed under the MIT License.
 # You may obtain a copy of the license at https://opensource.org/licenses/MIT
 
-import gzip
+import json
 import logging
-import pickle
 import pandas as pd
 from pathlib import Path, PosixPath
 
@@ -43,36 +42,112 @@ def get_results_path2(settings, output_meta_data, suffix):
     results_path = results_parent/Path(results_name_str)
     return results_path
 
-#Get variable from parsed file. Save information as zipped (compressed) pickle file
-def create_no_file(data, output_meta_data, settings=None):
-    # TODO Consider how to implement the result folder. 
-    # Define the output file path with the pickle that is zipped suffix
+#Get variable from parsed file. Save information as HDF5 file
+def save_h5_file(data, output_meta_data, settings=None):
+    # Define the output file path with the HDF5 suffix
     if settings is None:
-        no_file_path = output_meta_data['file_path'].with_suffix('.no')
+        no_file_path = output_meta_data['file_path'].with_suffix('.h5')
     else:
-        no_file_path = get_results_path2(settings, output_meta_data, '.no')
+        no_file_path = get_results_path2(settings, output_meta_data, '.h5')
     
-    # Save the data and output_meta_data to the file with compression
-    with gzip.open(no_file_path, 'wb') as file:
-        no_file = {'data': data, 'output_meta_data': output_meta_data}
-        pickle.dump(no_file, file)
+    # Save DataFrames to HDF5 with compression
+    with pd.HDFStore(no_file_path, mode='w', complevel=9, complib='blosc') as store:
+        # Save all DataFrames from data dictionary
+        for key, value in data.items():
+            if isinstance(value, pd.DataFrame):
+                store.put(f'data/{key}', value, format='table')
+            else:
+                # For non-DataFrame data, store as a separate DataFrame or in metadata
+                logging.warning(f"Non-DataFrame data '{key}' will be stored in metadata")
+        
+        # Prepare metadata for JSON serialization
+        metadata = {}
+        for key, value in output_meta_data.items():
+            if isinstance(value, pd.DataFrame):
+                # Store DataFrame in HDF5 under metadata group
+                store.put(f'metadata/{key}', value, format='table')
+            elif isinstance(value, (dict, list)):
+                # Store complex types as JSON strings
+                metadata[key] = json.dumps(value)
+            elif isinstance(value, Path):
+                # Convert Path to string
+                metadata[key] = str(value)
+            else:
+                # Store simple types directly
+                metadata[key] = value
+        
+        # Save metadata as attributes on the SSA DataFrame
+        if metadata:
+            store.get_storer('data/SSA').attrs.metadata = metadata
     
     logging.info(f"{no_file_path} created.")
 
-# Read the data and output_meta_data from the no file, a zipped pickle file
-def read_no_file(file_path):
-    no_file_path = get_file_path_with_suffix(file_path, '.no')
-    with gzip.open(no_file_path, 'rb') as file:
-        no_file = pickle.load(file)
-    data = no_file['data']
-    output_meta_data = no_file['output_meta_data']
-    #Add names to the Dataframes. Names do not appear when reading in a file.
-    for key, df in data.items():
-        if isinstance(df, pd.DataFrame):  # Ensure the value is a DataFrame
-            df.name = key  # Set the name attribute of the DataFrame
+# Read the data and output_meta_data from the HDF5 file
+def read_h5_file(file_path):
+    # Support both legacy .no files and new .h5 files
+    no_file_path_h5 = get_file_path_with_suffix(file_path, '.h5')
+    no_file_path_legacy = get_file_path_with_suffix(file_path, '.no')
+    
+    # Try HDF5 first, fall back to legacy format
+    if no_file_path_h5.exists():
+        no_file_path = no_file_path_h5
+        use_hdf5 = True
+    elif no_file_path_legacy.exists():
+        no_file_path = no_file_path_legacy
+        use_hdf5 = False
+        logging.warning(f"Reading legacy .no file format. Consider converting to .h5")
+    else:
+        raise FileNotFoundError(f"Neither {no_file_path_h5} nor {no_file_path_legacy} found")
+    
+    if use_hdf5:
+        # Read from HDF5
+        data = {}
+        output_meta_data = {}
+        
+        with pd.HDFStore(no_file_path, mode='r') as store:
+            # Read all data DataFrames
+            for key in store.keys():
+                if key.startswith('/data/'):
+                    df_key = key.replace('/data/', '')
+                    data[df_key] = store[key]
+                    data[df_key].name = df_key
+                elif key.startswith('/metadata/'):
+                    # Read DataFrame metadata
+                    meta_key = key.replace('/metadata/', '')
+                    output_meta_data[meta_key] = store[key]
+            
+            # Read metadata attributes from the SSA DataFrame
+            metadata = store.get_storer('data/SSA').attrs.metadata
+            for key, value in metadata.items():
+                if key not in output_meta_data:  # Don't overwrite DataFrame metadata
+                    # Try to parse JSON strings back to original types
+                    if isinstance(value, str) and (value.startswith('{') or value.startswith('[')):
+                        try:
+                            output_meta_data[key] = json.loads(value)
+                        except json.JSONDecodeError:
+                            output_meta_data[key] = value
+                    else:
+                        output_meta_data[key] = value
+        
+        # Convert file_path back to Path object if it exists
+        if 'file_path' in output_meta_data and isinstance(output_meta_data['file_path'], str):
+            output_meta_data['file_path'] = Path(output_meta_data['file_path'])
+    else:
+        # Legacy pickle format - keep for backward compatibility
+        import gzip
+        import pickle
+        with gzip.open(no_file_path, 'rb') as file:
+            no_file = pickle.load(file)
+        data = no_file['data']
+        output_meta_data = no_file['output_meta_data']
+        # Add names to the DataFrames
+        for key, df in data.items():
+            if isinstance(df, pd.DataFrame):
+                df.name = key
+    
     return data, output_meta_data
 
-def get_file_path_with_suffix(file_path, suffix='.no'):
+def get_file_path_with_suffix(file_path, suffix='.h5'):
     # Convert any file path to use the specified suffix/extension.
     # Ensure suffix starts with a period
     if not suffix.startswith('.'):
@@ -87,4 +162,4 @@ if __name__ == "__main__":
     output_file_name = "test.out"
     file_path = Path(directory_str + output_file_name)
     data, output_meta_data = NO_parser.parse_file(file_path)
-    create_no_file(data, output_meta_data)
+    save_h5_file(data, output_meta_data)
