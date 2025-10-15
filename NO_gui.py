@@ -46,7 +46,7 @@ class Start_Screen(tk.Tk):
         )
         # Initialize all setting variables. This process makes saving, than loading settings easier.
         self.load_settings()
-        self.cbo_summary = tk.StringVar(value="")
+
         # Post Processing frame options
         cb_excel = ttk.Checkbutton(
             frame_post_processing, text="Excel", variable=self.cbo_excel, onvalue="Excel", offvalue=""
@@ -396,7 +396,7 @@ class Start_Screen(tk.Tk):
             "self.cbo_excel": 'tk.StringVar(value="")',
             "self.cbo_route": 'tk.StringVar(value="")',
             "self.cbo_no_file": 'tk.StringVar(value="")',
-            "self.cbo_summary": 'tk.StringVar(value="")',
+            "self.cbo_summary": 'tk.StringVar(value="")',  # Add this line
             "self.conversion": 'tk.StringVar(value="")',
             "self.cbo_compare": 'tk.StringVar(value="")',
             "self.cbo_average": 'tk.StringVar(value="")',
@@ -598,16 +598,16 @@ class Start_Screen(tk.Tk):
                         "Processing multiple files, openning monitor window."
                     )
                     self.open_monitor_gui()
+                elif "Summary" in self.settings["output"]:
+                    try:
+                        NO_summary.create_excel_summary(self.settings, gui=self)
+                    except Exception as e:
+                        error_msg = f"Error with summary creation: {str(e)}\n"
+                        self.gui_text(error_msg)
             except:
                 self.gui_text(
                     "Error after validation, before single_sim or multiple_sim. \n"
                 )
-            if "Summary" in self.settings["output"]:
-                try:
-                    NO_summary.create_excel_summary(self.settings, gui=self)
-                except Exception as e:
-                    error_msg = f"Error with summary creation: {str(e)}\n"
-                    self.gui_text(error_msg)
         else:
             self.gui_text("Error with Validation of Settings")
         self.btn_run["state"] = tk.NORMAL
@@ -817,7 +817,7 @@ class Start_Screen(tk.Tk):
         self.summary_settings = NO_summary_gui.launch_window(self, self.summary_settings)
 
         # Enable summary checkbox if options were configured
-        if self.summary_settings.get('lookup_fire_data', False) or len(self.summary_settings.get('segments_2_lookup', [])) > 0:
+        if self.summary_settings.get('lookup_fire_data', True) or len(self.summary_settings.get('segments_2_lookup', [])) > 0:
             self.cbo_summary.set("Summary")
         else:
             self.cbo_summary.set("")

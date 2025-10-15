@@ -22,7 +22,9 @@ import NO_visio
 import NO_file_tools
 import NO_file_tools
 import NO_average
+import NO_summary
 from NO_constants import VERSION_NUMBER
+import NO_process_multiple_files_progress as progress_tracker
 
 # logging.disable(logging.CRITICAL)
 logging.basicConfig(
@@ -57,7 +59,8 @@ def single_process(
     processing_dictionary,
     done_list,
     pause_value,
-    no_file_paths
+    no_file_paths,
+    error_messages
 ):
     pause_check(pause_value)
     # Prepare to monitor process status
@@ -81,6 +84,7 @@ def single_process(
             file_path = NO_file_tools.output_from_input(file_path, settings["path_exe"])
         else:
             logging.info(f"SES simulation failed for {name}")
+            error_messages.append(f"{name}: SES simulation failed")
             process_status[value_index["Simulation"]] = "Failed"
             processing_dictionary[pid] = process_status
             return
@@ -113,14 +117,16 @@ def single_process(
                         # Create a list of NO Files for averaging
                         no_file_path = NO_file_tools.get_results_path2(settings, output_meta_data, ".no")
                         no_file_paths.append(no_file_path)
+                        logging.info(f"Finished saving {no_file_path}")
                     except:
                         logging.info(f"Error creating H5 File for {name}")
             process_status[value_index["Read Output"]] = "Done"
             processing_dictionary[pid] = process_status
             logging.info(f"Finished Parsing {name}")
-        except:
+        except Exception as e:
             process_status[value_index["Read Output"]] = "Failed"
-            logging.info(f"Error Parsing {name}")
+            error_messages.append(f"{name}: Error parsing file - {str(e)}")
+            logging.info(f"Error Parsing {name}: {str(e)}")
             return
 
     if process_settings["Visio"]:
@@ -133,9 +139,10 @@ def single_process(
             logging.info(f"Finished writing Visio file for {name}")
             process_status[value_index["Visio"]] = "Done"
             processing_dictionary[pid] = process_status
-        except:
+        except Exception as e:
             process_status[value_index["Visio"]] = "Failed"
-            logging.info(f"Error writing Visio file for {name}")
+            error_messages.append(f"{name}: Error creating Visio - {str(e)}")
+            logging.info(f"Error writing Visio file for {name}: {str(e)}")
     if process_settings["Excel"]:
         pause_check(pause_value)
         try:
@@ -146,9 +153,10 @@ def single_process(
             logging.info(f"Finished writing Excel file for {name}")
             process_status[value_index["Excel"]] = "Done"
             processing_dictionary[pid] = process_status
-        except:
+        except Exception as e:
             process_status[value_index["Excel"]] = "Failed"
-            logging.info(f"Error writing Excel file for {name}")
+            error_messages.append(f"{name}: Error creating Excel - {str(e)}")
+            logging.info(f"Error writing Excel file for {name}: {str(e)}")
     if process_settings["Route"]:
         pause_check(pause_value)
         try:
@@ -159,9 +167,10 @@ def single_process(
             logging.info(f"Finished writing Route file for {name}")
             process_status[value_index["Route"]] = "Done"
             processing_dictionary[pid] = process_status
-        except:
+        except Exception as e:
             process_status[value_index["Route"]] = "Failed"
-            logging.info(f"Error creating Route Excel file for {name}")
+            error_messages.append(f"{name}: Error creating Route - {str(e)}")
+            logging.info(f"Error creating Route Excel file for {name}: {str(e)}")
     done_list.append(name)
     logging.info(f"Finished processing {name}")
 
@@ -205,6 +214,7 @@ class Manager_Class:
         self.processing_dictionary = self.manager.dict()
         self.queued_files = self.manager.list()
         self.done_files = self.manager.list()
+        self.error_messages = self.manager.list()  # Track errors
         self.pause_value = self.manager.Value("i", 0)
         self.finished = self.manager.Value("i", 0)
         self.file_names = self.manager.list()
@@ -226,7 +236,7 @@ class Monitor_GUI(tk.Toplevel):
         self.monitor_window = ttk.Frame(self, padding=p, borderwidth=5)
         # Queued List
         self.queue_frame = ttk.LabelFrame(
-            self.monitor_window, borderwidth=5, text="Queued Files", padding=p
+            self.monitor_window, borderwidth=5, text="Queued (0)", padding=p
         )
         self.queued_scrollbar = ttk.Scrollbar(self.queue_frame)
         self.queued_scrollbar.pack(side="right", fill="y")
@@ -241,7 +251,7 @@ class Monitor_GUI(tk.Toplevel):
         self.queued_list.pack(side="left", fill="both")
         # Create processing table
         self.processing_frame = ttk.LabelFrame(
-            self.monitor_window, borderwidth=5, text="Processing", padding=p
+            self.monitor_window, borderwidth=5, text="Processing (0)", padding=p
         )
         headers = list(COLUMN_HEADERS_AND_WIDTH.keys())
         column_number = 10
@@ -260,7 +270,7 @@ class Monitor_GUI(tk.Toplevel):
             column_number += 10
         # Done List
         self.done_frame = ttk.LabelFrame(
-            self.monitor_window, borderwidth=5, text="Done Files", padding=p
+            self.monitor_window, borderwidth=5, text="Done (0)", padding=p
         )
         self.done_scrollbar = ttk.Scrollbar(self.done_frame)
         self.done_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
@@ -272,6 +282,44 @@ class Monitor_GUI(tk.Toplevel):
         )
         self.done_scrollbar.config(command=self.done_list.yview)
         self.done_list.pack(side=tk.LEFT, fill=tk.BOTH)
+
+        # Error Log Frame
+        self.error_frame = ttk.LabelFrame(
+            self.monitor_window, borderwidth=5, text="Errors", padding=p
+        )
+        self.error_scrollbar = ttk.Scrollbar(self.error_frame)
+        self.error_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.error_text = tk.Text(
+            self.error_frame,
+            width=60,
+            height=6,
+            state=tk.DISABLED,
+            wrap="word",
+            yscrollcommand=self.error_scrollbar.set,
+            fg="red",
+            font=("Arial", 9)
+        )
+        self.error_scrollbar.config(command=self.error_text.yview)
+        self.error_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        # Progress Bar Frame
+        progress_frame = ttk.LabelFrame(
+            self.monitor_window, borderwidth=5, text="Overall Progress", padding=p
+        )
+        self.progress_label = ttk.Label(
+            progress_frame, 
+            text="0/0 tasks (0%)",
+            font=("Arial", 10)
+        )
+        self.progress_label.pack(pady=5)
+        self.progress_bar = ttk.Progressbar(
+            progress_frame,
+            orient="horizontal",
+            length=400,
+            mode="determinate",
+            maximum=100
+        )
+        self.progress_bar.pack(pady=5, fill="x", expand=True)
 
         # Pause and stop buttons
         button_frame = ttk.LabelFrame(
@@ -299,14 +347,43 @@ class Monitor_GUI(tk.Toplevel):
         self.queue_frame.grid(column=5, row=10, sticky="NS")
         self.processing_frame.grid(column=10, row=10, sticky="N")
         self.done_frame.grid(column=15, row=10, sticky="NS")
+        progress_frame.grid(column=5, row=40, columnspan=11, sticky="EW", pady=5)
+        self.error_frame.grid(column=5, row=50, columnspan=11, sticky="EW", pady=10)
         button_frame.grid(column=10, row=100)
+        
+        # Initialize progress tracker
+        num_files = len(self.settings["ses_output_str"])
+        self.progress_tracker = progress_tracker.ProgressTracker(
+            num_files, 
+            self.process_settings
+        )
+        
         self.seperate_thread()
         self.after(UPDATE_FREQUENCY, self.update_monitor_window)
 
     def update_monitor_table(self):
         # Update the queued and done list in the tkinter application, manager
-        self.queued_list_var.set(list(self.manager.queued_files))
-        self.done_list_var.set(list(self.manager.done_files))
+        queued_files = list(self.manager.queued_files)
+        done_files = list(self.manager.done_files)
+        
+        # Count dictionary items that contain "Processing" or "Queued"
+        processing_count = 0
+        for pid, status_list in self.manager.processing_dictionary.items():
+            if "Processing" in status_list or "Queued" in status_list:
+                processing_count += 1
+        
+        self.queued_list_var.set(queued_files)
+        self.done_list_var.set(done_files)
+        
+        # Update frame labels with counts
+        self.queue_frame.config(text=f"Queued ({len(queued_files)})")
+        self.processing_frame.config(text=f"Processing ({processing_count})")
+        self.done_frame.config(text=f"Done ({len(done_files)})")
+        
+        # Update error log
+        self.update_error_log()
+        # Update progress bar
+        self.update_progress_bar()
         row_number = 20
         for key, values in self.manager.processing_dictionary.items():
             column_number = 10
@@ -333,6 +410,35 @@ class Monitor_GUI(tk.Toplevel):
                 self.entry.insert(tk.END, value)
                 column_number += 10
             row_number += 10
+
+    def update_error_log(self):
+        """Update the error text widget with new errors"""
+        current_errors = list(self.manager.error_messages)
+        if current_errors:
+            self.error_text["state"] = tk.NORMAL
+            self.error_text.delete("1.0", tk.END)
+            for error in current_errors:
+                self.error_text.insert(tk.END, f"• {error}\n")
+            self.error_text["state"] = tk.DISABLED
+    
+    def update_progress_bar(self):
+        """Update progress bar based on current processing status"""
+        # Calculate completed work from processing dictionary
+        completed = progress_tracker.calculate_progress_from_status(
+            self.manager.processing_dictionary,
+            self.process_settings["process_status_value_index"]
+        )
+        
+        # Update the progress tracker
+        self.progress_tracker.completed_work_units = completed
+        
+        # Update progress bar value
+        percentage = self.progress_tracker.get_progress_percentage()
+        self.progress_bar["value"] = percentage
+        
+        # Update progress label text
+        progress_text = self.progress_tracker.get_progress_text()
+        self.progress_label.config(text=progress_text)
 
     def update_monitor_window(self):
         if self.in_progress:
@@ -377,7 +483,8 @@ class Monitor_GUI(tk.Toplevel):
                         self.manager.processing_dictionary,
                         self.manager.done_files,
                         self.manager.pause_value,
-                        self.manager.no_file_paths
+                        self.manager.no_file_paths,
+                        self.manager.error_messages
                     ),
                 )
                 self.results.append(result)
@@ -391,19 +498,65 @@ class Monitor_GUI(tk.Toplevel):
         self.in_progress = False
         # Average results from NO Files
         if "Average" in self.settings["output"]: 
-            self.settings["file_type"] = "H5_file"
-            #Load NO Files in sorted order
-            unsorted_no_file_paths = list(self.manager.no_file_paths)
-            no_file_paths = sorted(unsorted_no_file_paths)
-            logging.info(f"NO File Paths: {list(self.manager.no_file_paths)}")
-            self.settings["ses_output_str"] = no_file_paths
-            NO_average.average_outputs(self.settings, gui="")
-        title_msg = "Post-processing complete."
-        msg_1 = "Click 'Okay' to return to main screen."
-        msg_all = msg_1
+            # Update progress label to show post-processing
+            self.progress_label.config(text="Post-processing: Creating average output...")
+            self.update()
+            try:
+                unsorted_no_file_paths = list(self.manager.no_file_paths)
+                no_file_paths = sorted(unsorted_no_file_paths)
+                logging.info(f"NO File Paths: {list(self.manager.no_file_paths)}")
+                self.settings["ses_output_str"] = no_file_paths
+                NO_average.average_outputs(self.settings, gui="")
+            except Exception as e:
+                error_msg = f"CRITICAL: Error with averaging - {str(e)}"
+                self.manager.error_messages.append(error_msg)
+                self.update_error_log()
+                self.wm_attributes("-topmost", -1)
+                messagebox.showerror(
+                    title="Averaging Error",
+                    message=f"Failed to create average output:\n\n{str(e)}",
+                    parent=self
+                )
+        if "Summary" in self.settings["output"]:
+            # Update progress label to show post-processing
+            self.progress_label.config(text="Post-processing: Creating summary output...")
+            self.update()
+            try:
+                NO_summary.create_excel_summary(self.settings, gui="")
+            except Exception as e:
+                error_msg = f"CRITICAL: Error creating summary - {str(e)}"
+                self.manager.error_messages.append(error_msg)
+                self.update_error_log()
+                self.wm_attributes("-topmost", -1)
+                messagebox.showerror(
+                    title="Summary Error",
+                    message=f"Failed to create summary output:\n\n{str(e)}",
+                    parent=self
+                )
+        
+        # Set progress to 100% when completely done
+        self.progress_bar["value"] = 100
+        self.progress_tracker.completed_work_units = self.progress_tracker.total_work_units
+        self.progress_label.config(text=f"Complete! {self.progress_tracker.get_progress_text()}")
+        # Determine completion message based on errors
+        error_count = len(list(self.manager.error_messages))
+        if error_count > 0:
+            title_msg = f"Post-processing complete with {error_count} error(s)"
+            msg_1 = f"Processing finished with {error_count} error(s).\n"
+            msg_2 = "Check the 'Errors' section above for details.\n\n"
+            msg_3 = "Click 'Okay' to return to main screen."
+            msg_all = msg_1 + msg_2 + msg_3
+            msg_type = messagebox.showwarning
+        else:
+            title_msg = "Post-processing complete."
+            msg_1 = "All files processed successfully!\n\n"
+            msg_2 = "Click 'Okay' to return to main screen."
+            msg_all = msg_1 + msg_2
+            msg_type = messagebox.showinfo
+        
         # Make message box appear above the status window using code from https://stackoverflow.com/questions/52345195/getting-tkinter-messagebox-at-top-of-the-screen-in-python
         self.wm_attributes("-topmost", -1)
-        messagebox.showinfo(title=title_msg, message=msg_all, parent=self)
+        msg_type(title=title_msg, message=msg_all, parent=self)
         self.destroy()
 
     def create_process_settings(self):
