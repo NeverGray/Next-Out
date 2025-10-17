@@ -8,13 +8,14 @@
 from pathlib import Path
 import pandas as pd
 
-from NO_file_tools import read_h5_file
-from NO_visio import valid_simtime
+from NO_file_tools import read_h5_file, can_write_file
 
 def summarize_segment_data(settings, gui=""):
     """
     Process multiple NO files and extract data from multiple dataframe types.
     """
+    from NO_visio import valid_simtime  # Import here to avoid circular import
+    
     #Get summary options from settings
     run_msg(gui, "Creating Summary file")
     segment_numbers_2_lookup = settings.get('segments_2_lookup', [])
@@ -23,10 +24,21 @@ def summarize_segment_data(settings, gui=""):
     segment_summary_data = []
     fire_summary_data = []
     summary_dfs = []
+    file_info_data = []  # Store file metadata for Files_info sheet
     for no_file_path_str in settings['ses_output_str']:
         try:
             no_file_path = Path(no_file_path_str)
             data, output_meta_data = read_h5_file(no_file_path)
+            
+            # Collect file metadata for Files_info sheet
+            file_info = {
+                'File_Name': no_file_path.stem,
+                'File_Time': output_meta_data.get('file_time', ''),
+                'File_Path': str(output_meta_data.get('file_path', no_file_path)),
+                'Conversion': output_meta_data.get('SES_version', '')
+            }
+            file_info_data.append(file_info)
+            
             requested_time = settings.get('sim_time', -1)
             segment_slices = []
             fire_slices = []
@@ -81,7 +93,8 @@ def summarize_segment_data(settings, gui=""):
         df = pd.concat(fire_summary_data)
         df.name = "Fire"
         summary_dfs.append(df)
-    return summary_dfs
+    
+    return summary_dfs, file_info_data
 
 def valid_summary_option(settings):
     valid = False
@@ -91,44 +104,102 @@ def valid_summary_option(settings):
         valid = True
     return valid
 
+def auto_adjust_column_widths(worksheet, df, has_index=True):
+    """
+    Auto-adjust column widths in an Excel worksheet to fit content.
+    
+    Args:
+        worksheet: openpyxl worksheet object
+        df: pandas DataFrame that was written to the worksheet
+        has_index: Whether the DataFrame was written with index=True
+    """
+    # Start column offset (1 if index is written, 0 if not)
+    col_offset = 1 if has_index else 0
+    
+    # Auto-size index column if present
+    if has_index:
+        index_name = df.index.name or 'Index'
+        # Convert index to list and calculate max string length
+        max_length = max(
+            max(len(str(val)) for val in df.index),
+            len(str(index_name))
+        )
+        worksheet.column_dimensions['A'].width = max_length + 2
+    
+    # Auto-size data columns
+    for idx, col in enumerate(df.columns):
+        max_length = max(
+            df[col].astype(str).apply(len).max(),
+            len(str(col))
+        )
+        col_letter = worksheet.cell(1, idx + col_offset + 1).column_letter
+        worksheet.column_dimensions[col_letter].width = max_length + 2
+
 def create_excel_summary(settings, gui=""):
     """
     Create an Excel file from NO files based on settings, with each dataframe saved
     to a separate worksheet named according to its type.
     """
-    # Get the summary dataframes
+    # Get the summary dataframes and file info
     if valid_summary_option(settings):
-        summary_dfs = summarize_segment_data(settings, gui)
+        summary_dfs, file_info_data = summarize_segment_data(settings, gui)
     else:
         run_msg(gui, "No summary options provided.")
         return None
 
     if not summary_dfs:
         return None
+    
     # Determine output file name for summary file
     results_folder = Path(settings['ses_output_str'][0]).parent
     result_path = results_folder / "Summary.xlsx"
+    
+    # Check if file can be written (e.g., not already open)
+    if not can_write_file(result_path, gui):
+        return None
+    
     # Create Excel writer object
     with pd.ExcelWriter(result_path, engine='openpyxl') as writer:
+        
         # Write each dataframe to its own worksheet
         for df in summary_dfs:
-            # Get the name for the worksheet (default to "Sheet1" if no name specified)
+            # Get the name for the worksheet
             sheet_name = df.name
             
-            # Create flat version of this dataframe
-            flat_df = (df
-                      .reset_index(level=[0,1])
-                      .rename(columns={
-                          'level_0': 'File_Name',
-                          'level_1': 'Segment'
-                      }))
+            # Create combined index directly from the multi-index (more efficient)
+            # Get the original index level names (or provide defaults if unnamed)
+            level_0_name = df.index.names[0] or 'File_Name'
+            level_1_name = df.index.names[1] or ('Fire_Segment' if sheet_name.lower() == "fire" else 'Segment')
             
-            # For fire data, rename the Segment column to Fire_Segment
-            if sheet_name.lower() == "fire":
-                flat_df = flat_df.rename(columns={'Segment': 'Fire_Segment'})
+            # Extract level 0 and level 1 values
+            level_0_values = df.index.get_level_values(0).astype(str)
+            level_1_values = df.index.get_level_values(1).astype(str)
             
-            # Save to worksheet
-            flat_df.to_excel(writer, sheet_name=sheet_name, index=False)
+            # Create new single index by combining them
+            df.index = level_0_values + '_' + level_1_values
+            df.index.name = f'{level_0_name}_{level_1_name}'
+            
+            # Save to worksheet with the new index
+            df.to_excel(writer, sheet_name=sheet_name, index=True)
+            
+            # Auto-adjust column widths for this sheet
+            worksheet = writer.sheets[sheet_name]
+            auto_adjust_column_widths(worksheet, df, has_index=True)
+        
+        # Write Files_info sheet
+        if file_info_data:
+            files_info_df = pd.DataFrame(file_info_data)
+            
+            # Check if Conversion column exists and all values are None
+            if 'Conversion' in files_info_df.columns:
+                if files_info_df['Conversion'].isna().all():
+                    files_info_df = files_info_df.drop(columns=['Conversion'])
+            
+            files_info_df.to_excel(writer, sheet_name='Files_info', index=False)
+            
+            # Auto-adjust column widths for Files_info sheet
+            worksheet = writer.sheets['Files_info']
+            auto_adjust_column_widths(worksheet, files_info_df, has_index=False)
     run_msg(gui, f"Summary saved to {result_path}")
     return result_path
 
@@ -139,13 +210,12 @@ def run_msg(gui, text):
         print("Run msg: " + text)
 
 if __name__ == "__main__":
-    # Example usage
+    ses_output_str=[]
+    prefix = "C:/Simulations/Test/test_"
+    for i in range(1,26): #How many test files to summarize
+        ses_output_str.append(f"{prefix}{i:02d}.out")
     settings = {
-        'ses_output_str': [
-            'C:/Simulations/Test/PT09-S1GM-011-R01.out',
-            'C:/Simulations/Test/PT09-S1GM-012-F-R01.out',
-            'C:/Simulations/Test/PT09-S1GM-012-R01.out'
-        ],
+        'ses_output_str': ses_output_str,   
         'sim_time': -1,
         'output_filename': 'summary_results.xlsx',
         'segments_2_lookup': [2,4,6],

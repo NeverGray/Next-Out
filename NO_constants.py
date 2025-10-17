@@ -31,7 +31,7 @@ COLUMN_UNITS={
     "Radiation_to_Wall":["W","Btu/h","SST"],
     "Working_Fluid_Temp":["\u00B0C","\u00B0F","SST"],
     "Heat_Absorbed_by_Pipe":["W","Btu/h","SST"],
-    "Actual_Airflow_NV":["m^3/s","kcfm","SST"], #Next-Out calculated data
+    "Actual_Airflow_NO":["m^3/s","kcfm","SST"], #Next-Out calculated data
     "Section" :["#","#","SSP"],                 # SSP Values
     "Pressure_Change" : ["Pa", "IN. WG", "SSP"],
     "Train_Number":["#","#","TRA"],          #Train Information
@@ -108,7 +108,7 @@ COLUMN_UNITS={
     "Min_Humidity":["kg/kg","lb/lb","ST"],
     "Min_Humidity_Time":["seconds","second","ST"],
     "Average_Humidity":["kg/kg","lb/lb","ST"],
-    "Average_Dry_Bulb_NV":["\u00B0C","\u00B0F","ST"],
+    "Average_Dry_Bulb_NO":["\u00B0C","\u00B0F","ST"],
     "Percentage_Above_T1":["%","%","PER"], #Start of PER values
     "Percentage_Above_T2":["%","%","PER"],
     "Percentage_Above_T3":["%","%","PER"],

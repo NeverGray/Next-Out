@@ -10,6 +10,31 @@ import logging
 import pandas as pd
 from pathlib import Path, PosixPath
 
+def can_write_file(file_path, gui=""):
+    """
+    Check if a file can be written to (not locked/open in another program).
+    
+    Args:
+        file_path: Path object or string to the file to check
+        gui: Optional GUI object for displaying messages
+        
+    Returns:
+        True if file can be written, False otherwise
+    """
+    from NO_run import run_msg  # Import here to avoid circular import
+    
+    try:
+        # Try to open file in write mode to check if it's accessible
+        with open(file_path, 'a') as test_file:
+            pass  # Just testing if we can access it
+        return True
+    except PermissionError:
+        run_msg(gui, f"Error: Cannot write to {file_path}. File may be open in another program. Please close it and try again.")
+        return False
+    except Exception as e:
+        run_msg(gui, f"Error: Cannot access {file_path}. {str(e)}")
+        return False
+
 def output_from_input(file_path_string, path_exe):
     file_path = Path(file_path_string)
     # TODO Select suffix based on SES type

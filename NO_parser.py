@@ -645,9 +645,9 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
     )
     # Add the actual airflow to the SST Dataframe
     actual_airflow = calculate_actual_airflow(df_sst, df_ssa, ambient_temperature, version)
-    df_sst['Actual_Airflow_NV'] = actual_airflow
+    df_sst['Actual_Airflow_NO'] = actual_airflow
     # Create the other dataframes if there the data exists.
-    if summary:
+    if summary and len(data_segment) > 0:
         df_segment = to_dataframe2(
             data_segment,
             to_integers=["Segment"],
@@ -662,9 +662,9 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
         df_sub = to_dataframe2(data_sub, groupby=["Time", "Segment", "Sub"])
         df_sub.name = "ST"
         # Calculate the average dry bulb from the positive and nefative airflow directions
-        average_dry_bulb_nv = calculate_average_dry_bulb(df_sub, df_segment)
+        Average_Dry_Bulb_NO = calculate_average_dry_bulb(df_sub, df_segment)
         # Add the average to the ST dataframe
-        df_sub['Average_Dry_Bulb_NV'] = average_dry_bulb_nv
+        df_sub['Average_Dry_Bulb_NO'] = Average_Dry_Bulb_NO
         df_percentage = to_dataframe2(data_percentage)
         df_percentage.name = "PER"
         df_te = to_dataframe2(data_te, to_integers=["Energy_Sector"], to_index=["Time", "Energy_Sector"])

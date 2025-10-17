@@ -181,10 +181,10 @@ def update_temperature_NV02(simtime_df, SST_simtime, shape):
             ses_WallTemp = SST_simtime.loc[seg_id,sub_id]['Wall_Temp']
             if not pd.isna(ses_WallTemp): 
                 walltemp = str(round(ses_WallTemp, 1)) + DEGREE_SYMBOL
-        if 'Actual_Airflow_NV' in SST_simtime.columns:
-            Actual_Airflow_NV = SST_simtime.loc[seg_id,sub_id]['Actual_Airflow_NV']
-            if not pd.isna(Actual_Airflow_NV):
-                actual_airflow = str(round(abs(Actual_Airflow_NV), 1))
+        if 'Actual_Airflow_NO' in SST_simtime.columns:
+            Actual_Airflow_NO = SST_simtime.loc[seg_id,sub_id]['Actual_Airflow_NO']
+            if not pd.isna(Actual_Airflow_NO):
+                actual_airflow = str(round(abs(Actual_Airflow_NO), 1))
 
     # Update Arrow
     name = 'Arrow_NV02'
