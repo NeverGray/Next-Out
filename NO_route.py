@@ -133,7 +133,6 @@ if __name__ == "__main__":
     settings = {
         'ses_output_str': one_output_file, 
         'visio_template': 'C:/Simulations/Demonstration/Next Vis Samples1p21.vsdx', 
-        'results_folder_str': 'C:/Simulations/1p30 Testing', 
         'simtime': -1, 
         'conversion': '', 
         'control': 'First', 

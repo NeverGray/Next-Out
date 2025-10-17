@@ -24,7 +24,7 @@ def output_from_input(file_path_string, path_exe):
         logging.debug("Error in 'output_from_input' when converting file strings")
         return file_path
 
-def get_results_path2(settings, output_meta_data, suffix):
+def get_results_path2(output_meta_data, suffix):
     output_file_path = Path(output_meta_data['file_path'])
     output_stem = output_file_path.stem
     ses_version = output_meta_data.get('SES_version', '')
@@ -34,11 +34,8 @@ def get_results_path2(settings, output_meta_data, suffix):
         results_name_str = output_stem + '_IP' + suffix
     else:
         results_name_str = output_stem + suffix
-    results_folder_str = settings.get("results_folder_str")
-    if results_folder_str is None:
-        results_parent = output_file_path.parent
-    else:
-        results_parent = Path(results_folder_str)
+    # Always use the same folder as the output file
+    results_parent = output_file_path.parent
     results_path = results_parent/Path(results_name_str)
     return results_path
 
@@ -48,7 +45,7 @@ def save_h5_file(data, output_meta_data, settings=None):
     if settings is None:
         no_file_path = output_meta_data['file_path'].with_suffix('.h5')
     else:
-        no_file_path = get_results_path2(settings, output_meta_data, '.h5')
+        no_file_path = get_results_path2(output_meta_data, '.h5')
     
     # Save DataFrames to HDF5 with compression
     with pd.HDFStore(no_file_path, mode='w', complevel=9, complib='blosc') as store:

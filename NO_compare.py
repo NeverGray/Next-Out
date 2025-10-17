@@ -49,9 +49,9 @@ def compare_outputs(settings, gui=""):
     second_data = dictionary_to_list(second_df)
     num_df = len(base_data)
     suffix = base_output_meta_data['file_path'].suffix
-    base_path = NO_file_tools.get_results_path2(settings, base_output_meta_data, suffix)
+    base_path = NO_file_tools.get_results_path2(base_output_meta_data, suffix)
     suffix = second_output_meta_data['file_path'].suffix
-    second_path = NO_file_tools.get_results_path2(settings, second_output_meta_data, suffix)
+    second_path = NO_file_tools.get_results_path2(second_output_meta_data, suffix)
     if num_df != len(second_data):
         msg = "Error in Comparing two output files! " + base_path.name + "and" + second_path.name + "have different structures."
         NO_run.run_msg(gui, msg)
@@ -88,7 +88,7 @@ def compare_outputs(settings, gui=""):
             compare_output_meta_data = base_output_meta_data.copy()
             compare_output_meta_data['file_path'] = compare_file_path
             compare_output_meta_data['ses_version'] = 'Unconfirmed'
-            compare_results_path = NO_file_tools.get_results_path2(settings, compare_output_meta_data, ".xlsx")
+            compare_results_path = NO_file_tools.get_results_path2(compare_output_meta_data, ".xlsx")
             p_e_text = (
                 "Percent Error = Absolute value of [(Difference) / ("
                 + base_path.name
@@ -253,7 +253,6 @@ if __name__ == "__main__":
         ]
     settings = {
         "ses_output_str": ses_output_list,
-        "results_folder_str": directory_str,
         "visio_template": None,
         "simtime": 9999.0,
         "conversion": "",

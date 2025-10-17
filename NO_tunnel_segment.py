@@ -78,11 +78,9 @@ if __name__ == "__main__":
     visio_template = "Next Vis Samples1p21.vsdx"
     file_path_string = "C:/simulations/NV_Tunnel_Fix/siinfern-detailed.out"
     visio_template_folder = "C:/simulations/NV_Tunnel_Fix"
-    results_folder_str = ""
     settings = {
         "ses_output_str": [file_path_string],
         "visio_template": "/".join([visio_template_folder, visio_template]),
-        "results_folder_str": results_folder_str,
         "simtime": 500.0,
         "conversion": "",
         "control": "First",

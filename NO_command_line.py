@@ -110,12 +110,6 @@ class command_line_screen(tk.Tk):
                     msg + "Files to process. Check if input or output files are present.\n"
                 )
                 valid = False
-            # Check if the folder for post-processing output exists
-            if not self.settings["results_folder_str"] is None:
-                results_folder_path = Path(self.settings["results_folder_str"])
-                if not results_folder_path.is_dir():
-                    msg = msg + "Folder to write results does not exist.\n"
-                    valid = False
             # If using input file, check the executable exists
             if self.settings["file_type"] == "input_file":
                 exe_path_string = settings["path_exe"]
@@ -155,7 +149,6 @@ if __name__ == "__main__":
         'file_type': 'input_file',
         'output': ['Excel', 'Visio', '', '', '', '', '', '', ''],
         'path_exe': 'C:/Simulations/_Exe/SESV6_32.exe',
-        'results_folder_str': None,
         'ses_output_str': [directory_str + input_file_name],
         'simtime': -1,
         'visio_template': 'C:/Simulations/Test/Test Template.vsdx'}

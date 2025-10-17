@@ -115,7 +115,7 @@ def single_process(
                         NO_file_tools.save_h5_file(data, output_meta_data, settings)
                         logging.info(f"Created H5 File for {name}")
                         # Create a list of NO Files for averaging
-                        no_file_path = NO_file_tools.get_results_path2(settings, output_meta_data, ".no")
+                        no_file_path = NO_file_tools.get_results_path2(output_meta_data, ".no")
                         no_file_paths.append(no_file_path)
                         logging.info(f"Finished saving {no_file_path}")
                     except:
@@ -658,7 +658,6 @@ if __name__ == "__main__":
     settings={
         'ses_output_str': ['C:\\Simulations\\2023-12-28\\Next-In 3p1 lite.xlsm'],
         'visio_template': 'C:/Simulations/1p31 Testing/Next Vis Samples1p21.vsdx',
-        'results_folder_str': 'C:/Simulations/2023-12-28',
         'simtime': -1,
         'conversion': '',
         'output': ['', '', '', '', '', '', '', '', ''], 

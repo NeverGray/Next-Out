@@ -109,7 +109,6 @@ if __name__ == "__main__":
         ]
     settings = {
         "ses_output_str": ses_output_list,
-        "results_folder_str": None,
         "visio_template": None,
         "simtime": 9999.0,
         "conversion": "tbd",

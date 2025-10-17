@@ -15,7 +15,7 @@ import NO_parser
 import NO_route
 import NO_visio as nvv
 import NO_file_tools
-import NO_file_tools
+import NO_summary
 
 
 #Function to perform a single simulation
@@ -106,6 +106,12 @@ def single_sim(settings, gui=""):
         except:
             msg = "Error creating Route Data Excel Files"
             run_msg(gui,msg)
+    if "Summary" in settings["output"]:  # Summary data
+        try:
+            NO_summary.create_excel_summary(settings, gui)
+        except Exception as e:
+            msg = f"Error creating Summary Excel Files: {str(e)}"
+            run_msg(gui,msg)
     run_msg(gui,"DONE!")
 
 def run_msg(gui, text):
@@ -143,7 +149,6 @@ if __name__ == "__main__":
         'file_type': 'input_file',
         'output': ['Excel', 'Visio', "H5_file", '', '', '', '', '', ''],
         'path_exe': 'C:/Simulations/_Exe/SESV6_32.exe',
-        'results_folder_str': None,
         'ses_output_str': [directory_str + input_file_name],
         'simtime': -1,
         'visio_template': 'C:/Simulations/Test/Test.vsdx'}
