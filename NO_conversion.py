@@ -88,11 +88,9 @@ def average_to_zero(data, dataframe, column):
 if __name__ == "__main__":
     file_path_string = "C:/Simulations/SI_TO_IP/sinorm-detailed.out"
     visio_template = "C:/Simulations/2022-01-22/Next Vis Samples1p21.vsdx"
-    results_folder_str = "C:/Simulations/SI_TO_IP"
     settings = {
         "ses_output_str": [file_path_string],
         "visio_template": visio_template,
-        "results_folder_str": results_folder_str,
         "simtime": 9999.0,
         "conversion": "SI_TO_IP",
         "control": "First",

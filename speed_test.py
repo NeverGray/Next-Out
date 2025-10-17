@@ -36,7 +36,6 @@ if __name__ == "__main__":
         'ses_output_str':'',
         'file_type': 'output_file',
         'visio_template': '', 
-        'results_folder_str': None, 
         'simtime': -1, 
         'conversion': '', 
         'output': ['Excel', "H5_file", '', '', '', '', '', '', '']

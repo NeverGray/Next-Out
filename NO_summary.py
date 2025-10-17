@@ -10,7 +10,6 @@ import pandas as pd
 
 from NO_file_tools import read_h5_file
 from NO_visio import valid_simtime
-from NO_run import run_msg 
 
 def summarize_segment_data(settings, gui=""):
     """
@@ -50,7 +49,7 @@ def summarize_segment_data(settings, gui=""):
                             run_msg(gui, f"  No requested segments found in {df_name}")
                         
                         # Process fire data (same approach)
-                        if df_name=='SSA' and fire_summary and not output_meta_data['form4_df'].empty:
+                        if df_name=='SSA' and fire_summary and 'form4_df' in output_meta_data and not output_meta_data['form4_df'].empty:
                             fire_segment = int(output_meta_data['form4_df'].index.get_level_values('Segment')[0])
                             if fire_segment in time_slice.index:
                                 fire_slice = time_slice.loc[[fire_segment]]
@@ -107,11 +106,7 @@ def create_excel_summary(settings, gui=""):
     if not summary_dfs:
         return None
     # Determine output file name for summary file
-    results_folder =settings.get("results_folder_str", None) 
-    if results_folder is None:
-        results_folder = Path(settings['ses_output_str'][0]).parent
-    else:
-        results_folder = Path(results_folder)
+    results_folder = Path(settings['ses_output_str'][0]).parent
     result_path = results_folder / "Summary.xlsx"
     # Create Excel writer object
     with pd.ExcelWriter(result_path, engine='openpyxl') as writer:
@@ -137,6 +132,12 @@ def create_excel_summary(settings, gui=""):
     run_msg(gui, f"Summary saved to {result_path}")
     return result_path
 
+def run_msg(gui, text):
+    if gui != "":
+        gui.gui_text(text)
+    else:
+        print("Run msg: " + text)
+
 if __name__ == "__main__":
     # Example usage
     settings = {
@@ -146,7 +147,6 @@ if __name__ == "__main__":
             'C:/Simulations/Test/PT09-S1GM-012-R01.out'
         ],
         'sim_time': -1,
-        'results_folder_str': 'C:/Simulations/Test',
         'output_filename': 'summary_results.xlsx',
         'segments_2_lookup': [2,4,6],
         'lookup_fire_data': True

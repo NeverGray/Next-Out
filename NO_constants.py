@@ -11,7 +11,9 @@ VERSION_NUMBER = "1.4.E" # Faster Paser Code
     1.4.B Added Train Supplementary Data
     1.4.C Summary feature and speed test
     1.4.D Updated Parser for abbreviated prints and faster processing
-    1.4.E Added Summary Feature"""
+    1.4.E Added Summary Feature
+    1.4.F Major changes- Eliminate result folder option, move summary to main gui
+    """
 
 
 #Column name : [SI Unit, IP Unit]

@@ -32,7 +32,7 @@ SHEET_NAMES ={
 
 def create_excel(settings, data, output_meta_data, gui=""):
     file_name = str(output_meta_data['file_path'].name)
-    excel_results_path = NO_file_tools.get_results_path2(settings, output_meta_data, ".xlsx")
+    excel_results_path = NO_file_tools.get_results_path2(output_meta_data, ".xlsx")
     # TODO Add error checker if excel file is open
     NO_run.run_msg(gui, "Creating Excel file " + excel_results_path.name)
     TITLES = {
@@ -128,11 +128,9 @@ def create_excel(settings, data, output_meta_data, gui=""):
 if __name__ == "__main__":
     file_path_string = "C:/Simulations/Testing/SES-119 002.out"
     visio_template = "C:/Simulations/2022-01-22/Next Vis Samples1p21.vsdx"
-    results_folder_str = "C:/Simulations/Testing"
     settings = {
         "ses_output_str": [file_path_string],
         "visio_template": visio_template,
-        "results_folder_str": results_folder_str,
         "simtime": 9999.0,
         "conversion": "SI_TO_IP",
         "control": "First",
@@ -155,4 +153,4 @@ if __name__ == "__main__":
     print(f"Time for create_excel {end_create_excel - start_create_excel:0.4f} seconds")
     # NO_run.single_sim(settings)
     # prof.print_stats()
-    prof.dump_stats(results_folder_str + "/NV 1p16 xlsxwriter.prof")
+    prof.dump_stats("C:/Simulations/Testing/NV 1p16 xlsxwriter.prof")

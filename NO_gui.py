@@ -16,7 +16,6 @@ import NO_process_multiple_files
 import NO_run
 import NO_compare
 import NO_summary
-import NO_summary_gui
 from NO_constants import VERSION_NUMBER
 
 class Start_Screen(tk.Tk):
@@ -59,13 +58,10 @@ class Start_Screen(tk.Tk):
             offvalue="",
             command=self.update_output_options,
         )
-        # Summary row frame for checkbox and button
-        frm_summary = ttk.Frame(frame_post_processing)
+        # Summary checkbox
         cb_summary = ttk.Checkbutton(
-            frm_summary, text="", variable=self.cbo_summary, onvalue="Summary", offvalue=""
-        )
-        btn_summary = ttk.Button(
-            frm_summary, text="Summary", command=self.open_summary_gui
+            frame_post_processing, text="Summary", variable=self.cbo_summary, onvalue="Summary", offvalue="",
+            command=self.update_output_options
         )
         cb_route = ttk.Checkbutton(
             frame_post_processing,
@@ -109,16 +105,13 @@ class Start_Screen(tk.Tk):
             command=self.average_off
         )
         analysis_label = ttk.Label(
-            self.frame_analysis, text="* H5 File is enabled\n for faster Analysis"
-        )
+            self.frame_analysis, text="* Requires H5 Files")
         # POST PROCESSING grid
         cb_excel.grid(column=0, row=0, sticky="W", pady=py)
         cb_visio.grid(column=0, row=10, sticky="W", pady=py)
         cb_route.grid(column=0, row=15, sticky="W", pady=py)
         self.cb_no_file.grid(column=0, row=20, sticky="W", pady=py)
-        frm_summary.grid(column=0, row=25, sticky="W", pady=py)
-        cb_summary.pack(side="left", padx=(0, 5))
-        btn_summary.pack(side="left")
+        cb_summary.grid(column=0, row=25, sticky="W", pady=py)
         # Conversion grid
         rb_conversion_none.grid(column=0, row=10, sticky="W", pady=py)
         rb_IP_to_SI.grid(column=0, row=17, sticky="W", pady=py)
@@ -295,34 +288,36 @@ class Start_Screen(tk.Tk):
         cb_pdf.grid(column=1, row=r, sticky="W", pady=py)
         cb_png.grid(column=2, row=r, sticky="W", pady=py)
         cb_svg.grid(column=3, row=r, sticky="W", pady=py)
-        # Results Folder widgets
-        frame_results_folder = ttk.LabelFrame(
-            self.ss, borderwidth=5, text="Folder to Post Processing", padding=p
+        
+        # SUMMARY OPTIONS Frame
+        self.frame_summary = ttk.LabelFrame(
+            self.ss, borderwidth=5, text="Summary Options (Requires H5 File)", padding=p
         )
-        rb_ses = ttk.Radiobutton(
-            frame_results_folder,
-            text="Same as SES Input",
-            variable=self.results_folder,
-            value="ses output",
+        self.cb_fire = ttk.Checkbutton(
+            self.frame_summary, 
+            text="Fire Segment", 
+            variable=self.cbo_fire_segment, 
+            onvalue=True, 
+            offvalue=False
         )
-        rb_selected = ttk.Radiobutton(
-            frame_results_folder,
-            text="Selected",
-            variable=self.results_folder,
-            value="selected",
+        lbl_segments = ttk.Label(
+            self.frame_summary, 
+            text="Segment numbers (comma-separated):"
         )
-        btn_results_folder = ttk.Button(
-            frame_results_folder, text="Select", command=self.get_results_folder
+        self.ent_segment_numbers = ttk.Entry(
+            self.frame_summary, 
+            textvariable=self.segment_numbers_str
         )
-        ent_results_folder = ttk.Entry(
-            frame_results_folder, textvariable=self.path_results_folder
-        )
-        # OUTPUT FILE LOCATION grid
-        rb_ses.grid(column=0, row=0, sticky="W")
-        rb_selected.grid(column=2, row=0, sticky="EW")
-        btn_results_folder.grid(column=0, row=1, sticky="W")
-        ent_results_folder.grid(column=1, row=1, sticky="WE", columnspan=2)
-        frame_results_folder.columnconfigure(2, weight=1)
+        
+        # Summary Options Grid
+        r = 0
+        self.cb_fire.grid(column=0, row=r, sticky="W", pady=py, padx=px)
+        r = 1
+        lbl_segments.grid(column=0, row=r, sticky="W", pady=py, padx=px)
+        r = 2
+        self.ent_segment_numbers.grid(column=0, row=r, columnspan=4, sticky=["WE"], pady=py, padx=px)
+        self.frame_summary.columnconfigure(0, weight=1)
+        
         # RUN button
         frm_run = ttk.Frame(self.ss, padding=p, borderwidth=5)
         #self.btn_run = ttk.Button(frm_run, text="Run", command=self.run)
@@ -361,15 +356,15 @@ class Start_Screen(tk.Tk):
         # Ensure all rows except the Status row do not expand
         self.ss.rowconfigure(0, weight=0)  # Post Processing
         self.ss.rowconfigure(1, weight=0)  # SES Files
-        self.ss.rowconfigure(2, weight=0)  # SES Executable
-        self.ss.rowconfigure(3, weight=0)  # Visio Template
+        self.ss.rowconfigure(2, weight=0)  # Visio Template
+        self.ss.rowconfigure(3, weight=0)  # Summary Options
         self.ss.rowconfigure(4, weight=0)  # Run Button
 
         # Ensure the Status row expands
-        self.ss.rowconfigure(6, weight=1)  # Status window row
+        self.ss.rowconfigure(5, weight=1)  # Status window row
 
         # Place the Status window at the bottom and allow it to expand
-        frm_status.grid(column=0, row=6, columnspan=2, sticky="WENS", pady=py, padx=px)
+        frm_status.grid(column=0, row=5, columnspan=2, sticky="WENS", pady=py, padx=px)
 
         # Ensure the Run button row does not expand
         frm_run.grid(column=0, columnspan=2, row=4, sticky="WE", pady=py, padx=px)
@@ -383,8 +378,11 @@ class Start_Screen(tk.Tk):
         frame_ses_files.grid(column=0, row=0, sticky=["NSEW"], pady=py, padx=px)
         self.frame_ses_exe.grid(column=0, row=1, sticky=["NSEW"], pady=py, padx=px)
         self.frame_visio.grid(column=0, row=2, sticky=["WE"], pady=py, padx=px)
-        frame_results_folder.grid(column=0, row=3, sticky=["WE"], pady=py, padx=px)
+        self.frame_summary.grid(column=0, row=3, sticky=["WE"], pady=py, padx=px)
 
+        # Set minimum window size
+        self.minsize(550, 790)
+        
         #Update the GUI to show the current settings
         self.update_output_options()
         self.update_frame_ses_exe()
@@ -413,8 +411,8 @@ class Start_Screen(tk.Tk):
             "self.cbo_pdf": 'tk.StringVar(value="")',
             "self.cbo_png": 'tk.StringVar(value="")',
             "self.cbo_svg": 'tk.StringVar(value="")',
-            "self.results_folder": 'tk.StringVar(value="ses output")',
-            "self.path_results_folder": 'tk.StringVar(value="")'
+            "self.cbo_fire_segment": 'tk.BooleanVar(value=False)',
+            "self.segment_numbers_str": 'tk.StringVar(value="")'
         }
         self.directory_cache = {}
         self.summary_settings = {
@@ -435,7 +433,25 @@ class Start_Screen(tk.Tk):
                     load_gui_settings = data_to_save.get("gui_settings", {})
                     for key, value in load_gui_settings.items():
                         if value != "":
-                            exec(f'{key} = tk.StringVar(value="{value}")')
+                            # Handle boolean variables
+                            if key == "self.cbo_fire_segment":
+                                exec(f'{key} = tk.BooleanVar(value={value})')
+                            else:
+                                exec(f'{key} = tk.StringVar(value="{value}")')
+                    
+                    # Load summary settings into GUI fields
+                    if self.summary_settings.get('lookup_fire_data', False):
+                        self.cbo_fire_segment.set(True)
+                    if 'segments_2_lookup' in self.summary_settings:
+                        segment_numbers = self.summary_settings['segments_2_lookup']
+                        numbers_str = ', '.join(map(str, segment_numbers))
+                        self.segment_numbers_str.set(numbers_str)
+                    
+                    # Load and apply window geometry if it exists
+                    window_geometry = data_to_save.get("window_geometry", None)
+                    if window_geometry:
+                        self.geometry(window_geometry)
+                        
                 except Exception as e:
                     msg = f"Error loading {str(path_of_file)}: {str(e)}"
         except Exception as e:
@@ -517,19 +533,6 @@ class Start_Screen(tk.Tk):
         except ValueError:
             pass
 
-    def get_results_folder(self, *args):
-        file_type = "results"
-        try:
-            filename = filedialog.askdirectory(
-                title="Select folder to write post-processing results", mustexist=True,
-                initialdir=self.directory_cache.get(file_type, None),
-            )
-            self.path_results_folder.set(filename)
-            self.results_folder.set("selected")
-            self.directory_cache[file_type] = filename
-        except ValueError:
-            pass
-
     def ses_clear(self, *args):  # For clearing text boxses (not needed right now)
         try:
             self.output_files["state"] = "normal"
@@ -564,24 +567,26 @@ class Start_Screen(tk.Tk):
         except:
             error_msg = "ERROR finding input, output, or H5 Files"
             self.gui_text(error_msg)
-        try:
-            self.get_results_folder_str()
-        except:
-            error_msg = "ERROR with selected result folder"
-            self.gui_text(error_msg)
-            # Default to putting results in the same folder as the SES output
-            self.results_folder_str = (None)
+        # Get summary settings from GUI
+        lookup_fire_data = self.cbo_fire_segment.get()
+        segments_2_lookup = []
+        numbers_text = self.segment_numbers_str.get().strip()
+        if numbers_text:
+            try:
+                segments_2_lookup = [int(num.strip()) for num in numbers_text.split(',')]
+            except ValueError:
+                self.gui_text("Warning: Invalid segment numbers format. Using empty list.\n")
+        
         self.settings = {
             "ses_output_str": self.ses_output_str,
             "visio_template": self.path_visio.get(),
-            "results_folder_str": self.results_folder_str,
             "simtime": -1,
             "conversion": self.conversion.get(),
             "output": pp_list,
             "file_type": self.file_type.get(),
             "path_exe": self.path_exe.get(),
-            "lookup_fire_data": self.summary_settings.get('lookup_fire_data', False),  # Add this
-            "segments_2_lookup": self.summary_settings.get('segments_2_lookup', [])    # Add this
+            "lookup_fire_data": lookup_fire_data,
+            "segments_2_lookup": segments_2_lookup
         }
 
         if self.validation(self.settings):
@@ -635,12 +640,6 @@ class Start_Screen(tk.Tk):
                 msg + "No files to process. Check if input or output files are present.\n"
             )
             valid = False
-        # Check if the folder for post-processing output exists
-        if not self.settings["results_folder_str"] is None:
-            results_folder_path = Path(self.settings["results_folder_str"])
-            if not results_folder_path.is_dir():
-                msg = msg + "Folder to write results does not exist.\n"
-                valid = False
         # If using input file, check the executable exists
         if self.file_type.get() == "input_file":
             exe_path_string = self.path_exe.get()
@@ -728,13 +727,6 @@ class Start_Screen(tk.Tk):
             files_string = self.path_files.get()
             self.ses_output_str = files_string.split("; ")
 
-    def get_results_folder_str(self, *args):
-        option = self.results_folder.get()
-        if option == "selected":
-            self.results_folder_str = self.path_results_folder.get()
-        else:  # Default is same as SES output. Use empty string
-            self.results_folder_str = None
-
     def update_output_options(self, *args):
         #TODO Update when "Open Visio can be selected or not"
         option = self.ses.get()
@@ -754,6 +746,12 @@ class Start_Screen(tk.Tk):
             visio_state = "disable"
         # Disable all items in a frame: https://www.tutorialspoint.com/how-to-gray-out-disable-a-tkinter-frame
         self.configure_widget_state(self.frame_visio, visio_state)
+        # Enable/disable summary frame
+        if self.cbo_summary.get() == "Summary":
+            summary_state = "enable"
+        else:
+            summary_state = "disable"
+        self.configure_widget_state(self.frame_summary, summary_state)
         if self.cbo_average.get() == "Average":
             self.cbo_compare.set("")  # Uncheck "Average"
             self.cbo_no_file.set("H5_file")  # Uncheck "Open Visio"
@@ -810,18 +808,6 @@ class Start_Screen(tk.Tk):
     
 
 
-    #Offer to save the current settings before exiting the program
-    def open_summary_gui(self):
-        """Open the summary settings window and get the summary options"""
-        # Get updated settings back
-        self.summary_settings = NO_summary_gui.launch_window(self, self.summary_settings)
-
-        # Enable summary checkbox if options were configured
-        if self.summary_settings.get('lookup_fire_data', True) or len(self.summary_settings.get('segments_2_lookup', [])) > 0:
-            self.cbo_summary.set("Summary")
-        else:
-            self.cbo_summary.set("")
-
     def on_closing(self):
         title_on_closing = "Quit Next Vis?"
         msg_1 = "Click 'Yes' to quit and save the most recent settings.\n"
@@ -836,11 +822,28 @@ class Start_Screen(tk.Tk):
                 GUI_settings_2_save = {}
                 for key, value in self.screen_settings.items():
                     exec(f'GUI_settings_2_save["{key}"]= {key}.get()')
+                
+                # Update summary_settings from GUI
+                summary_settings = {
+                    'lookup_fire_data': self.cbo_fire_segment.get(),
+                    'segments_2_lookup': []
+                }
+                numbers_text = self.segment_numbers_str.get().strip()
+                if numbers_text:
+                    try:
+                        summary_settings['segments_2_lookup'] = [int(num.strip()) for num in numbers_text.split(',')]
+                    except ValueError:
+                        pass  # Keep empty list if invalid
+                
+                # Save window geometry (size and position)
+                window_geometry = self.geometry()
+                
                 data_to_save = {}
                 data_to_save = {
                     "gui_settings":GUI_settings_2_save, 
-                    "summary_settings":self.summary_settings,
-                    "directory_cache":self.directory_cache}
+                    "summary_settings":summary_settings,
+                    "directory_cache":self.directory_cache,
+                    "window_geometry":window_geometry}
                 with open("NO_settings.toml", "wb") as f:
                     tomli_w.dump(data_to_save, f)
                 self.destroy()
