@@ -1,0 +1,129 @@
+================================================================================
+ORIGINAL VERSION PROFILE
+================================================================================
+
+Top 20 functions by cumulative time:
+Mon Oct 20 10:36:24 2025    C:/Simulations/Test/xlsxwriter_original.prof
+
+         86110037 function calls (86109818 primitive calls) in 59.392 seconds
+
+   Ordered by: cumulative time
+   List reduced from 742 to 20 due to restriction <20>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.001    0.001   59.782   59.782 NO_Excel_R01.py:33(create_excel)
+        4    0.000    0.000   43.241   10.810 _decorators.py:325(wrapper)
+        4    0.000    0.000   43.241   10.810 generic.py:2284(to_excel)
+        4    0.000    0.000   43.239   10.810 excel.py:893(write)
+        4    4.346    1.087   43.239   10.810 _xlsxwriter.py:241(_write_cells)
+        1    0.000    0.000   16.534   16.534 _base.py:1347(__exit__)
+        1    0.000    0.000   16.534   16.534 _base.py:1355(close)
+        1    0.000    0.000   16.534   16.534 _xlsxwriter.py:235(_save)
+        1    0.000    0.000   16.533   16.533 workbook.py:373(close)
+        1    0.000    0.000   16.533   16.533 workbook.py:742(_store_workbook)
+        1    0.000    0.000   15.197   15.197 packager.py:136(_create_package)
+  2449683    1.587    0.000   14.344    0.000 excel.py:888(get_formatted_cells)
+        1    0.000    0.000   13.367   13.367 packager.py:189(_write_worksheet_files)
+        4    0.000    0.000   13.364    3.341 worksheet.py:4873(_assemble_xml_file)
+        4    0.000    0.000   13.362    3.341 worksheet.py:6404(_write_sheet_data)
+        4    1.658    0.415   13.362    3.341 worksheet.py:6582(_write_rows)
+  2449817    2.095    0.000   12.688    0.000 worksheet.py:102(cell_wrapper)
+  2449813    1.469    0.000   10.592    0.000 worksheet.py:471(write)
+  2449679    1.150    0.000    9.518    0.000 __init__.py:183(dumps)
+  2449813    2.961    0.000    9.123    0.000 worksheet.py:491(_write)
+
+
+
+================================================================================
+OPTIMIZED VERSION PROFILE
+================================================================================
+
+Top 20 functions by cumulative time:
+Mon Oct 20 10:39:26 2025    C:/Simulations/Test/xlsxwriter_optimized.prof
+
+         86109828 function calls (86109605 primitive calls) in 39.659 seconds
+
+   Ordered by: cumulative time
+   List reduced from 742 to 20 due to restriction <20>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000   39.955   39.955 NO_Excel_R01.py:33(create_excel)
+        4    0.000    0.000   28.516    7.129 _decorators.py:325(wrapper)
+        4    0.000    0.000   28.516    7.129 generic.py:2284(to_excel)
+        4    0.000    0.000   28.511    7.128 excel.py:893(write)
+        4    2.686    0.672   28.511    7.128 _xlsxwriter.py:241(_write_cells)
+        1    0.000    0.000   11.433   11.433 _base.py:1347(__exit__)
+        1    0.000    0.000   11.433   11.433 _base.py:1355(close)
+        1    0.000    0.000   11.433   11.433 _xlsxwriter.py:235(_save)
+        1    0.000    0.000   11.433   11.433 workbook.py:373(close)
+        1    0.000    0.000   11.433   11.433 workbook.py:742(_store_workbook)
+        1    0.000    0.000   10.239   10.239 packager.py:136(_create_package)
+  2449683    1.019    0.000    9.108    0.000 excel.py:888(get_formatted_cells)
+        1    0.000    0.000    9.103    9.103 packager.py:189(_write_worksheet_files)
+        4    0.000    0.000    9.100    2.275 worksheet.py:4873(_assemble_xml_file)
+        4    0.000    0.000    9.098    2.275 worksheet.py:6404(_write_sheet_data)
+        4    1.324    0.331    9.098    2.275 worksheet.py:6582(_write_rows)
+  2449817    1.266    0.000    8.964    0.000 worksheet.py:102(cell_wrapper)
+  2449767    0.994    0.000    7.699    0.000 worksheet.py:471(write)
+  2449767    2.011    0.000    6.704    0.000 worksheet.py:491(_write)
+  2449679    0.762    0.000    6.347    0.000 __init__.py:183(dumps)
+
+
+
+================================================================================
+FUNCTIONS WITH MOST TIME SPENT (sorted by own time)
+================================================================================
+
+Original - Top 15 by own time:
+Mon Oct 20 10:36:24 2025    C:/Simulations/Test/xlsxwriter_original.prof
+
+         86110037 function calls (86109818 primitive calls) in 59.392 seconds
+
+   Ordered by: internal time
+   List reduced from 742 to 15 due to restriction <15>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+  2449679    4.479    0.000    4.479    0.000 encoder.py:205(iterencode)
+        4    4.346    1.087   43.239   10.810 _xlsxwriter.py:241(_write_cells)
+  2449813    2.961    0.000    9.123    0.000 worksheet.py:491(_write)
+  2658264    2.946    0.000    2.946    0.000 {method 'write' of '_io.TextIOWrapper' objects}
+  1652575    2.934    0.000    5.552    0.000 excel.py:872(_generate_body)
+  2449679    2.730    0.000    8.367    0.000 encoder.py:183(encode)
+  2449670    2.683    0.000    3.064    0.000 excel.py:85(__init__)
+  1488557    2.652    0.000    4.341    0.000 worksheet.py:652(_write_number)
+  2449679    2.398    0.000    4.520    0.000 excel.py:596(_format_value)
+  1488557    2.129    0.000    5.348    0.000 xmlwriter.py:136(_xml_number_element)
+  2449817    2.095    0.000   12.688    0.000 worksheet.py:102(cell_wrapper)
+  2449679    1.921    0.000    2.344    0.000 _base.py:1293(_value_with_fmt)
+  1743774    1.826    0.000    8.811    0.000 worksheet.py:6761(_write_cell)
+        4    1.658    0.415   13.362    3.341 worksheet.py:6582(_write_rows)
+  2449683    1.587    0.000   14.344    0.000 excel.py:888(get_formatted_cells)
+
+
+
+Optimized - Top 15 by own time:
+Mon Oct 20 10:39:26 2025    C:/Simulations/Test/xlsxwriter_optimized.prof
+
+         86109828 function calls (86109605 primitive calls) in 39.659 seconds
+
+   Ordered by: internal time
+   List reduced from 742 to 15 due to restriction <15>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+  2449679    3.023    0.000    3.023    0.000 encoder.py:205(iterencode)
+        4    2.686    0.672   28.511    7.128 _xlsxwriter.py:241(_write_cells)
+  1488557    2.013    0.000    3.248    0.000 worksheet.py:652(_write_number)
+  2449767    2.011    0.000    6.704    0.000 worksheet.py:491(_write)
+  2449679    1.804    0.000    5.586    0.000 encoder.py:183(encode)
+  2449670    1.755    0.000    2.015    0.000 excel.py:85(__init__)
+  1488557    1.611    0.000    3.559    0.000 xmlwriter.py:136(_xml_number_element)
+  2449679    1.547    0.000    2.919    0.000 excel.py:596(_format_value)
+  1652575    1.465    0.000    2.938    0.000 excel.py:872(_generate_body)
+  1743774    1.360    0.000    6.138    0.000 worksheet.py:6761(_write_cell)
+        4    1.324    0.331    9.098    2.275 worksheet.py:6582(_write_rows)
+  2658261    1.277    0.000    1.277    0.000 {method 'write' of '_io.TextIOWrapper' objects}
+  2449817    1.266    0.000    8.964    0.000 worksheet.py:102(cell_wrapper)
+  2449637    1.193    0.000    5.171    0.000 excel.py:788(_format_hierarchical_rows)
+  2449679    1.167    0.000    1.406    0.000 _base.py:1293(_value_with_fmt)
+
+

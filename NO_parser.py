@@ -553,6 +553,7 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
                         if float(m.group("Time")) == time:
                             duplicate_pit = True
                         time = float(m.group("Time"))
+                        break  # Stop searching once a match is found
                     # If key is other than "time"
                     elif key == "p_data":
                         matches = list(rx.finditer(lines[i]))  # Find all matches in the line
@@ -560,27 +561,51 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
                             match_dict = match.groupdict()
                             match_dict["Time"] = time
                             pressure_pit.append(match_dict)
+                        break  # Stop searching once a match is found
                     elif key == "abb_segment_1":
                         s = lines[i].split()  # splits only on whitespace
                         s = [t for t in s if t != '-']
-                        Segment = s[1]
-                        temp = s[4:]
+                        Segment = s[1].lstrip('-')  # Remove leading hyphen if present
+                        sub_temperature = s[4:]
                         k = i + 1
                         # Check if there is a page break in IP files
                         second_line = re.compile(r"\s{37}").match(lines[k]) 
                         while second_line is None:
                             k += 1
                             second_line = re.compile(r"\s{37}").match(lines[k])
-                        h = lines[k].split()
-                        for j in range(len(temp)):
+                        sub_humidity = lines[k].split()
+                        for j in range(len(sub_temperature)):
                             m_copy = m_dict.copy()  # keep existing data
                             m_copy.update({"Segment": Segment})
                             m_copy.update({"Sub": str(j + 1)})
-                            m_copy.update({"Air_Temp": temp[j]})
-                            m_copy.update({"Humidity": h[j]})
+                            m_copy.update({"Air_Temp": sub_temperature[j]})
+                            m_copy.update({"Humidity": sub_humidity[j]})
                             data_pit.append(m_copy)
+                        last_sub_segment = 0
+                        while len(sub_temperature) == 8: # There could more sub-segments on next line
+                            last_sub_segment = last_sub_segment + 8
+                            k += 1
+                            next_line = re.compile(r"\s{37}").match(lines[k])
+                            if next_line is None:
+                                sub_temperature = []
+                            else: # Process another sub-segment lines
+                                s = lines[k].split()
+                                sub_temperature= s[0:]
+                                k += 1
+                                sub_humidity = lines[k].split()
+                                for j in range(len(sub_temperature)):
+                                    current_sub_segment = last_sub_segment + j + 1
+                                    m_copy = m_dict.copy()  # keep existing data
+                                    m_copy.update({"Segment": Segment})
+                                    m_copy.update({"Sub": str(current_sub_segment)})
+                                    m_copy.update({"Air_Temp": sub_temperature[j]})
+                                    m_copy.update({"Humidity": sub_humidity[j]})
+                                    data_pit.append(m_copy)
+                        i = k - 1   # Update i to continue after reading sub-segments
+                        break  # Stop searching once a match is found
                     elif key == "detail_segment_1":
                         data_pit.append(m_dict)
+                        break  # Stop searching once a match is found
                     elif key == "wall":
                         while (m != None):
                             wall_pit.append(m_dict)
@@ -589,6 +614,7 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
                             if m is not None:
                                 m_dict = m.groupdict()
                                 m_dict["Time"] = time
+                        break  # Stop searching once a match is found
                     elif (
                             key == "sum_time"
                     ):  # TODO - Create code to find where all summary data is located
@@ -610,6 +636,7 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
                                 end_line -= 1
                             end_line += 1
                         sum_parser(lines[start_line:end_line], time)
+                        break  # Stop searching once a match is found
                     elif key == "train":  # Create worksheet for train information
                         while (m != None):
                             data_train.append(m_dict)
@@ -618,6 +645,7 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
                             if m is not None:
                                 m_dict = m.groupdict()
                                 m_dict["Time"] = time
+                        break  # Stop searching once a match is found
                     elif key == "train_sup":  # Create worksheet for train information
                         while (m != None):
                             data_train_sup.append(m_dict)
@@ -626,8 +654,10 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
                             if m is not None:
                                 m_dict = m.groupdict()
                                 m_dict["Time"] = time
+                        break  # Stop searching once a match is found
                     elif key == "fluid":
                         fluid_pit.append(m_dict)
+                        break  # Stop searching once a match is found
         i += 1
 
     # Create Data Frames from dictionaries for second-by-second information
@@ -904,6 +934,7 @@ def get_form8fs(lines):
     i = 0
     form8f_data_segment = []
     form8f_data_section = []
+    route_number = None
     while form_9a_match is None and i < len(lines):
         title_match = title_rx.match(lines[i])
         form_8f_match = form_8f.match(lines[i])
@@ -911,7 +942,7 @@ def get_form8fs(lines):
         if title_match is not None:
             title_dict = title_match.groupdict()
             route_number = int(title_dict['Route_Number'])
-        elif form_8f_match is not None:
+        elif route_number is not None and form_8f_match is not None: # Prevent edge cases with cooling pipes
             form_8f_dict = form_8f_match.groupdict()
             section = form_8f_dict.get('Section')
             if section is not None:

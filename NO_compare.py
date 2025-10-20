@@ -9,7 +9,6 @@ from io import BytesIO
 from pathlib import Path
 
 import pandas as pd
-from openpyxl.styles import Font
 
 import NO_Excel_R01 as NV_excel
 import NO_visio as nvv
@@ -23,14 +22,14 @@ def compare_outputs(settings, gui=""):
     if settings["file_type"] in ["input_file", "output_file"]:
         if settings["file_type"] == "input_file":
             for i in range(2):
-                msg = "Running SES Simulation for " + Path(settings["ses_output_str"][i]).name
+                msg = f"Running SES Simulation for {Path(settings['ses_output_str'][i]).name}"
                 NO_run.run_msg(gui, msg)
                 success = NO_run.run_SES(settings["path_exe"], settings["ses_output_str"][i], gui)
                 if success:
                     settings["ses_output_str"][i] = NO_file_tools.output_from_input(settings["ses_output_str"][i], settings["path_exe"])
                     settings["file_type"] = "output_file"
                 else:
-                    msg = "Post-processing is stopped for " + settings["ses_output_str"][i] + ".\n"
+                    msg = f"Post-processing is stopped for {settings['ses_output_str'][i]}.\n"
                     NO_run.run_msg(gui, msg)
                     return    
         base_file = Path(settings["ses_output_str"][0])
@@ -53,7 +52,7 @@ def compare_outputs(settings, gui=""):
     suffix = second_output_meta_data['file_path'].suffix
     second_path = NO_file_tools.get_results_path2(second_output_meta_data, suffix)
     if num_df != len(second_data):
-        msg = "Error in Comparing two output files! " + base_path.name + "and" + second_path.name + "have different structures."
+        msg = f"Error in Comparing two output files! {base_path.name} and {second_path.name} have different structures."
         NO_run.run_msg(gui, msg)
     else:
         msg = f'Comparing {base_path.name} and {second_path.name}.'
@@ -89,15 +88,14 @@ def compare_outputs(settings, gui=""):
             compare_output_meta_data['file_path'] = compare_file_path
             compare_output_meta_data['ses_version'] = 'Unconfirmed'
             compare_results_path = NO_file_tools.get_results_path2(compare_output_meta_data, ".xlsx")
-            p_e_text = (
-                "Percent Error = Absolute value of [(Difference) / ("
-                + base_path.name
-                + ")]"
-            )
-            diff_text = "Difference = (" + second_path.name + ") - (" + base_path.name + ")"
+            p_e_text = f"Percent Error = Absolute value of [(Difference) / ({base_path.name})]"
+            diff_text = f"Difference = ({second_path.name}) - ({base_path.name})"
             bio = BytesIO()
             # with pd.ExcelWriter(file_name + ".xlsx") as writer:
-            with pd.ExcelWriter(bio, engine="openpyxl") as writer:
+            with pd.ExcelWriter(bio, engine="xlsxwriter", engine_kwargs={'options': {'strings_to_numbers': False}}) as writer:
+                # Create format objects once for all sheets
+                format_bold = writer.book.add_format({'bold': True})
+                format_underline = writer.book.add_format({'underline': True})
                 # Code based on https://stackoverflow.com/questions/32957441/putting-many-python-pandas-dataframes-to-one-excel-worksheet
                 for i in range(len(p_e_summary)):
                     sum_col = len(diff[i].index.names) - 1  # Aligns summary column
@@ -122,14 +120,12 @@ def compare_outputs(settings, gui=""):
                         startcol=0,
                     )
                     ws = writer.sheets[s_name]
-                    ws.cell(row=1, column=1, value=title)
-                    ws.cell(row=1, column=1).font = Font(bold=True)
-                    ws.cell(row=2, column=1, value="Summary")
-                    ws.cell(row=2, column=1).font = Font(underline="single")
-                    ws.cell(row = data_row -1, column=1, value="Data")
-                    ws.cell(row = data_row -1, column=1).font = Font(underline="single")
-                    ws.cell(row=3, column=sum_col, value=p_e_text)
-                    ws.cell(row=data_row, column=1, value=p_e_text)
+                    # Use xlsxwriter write methods with format objects
+                    ws.write(0, 0, title, format_bold)
+                    ws.write(1, 0, "Summary", format_underline)
+                    ws.write(data_row - 2, 0, "Data", format_underline)
+                    ws.write_string(2, sum_col, p_e_text)
+                    ws.write_string(data_row - 1, 0, p_e_text)
                     n += 1
                     startcol_num = data_col * n + n
                     diff_summary[i].to_excel(
@@ -148,8 +144,8 @@ def compare_outputs(settings, gui=""):
                     )
                     n = 1
                     startcol_num = (data_col * n + n) + 1
-                    ws.cell(row=3, column=startcol_num, value=diff_text)
-                    ws.cell(row=data_row, column=startcol_num, value=diff_text)
+                    ws.write_string(2, startcol_num, diff_text)
+                    ws.write_string(data_row - 1, startcol_num, diff_text)
                     n += 1
                     startcol_num = data_col * n + n
                     second_data[i].to_excel(
@@ -160,7 +156,7 @@ def compare_outputs(settings, gui=""):
                         startcol=startcol_num,
                     )
                     startcol_num = (data_col * n + n) + 1
-                    ws.cell(row=data_row, column=startcol_num, value=second_path.name)
+                    ws.write_string(data_row - 1, startcol_num, second_path.name)
                     n += 1
                     startcol_num = data_col * n + n
                     base_data[i].to_excel(
@@ -171,33 +167,26 @@ def compare_outputs(settings, gui=""):
                         startcol=startcol_num,
                     )
                     startcol_num = (data_col * n + n) + 1
-                    ws.cell(row=data_row, column=startcol_num, value=base_path.name)
-                    #Freeze Plane
-                    freeze_cell = ws.cell(row=data_row+2, column=len(p_e[i].index.names)+1)
-                    ws.freeze_panes = freeze_cell
-                writer.book.properties.creator = "Next Vis 1p11`"
-                writer.book.properties.title = file_name
-                writer.book.save(bio) #Updated after Next-Vis 1p31
-                # From https://techoverflow.net/2019/07/24/how-to-write-bytesio-content-to-file-in-python/
-                # Copy the BytesIO stream to the output file
-                with open(compare_results_path, "wb") as outfile:  
-                    try:
-                        outfile.write(bio.getvalue())
-                    except:
-                        NO_run.run_msg(gui,
-                            "Error writing "
-                            + str(compare_results_path)
-                            + ".xlsx. Try closing file and trying again."
-                        )
-                    # TODO Add strings using https://stackoverflow.com/questions/43537598/write-strings-text-and-pandas-dataframe-to-excel
-            msg = ("Created " + str(compare_results_path))
+                    ws.write_string(data_row - 1, startcol_num, base_path.name)
+                    # Freeze panes
+                    ws.freeze_panes(data_row + 1, len(p_e[i].index.names) + 1)
+                # Set workbook properties
+                writer.book.set_properties({
+                    'creator': 'Next Vis 1p11',
+                    'title': file_name
+                })
+            # From https://techoverflow.net/2019/07/24/how-to-write-bytesio-content-to-file-in-python/
+            # Copy the BytesIO stream to the output file (AFTER writer closes)
+            with open(compare_results_path, "wb") as outfile:  
+                try:
+                    outfile.write(bio.getvalue())
+                except:
+                    NO_run.run_msg(gui, f"Error writing {compare_results_path}. Try closing file and trying again.")
+                # TODO Add strings using https://stackoverflow.com/questions/43537598/write-strings-text-and-pandas-dataframe-to-excel
+            msg = f"Created {compare_results_path}"
             NO_run.run_msg(gui, msg)
         except:
-            msg = (
-                "CRITICAL ERROR! Constructing (not saving) Excel File "
-                + file_name
-                + ".xlsx. Close the file if opened."
-            )
+            msg = f"CRITICAL ERROR! Constructing (not saving) Excel File {file_name}.xlsx. Close the file if opened."
             NO_run.run_msg(gui, msg)
     if "Excel" in settings['output']: 
         try:
@@ -205,11 +194,7 @@ def compare_outputs(settings, gui=""):
             NV_excel.create_excel(settings, base_df, base_output_meta_data, gui)
             NV_excel.create_excel(settings, second_df, second_output_meta_data, gui)
         except:
-            msg = (
-                    "ERROR Creating Excel File for single file "
-                    + file_name
-                    + ".xlsx."
-                )
+            msg = f"ERROR Creating Excel File for single file {file_name}.xlsx."
             NO_run.run_msg(gui, msg)
     if "Visio" in settings['output']:
         try:
@@ -217,11 +202,7 @@ def compare_outputs(settings, gui=""):
             nvv.create_visio(settings, base_df, base_output_meta_data, gui)
             nvv.create_visio(settings, second_df, second_output_meta_data, gui)
         except:
-            msg = (
-                    "ERROR Creating Visio File for single file "
-                    + file_name
-                    + ".xlsx."
-                )
+            msg = f"ERROR Creating Visio File for single file {file_name}.xlsx."
             NO_run.run_msg(gui, msg)
     if "Route" in settings["output"]:  # Route data
         try:
@@ -240,25 +221,27 @@ def dictionary_to_list(dic):
     return new_list
 
 def remove_columns(df_list):
-    #Removes columns that are strings so comparision can be completed.
-    df_list[0].drop(['ID','Title'], axis =1, inplace = True)
-    df_list[1].drop('ID', axis =1, inplace = True)
+    """Removes columns that are strings so comparison can be completed."""
+    for df in df_list:
+        # Select only columns with object (string) dtype and drop them
+        string_columns = df.select_dtypes(include=['object']).columns
+        if len(string_columns) > 0:
+            df.drop(columns=string_columns, inplace=True)
     return df_list
 
 if __name__ == "__main__":
-    directory_str = 'C:\\Simulations\\Test\\Compare\\'
+    directory_str = 'C:\\Simulations\\Test\\'
     ses_output_list = [
-        directory_str + 'sinorm-detailed.out', 
-        directory_str + 'sinorm-detailed-sup.out'
+        directory_str + 'TestIP01.no', 
+        directory_str + 'TestIP01.h5'
         ]
     settings = {
         "ses_output_str": ses_output_list,
         "visio_template": None,
         "simtime": 9999.0,
         "conversion": "",
-        "control": "First",
-        "output": ["Excel"],
-        "file_type": "output_file",
+        "output": [""],
+        "file_type": "H5_file",
         "path_exe": "C:\\Simulations\\_EXE\\SESV6_32.exe"
     }
     import datetime

@@ -7,7 +7,7 @@
 
 
 Set-Location "c:\bin\code"
-..\python3.13\Scripts\Activate.ps1
+..\python313\Scripts\Activate.ps1
 Remove-Item "C:\Bin\code\*.*" -Force
 
 # Prompt the user for confirmation
