@@ -5,7 +5,7 @@
 # This file is licensed under the MIT License.
 # You may obtain a copy of the license at https://opensource.org/licenses/MIT
 
-VERSION_NUMBER = "1.4.E" # Faster Paser Code
+VERSION_NUMBER = "1.4.G" # Faster Paser Code
 """ Veresion Log
     1.3.1 Last released version
     1.4.B Added Train Supplementary Data
@@ -13,6 +13,7 @@ VERSION_NUMBER = "1.4.E" # Faster Paser Code
     1.4.D Updated Parser for abbreviated prints and faster processing
     1.4.E Added Summary Feature
     1.4.F Major changes- Eliminate result folder option, move summary to main gui
+    1.4.G Faster Excel writing and file parsing
     """
 
 

@@ -50,7 +50,7 @@ def create_excel(settings, data, output_meta_data, gui=""):
     try:
         #Write the excel file to memory, then later in a file
         bio = BytesIO()
-        with pd.ExcelWriter(bio, engine="xlsxwriter") as writer:
+        with pd.ExcelWriter(bio, engine="xlsxwriter", engine_kwargs={'options': {'strings_to_numbers': False}}) as writer:
             # Set color based on SES Version of IP or SI
             if output_meta_data['ses_version'] == "SI from IP":
                 color_code = "#4BACC6" #Blue
@@ -58,22 +58,18 @@ def create_excel(settings, data, output_meta_data, gui=""):
                 color_code = "#8064A2" #Purple
             else:
                 color_code = "#F07F09" #Orange
-            # Format options for title and headers
+            # Format options for title and headers - create once for all sheets
             format_titles = writer.book.add_format() #For Titles on top
             format_titles.set_bold()
             format_index_header = writer.book.add_format() #Index on lefthand side
             format_index_header.set_bold()
             format_index_header.set_bg_color(color_code)
-            format_index_header.set_border(1)
-            format_titles = writer.book.add_format()
-            format_titles.set_bold()
             format_value_header = writer.book.add_format() #Values to right of index
             format_value_header.set_bold()
             format_value_header.set_bg_color(color_code)
-            format_value_header.set_border(1)
-            format_value_header.set_rotation(45)
             format_units = writer.book.add_format()
             format_units.set_align('center')
+            
             for item in data.values():
                 item.to_excel(writer, sheet_name=item.name, merge_cells=False, startrow=df_startrow)
                 worksheet = writer.sheets[item.name]
@@ -85,19 +81,24 @@ def create_excel(settings, data, output_meta_data, gui=""):
                     i += 1
                 # Get name of "Data:" column from worksheet name
                 worksheet.write(df_startrow-2, 1, SHEET_NAMES.get(item.name[:3]))
-                # Add autofilters to header data
-                worksheet.autofilter(df_startrow,0,worksheet.dim_rowmax,worksheet.dim_colmax)
                 # Freeze cells
                 freeze_column_max = len(item.index.names)
                 worksheet.freeze_panes(df_startrow + 1,freeze_column_max)
-                # Format headers of index of dataframe
+                # Add autofilters to header row only (more efficient than entire dataset)
+                max_col = freeze_column_max + len(item.columns) - 1
+                worksheet.autofilter(df_startrow, 0, df_startrow, max_col)
+                # Format headers of index of dataframe - use row formatting for efficiency
                 for i in range(len(item.index.names)):
                     worksheet.write(df_startrow, i, item.index.names[i], format_index_header)
-                # Format headers of values and add unit name
-                unit_row = df_startrow -1
+                # Format the entire header row for value columns at once
+                if len(item.columns) > 0:
+                    worksheet.set_row(df_startrow, None, format_value_header)
+                # Write headers of values and add unit names
+                unit_row = df_startrow - 1
                 for i in range(len(item.columns)):
                     column = i + freeze_column_max
-                    worksheet.write(df_startrow, column, item.columns[i], format_value_header)
+                    # Write column name (row format already applied above)
+                    worksheet.write_string(df_startrow, column, item.columns[i])
                     if item.columns[i] in NO_constants.COLUMN_UNITS:
                         value = NO_constants.COLUMN_UNITS[item.columns[i]][unit_index]
                         worksheet.write(unit_row, column, value, format_units)
@@ -108,7 +109,7 @@ def create_excel(settings, data, output_meta_data, gui=""):
                 'author':   ("Next Out " + NO_constants.VERSION_NUMBER)
             })
     except:
-        NO_run.run_msg(gui, "ERROR creating Excel file "+ excel_results_path.name + " in MEMORY before writing. Contact Justin@NeverGray.biz for this strange error.")
+        NO_run.run_msg(gui, f"ERROR creating Excel file {excel_results_path.name} in MEMORY before writing. Contact Justin@NeverGray.biz for this strange error.")
     try:
         # TODO Detect if file can be removed or not
         with open(excel_results_path, "wb") as outfile:  
@@ -116,17 +117,13 @@ def create_excel(settings, data, output_meta_data, gui=""):
                 try:
                     outfile.write(bio.getvalue())
                 except:
-                    print(
-                        "Error writing "
-                        + file_name
-                        + ".xlsx. Try closing file and trying again."
-                    )
-        NO_run.run_msg(gui, "Created Excel file " + excel_results_path.name)
+                    print(f"Error writing {file_name}.xlsx. Try closing file and trying again.")
+        NO_run.run_msg(gui, f"Created Excel file {excel_results_path.name}")
     except:
-        NO_run.run_msg(gui, "ERROR writing Excel file "+ excel_results_path.name + ". Try closing file and process again.")
+        NO_run.run_msg(gui, f"ERROR writing Excel file {excel_results_path.name}. Try closing file and process again.")
 
 if __name__ == "__main__":
-    file_path_string = "C:/Simulations/Testing/SES-119 002.out"
+    file_path_string = "C:/Simulations/Test/Test.PRN"
     visio_template = "C:/Simulations/2022-01-22/Next Vis Samples1p21.vsdx"
     settings = {
         "ses_output_str": [file_path_string],
@@ -150,7 +147,7 @@ if __name__ == "__main__":
     create_excel(settings, data, output_meta_data)
     prof.disable()
     end_create_excel = time.perf_counter()
-    print(f"Time for create_excel {end_create_excel - start_create_excel:0.4f} seconds")
+    print(f"OPTIMIZED VERSION - Time for create_excel {end_create_excel - start_create_excel:0.4f} seconds")
     # NO_run.single_sim(settings)
     # prof.print_stats()
-    prof.dump_stats("C:/Simulations/Testing/NV 1p16 xlsxwriter.prof")
+    prof.dump_stats("C:/Simulations/Test/xlsxwriter_optimized.prof")

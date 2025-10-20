@@ -1,5 +1,5 @@
 Set-Location c:\bin
-python3.13\scripts\activate
+python313\scripts\activate
 pip install pandas
 pip install xlsxwriter
 pip install pyinstaller
