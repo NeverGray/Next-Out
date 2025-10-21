@@ -10,6 +10,18 @@ import logging
 import pandas as pd
 from pathlib import Path, PosixPath
 
+# Explicitly import tables to ensure PyInstaller bundles it
+try:
+    import tables
+except ImportError:
+    tables = None
+
+# Import h5py as fallback
+try:
+    import h5py
+except ImportError:
+    h5py = None
+
 def can_write_file(file_path, gui=""):
     """
     Check if a file can be written to (not locked/open in another program).
@@ -72,8 +84,37 @@ def save_h5_file(data, output_meta_data, settings=None):
     else:
         no_file_path = get_results_path2(output_meta_data, '.h5')
     
-    # Save DataFrames to HDF5 with compression
-    with pd.HDFStore(no_file_path, mode='w', complevel=9, complib='blosc') as store:
+    # Always use h5py for writing (more reliable with PyInstaller)
+    if h5py is not None:
+        try:
+            _save_h5_with_h5py(data, output_meta_data, no_file_path)
+            logging.info(f"{no_file_path} created with h5py.")
+            return
+        except Exception as e:
+            raise Exception(f"Failed to save H5 file to {no_file_path} with h5py: {str(e)}") from e
+    
+    # Fallback to PyTables if h5py is not available (for development/script mode)
+    if tables is not None:
+        try:
+            _save_h5_with_pytables(data, output_meta_data, no_file_path)
+            logging.info(f"{no_file_path} created with PyTables.")
+            return
+        except Exception as e:
+            raise Exception(f"Failed to save H5 file to {no_file_path} with PyTables: {str(e)}") from e
+    
+    # Neither library available
+    raise ImportError(
+        "Neither h5py nor PyTables is available. H5 file creation requires one of these packages."
+    )
+
+def _save_h5_with_pytables(data, output_meta_data, no_file_path):
+    """Save using PyTables (pd.HDFStore) - for development/script mode only"""
+    try:
+        complib = 'blosc'
+    except:
+        complib = 'zlib'
+    
+    with pd.HDFStore(no_file_path, mode='w', complevel=9, complib=complib) as store:
         # Save all DataFrames from data dictionary
         for key, value in data.items():
             if isinstance(value, pd.DataFrame):
@@ -101,8 +142,116 @@ def save_h5_file(data, output_meta_data, settings=None):
         # Save metadata as attributes on the SSA DataFrame
         if metadata:
             store.get_storer('data/SSA').attrs.metadata = metadata
+
+def _save_h5_with_h5py(data, output_meta_data, no_file_path):
+    """Save using h5py (compatible with PyInstaller)"""
+    import numpy as np
     
-    logging.info(f"{no_file_path} created.")
+    with h5py.File(no_file_path, 'w') as f:
+        # Create data group
+        data_grp = f.create_group('data')
+        
+        # Save all DataFrames from data dictionary
+        for key, value in data.items():
+            if isinstance(value, pd.DataFrame):
+                # Reset index to save it as columns
+                df_reset = value.reset_index()
+                # Create dataset for this dataframe
+                key_grp = data_grp.create_group(key)
+                # Save column names
+                key_grp.attrs['columns'] = [str(c) for c in df_reset.columns]
+                key_grp.attrs['index_names'] = [str(n) for n in value.index.names]
+                # Save each column
+                for col in df_reset.columns:
+                    col_data = df_reset[col].values
+                    # Handle different dtypes
+                    if col_data.dtype == 'object' or col_data.dtype.kind == 'U':
+                        # Convert to byte strings for h5py compatibility
+                        col_data = np.array([str(x).encode('utf-8') for x in col_data])
+                        key_grp.create_dataset(str(col), data=col_data, compression='gzip', compression_opts=9)
+                    else:
+                        # Numeric data - save directly
+                        key_grp.create_dataset(str(col), data=col_data, compression='gzip', compression_opts=9)
+        
+        # Create metadata group
+        meta_grp = f.create_group('metadata')
+        for key, value in output_meta_data.items():
+            if isinstance(value, pd.DataFrame):
+                # Save DataFrame metadata
+                df_reset = value.reset_index()
+                key_grp = meta_grp.create_group(key)
+                key_grp.attrs['columns'] = [str(c) for c in df_reset.columns]
+                for col in df_reset.columns:
+                    col_data = df_reset[col].values
+                    if col_data.dtype == 'object' or col_data.dtype.kind == 'U':
+                        col_data = np.array([str(x).encode('utf-8') for x in col_data])
+                    key_grp.create_dataset(str(col), data=col_data, compression='gzip', compression_opts=9)
+            elif isinstance(value, (dict, list)):
+                meta_grp.attrs[key] = json.dumps(value)
+            elif isinstance(value, Path):
+                meta_grp.attrs[key] = str(value)
+            elif value is not None:
+                try:
+                    meta_grp.attrs[key] = value
+                except (TypeError, ValueError):
+                    meta_grp.attrs[key] = str(value)
+
+def _read_h5_with_h5py(no_file_path):
+    """Read H5 file using h5py"""
+    import numpy as np
+    
+    data = {}
+    output_meta_data = {}
+    
+    with h5py.File(no_file_path, 'r') as f:
+        # Read data group
+        if 'data' in f:
+            for key in f['data']:
+                key_grp = f['data'][key]
+                columns = [c.decode('utf-8') if isinstance(c, bytes) else str(c) for c in key_grp.attrs['columns']]
+                index_names = [n.decode('utf-8') if isinstance(n, bytes) else str(n) for n in key_grp.attrs.get('index_names', [])]
+                col_data = {}
+                for col in columns:
+                    arr = key_grp[col][()]
+                    # Decode bytes to string if needed
+                    if arr.dtype.kind in {'S', 'O', 'U'}:
+                        arr = np.array([x.decode('utf-8') if isinstance(x, bytes) else x for x in arr])
+                    col_data[col] = arr
+                df = pd.DataFrame(col_data)
+                if index_names and all(n in df.columns for n in index_names):
+                    df.set_index(index_names, inplace=True)
+                df.name = key
+                data[key] = df
+        
+        # Read metadata group
+        if 'metadata' in f:
+            meta_grp = f['metadata']
+            for key in meta_grp:
+                key_grp = meta_grp[key]
+                columns = [c.decode('utf-8') if isinstance(c, bytes) else str(c) for c in key_grp.attrs['columns']]
+                col_data = {}
+                for col in columns:
+                    arr = key_grp[col][()]
+                    if arr.dtype.kind in {'S', 'O', 'U'}:
+                        arr = np.array([x.decode('utf-8') if isinstance(x, bytes) else x for x in arr])
+                    col_data[col] = arr
+                df = pd.DataFrame(col_data)
+                output_meta_data[key] = df
+            
+            # Read metadata attributes
+            for key, value in meta_grp.attrs.items():
+                if isinstance(value, bytes):
+                    value = value.decode('utf-8')
+                # Try to parse JSON
+                if isinstance(value, str) and (value.startswith('{') or value.startswith('[')):
+                    try:
+                        output_meta_data[key] = json.loads(value)
+                    except Exception:
+                        output_meta_data[key] = value
+                else:
+                    output_meta_data[key] = value
+    
+    return data, output_meta_data
 
 # Read the data and output_meta_data from the HDF5 file
 def read_h5_file(file_path):
@@ -122,38 +271,61 @@ def read_h5_file(file_path):
         raise FileNotFoundError(f"Neither {no_file_path_h5} nor {no_file_path_legacy} found")
     
     if use_hdf5:
-        # Read from HDF5
+        # Try h5py first (more reliable with PyInstaller), fall back to PyTables
         data = {}
         output_meta_data = {}
         
-        with pd.HDFStore(no_file_path, mode='r') as store:
-            # Read all data DataFrames
-            for key in store.keys():
-                if key.startswith('/data/'):
-                    df_key = key.replace('/data/', '')
-                    data[df_key] = store[key]
-                    data[df_key].name = df_key
-                elif key.startswith('/metadata/'):
-                    # Read DataFrame metadata
-                    meta_key = key.replace('/metadata/', '')
-                    output_meta_data[meta_key] = store[key]
-            
-            # Read metadata attributes from the SSA DataFrame
-            metadata = store.get_storer('data/SSA').attrs.metadata
-            for key, value in metadata.items():
-                if key not in output_meta_data:  # Don't overwrite DataFrame metadata
-                    # Try to parse JSON strings back to original types
-                    if isinstance(value, str) and (value.startswith('{') or value.startswith('[')):
-                        try:
-                            output_meta_data[key] = json.loads(value)
-                        except json.JSONDecodeError:
-                            output_meta_data[key] = value
-                    else:
-                        output_meta_data[key] = value
+        if h5py is not None:
+            try:
+                data, output_meta_data = _read_h5_with_h5py(no_file_path)
+                if 'file_path' in output_meta_data and isinstance(output_meta_data['file_path'], str):
+                    output_meta_data['file_path'] = Path(output_meta_data['file_path'])
+                return data, output_meta_data
+            except Exception as e:
+                # If h5py fails, try PyTables
+                if tables is None:
+                    raise Exception(f"Failed to read H5 file with h5py and PyTables not available: {e}") from e
+                logging.warning(f"h5py read failed, trying PyTables: {e}")
         
-        # Convert file_path back to Path object if it exists
-        if 'file_path' in output_meta_data and isinstance(output_meta_data['file_path'], str):
-            output_meta_data['file_path'] = Path(output_meta_data['file_path'])
+        # Read with PyTables
+        if tables is not None:
+            try:
+                with pd.HDFStore(no_file_path, mode='r') as store:
+                    # Read all data DataFrames
+                    for key in store.keys():
+                        if key.startswith('/data/'):
+                            df_key = key.replace('/data/', '')
+                            data[df_key] = store[key]
+                            data[df_key].name = df_key
+                        elif key.startswith('/metadata/'):
+                            # Read DataFrame metadata
+                            meta_key = key.replace('/metadata/', '')
+                            output_meta_data[meta_key] = store[key]
+                    
+                    # Read metadata attributes from the SSA DataFrame if it exists
+                    if 'data/SSA' in store:
+                        try:
+                            metadata = store.get_storer('data/SSA').attrs.metadata
+                            for key, value in metadata.items():
+                                if key not in output_meta_data:
+                                    if isinstance(value, str) and (value.startswith('{') or value.startswith('[')):
+                                        try:
+                                            output_meta_data[key] = json.loads(value)
+                                        except json.JSONDecodeError:
+                                            output_meta_data[key] = value
+                                    else:
+                                        output_meta_data[key] = value
+                        except Exception as e:
+                            logging.warning(f"Could not read metadata from 'data/SSA': {e}")
+                
+                if 'file_path' in output_meta_data and isinstance(output_meta_data['file_path'], str):
+                    output_meta_data['file_path'] = Path(output_meta_data['file_path'])
+                return data, output_meta_data
+            except Exception as e:
+                raise Exception(f"Failed to read H5 file with PyTables: {e}") from e
+        
+        # Neither library available
+        raise ImportError("Neither h5py nor PyTables is available for reading H5 files.")
     else:
         # Legacy pickle format - keep for backward compatibility
         import gzip
