@@ -1226,6 +1226,7 @@ def sum_parser(lines, time):  # Parser for summary portion of output, between ti
                             data_esc.append(item)
                         i = end_line
                         # This is the last line
+                    break  # Stop checking other patterns once we found a match
         i += 1
     return None
 
@@ -1264,7 +1265,7 @@ def summary_of_simulation_parser(p_lines, time):
                     else:
                         data_sub.append(m_dict)
                         last_segment = m_dict["Segment"]
-                    break
+                    break  # Stop checking other patterns once we found a match
         i += 1
     return True
 

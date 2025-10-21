@@ -99,7 +99,8 @@ def compare_outputs(settings, gui=""):
                 # Code based on https://stackoverflow.com/questions/32957441/putting-many-python-pandas-dataframes-to-one-excel-worksheet
                 for i in range(len(p_e_summary)):
                     sum_col = len(diff[i].index.names) - 1  # Aligns summary column
-                    data_col = len(diff[i].index.names) + len(diff[i].columns)
+                    data_col_diff = len(diff[i].index.names) + len(diff[i].columns)
+                    data_col_orig = len(base_data[i].index.names) + len(base_data[i].columns)
                     s_name = p_e_summary[i].name
                     title = "Next-Out Sheet: " + s_name
                     n = 0
@@ -126,48 +127,50 @@ def compare_outputs(settings, gui=""):
                     ws.write(data_row - 2, 0, "Data", format_underline)
                     ws.write_string(2, sum_col, p_e_text)
                     ws.write_string(data_row - 1, 0, p_e_text)
-                    n += 1
-                    startcol_num = data_col * n + n
+                    
+                    # Calculate column positions sequentially
+                    # Section 1: Percent Error (p_e) - already written at column 0
+                    col_after_pe = data_col_diff + 1  # gap after p_e
+                    
+                    # Section 2: Difference (diff)
                     diff_summary[i].to_excel(
                         writer,
                         sheet_name=s_name,
                         merge_cells=False,
                         startrow=start_summary_row,
-                        startcol=sum_col + startcol_num,
+                        startcol=sum_col + col_after_pe,
                     )
                     diff[i].to_excel(
                         writer,
                         sheet_name=s_name,
                         merge_cells=False,
                         startrow=data_row,
-                        startcol=startcol_num,
+                        startcol=col_after_pe,
                     )
-                    n = 1
-                    startcol_num = (data_col * n + n) + 1
-                    ws.write_string(2, startcol_num, diff_text)
-                    ws.write_string(data_row - 1, startcol_num, diff_text)
-                    n += 1
-                    startcol_num = data_col * n + n
+                    ws.write_string(2, col_after_pe + 1, diff_text)
+                    ws.write_string(data_row - 1, col_after_pe + 1, diff_text)
+                    col_after_diff = col_after_pe + data_col_diff + 1  # gap after diff
+                    
+                    # Section 3: Second file data (original columns)
                     second_data[i].to_excel(
                         writer,
                         sheet_name=s_name,
                         merge_cells=False,
                         startrow=data_row,
-                        startcol=startcol_num,
+                        startcol=col_after_diff,
                     )
-                    startcol_num = (data_col * n + n) + 1
-                    ws.write_string(data_row - 1, startcol_num, second_path.name)
-                    n += 1
-                    startcol_num = data_col * n + n
+                    ws.write_string(data_row - 1, col_after_diff + 1, second_path.name)
+                    col_after_second = col_after_diff + data_col_orig + 1  # gap after second
+                    
+                    # Section 4: Base file data (original columns)
                     base_data[i].to_excel(
                         writer,
                         sheet_name=s_name,
                         merge_cells=False,
                         startrow=data_row,
-                        startcol=startcol_num,
+                        startcol=col_after_second,
                     )
-                    startcol_num = (data_col * n + n) + 1
-                    ws.write_string(data_row - 1, startcol_num, base_path.name)
+                    ws.write_string(data_row - 1, col_after_second + 1, base_path.name)
                     # Freeze panes
                     ws.freeze_panes(data_row + 1, len(p_e[i].index.names) + 1)
                 # Set workbook properties
@@ -232,8 +235,8 @@ def remove_columns(df_list):
 if __name__ == "__main__":
     directory_str = 'C:\\Simulations\\Test\\'
     ses_output_list = [
-        directory_str + 'TestIP01.no', 
-        directory_str + 'TestIP01.h5'
+        directory_str + 'Test.no', 
+        directory_str + 'Test.h5'
         ]
     settings = {
         "ses_output_str": ses_output_list,
