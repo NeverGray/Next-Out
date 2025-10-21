@@ -23,6 +23,20 @@ class command_line_screen(tk.Tk):
         py = "3"  # vertical padding
         px = "3"
         self.title("Next-Out " + VERSION_NUMBER +" Command Line Monitor ")
+        
+        # Set window icon
+        try:
+            from pathlib import Path
+            import sys
+            if getattr(sys, 'frozen', False):
+                icon_path = Path(sys._MEIPASS) / 'NO_Icon.ico'
+            else:
+                icon_path = Path(__file__).parent / 'NO_Icon.ico'
+            if icon_path.exists():
+                self.iconbitmap(str(icon_path))
+        except:
+            pass
+        
         style = ttk.Style()
         style.theme_use('winnative') #TODO Look at other styles
         self.ss = ttk.Frame(padding=p)  # start screen

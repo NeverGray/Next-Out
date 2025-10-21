@@ -10,8 +10,10 @@ Set-Location "c:\bin\code"
 ..\python313\Scripts\Activate.ps1
 Remove-Item "C:\Bin\code\*.*" -Force
 
-# Prompt the user for confirmation
 Copy-Item "$PSScriptRoot\*.py" "C:\bin\code\"
 Copy-Item "$PSScriptRoot\NO_Icon.ico" "C:\bin\code\"
-pyinstaller -F main.py --noconsole --onefile  --icon NO_Icon.ico --exclude matplotlib --exclude scipy --exclude unittest
+# Exclude large unused libraries: matplotlib, scipy, PIL, test frameworks, pandas I/O modules not used
+pyinstaller -F main.py --noconsole --onefile --icon NO_Icon.ico --add-data "NO_Icon.ico;." `
+    --exclude matplotlib --exclude scipy --exclude PIL --exclude unittest --exclude test --exclude tests `
+    --hidden-import=h5py
 Rename-Item -Path "C:\Bin\code\dist\main.exe" -NewName "Next-Out.exe"

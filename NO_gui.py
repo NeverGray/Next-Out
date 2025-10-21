@@ -26,6 +26,25 @@ class Start_Screen(tk.Tk):
         py = "3"  # vertical padding
         px = "3"
         self.title("Next-Out " + VERSION_NUMBER)
+        
+        # Set window icon
+        try:
+            from pathlib import Path
+            import sys
+            # Get the directory where the script/executable is located
+            if getattr(sys, 'frozen', False):
+                # Running as compiled executable
+                icon_path = Path(sys._MEIPASS) / 'NO_Icon.ico'
+            else:
+                # Running as script
+                icon_path = Path(__file__).parent / 'NO_Icon.ico'
+            
+            if icon_path.exists():
+                self.iconbitmap(str(icon_path))
+        except Exception as e:
+            # If icon can't be loaded, just continue with default
+            pass
+        
         style = ttk.Style()
         style.theme_use('winnative')
 

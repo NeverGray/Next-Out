@@ -74,7 +74,7 @@ def compare_h5_versions(old_dir, new_dir, old_ext=".no", new_ext=".h5"):
 if __name__ == "__main__":
     # Compare H5 files between Next-Out versions
     old_version_dir = "C:\\Simulations\\Next-Out 1.3.1 Results"
-    new_version_dir = "C:\\Simulations\\Next-out 1.4.I Results"
+    new_version_dir = "C:\\Simulations\\Next-out 1.4.J Results"
     
     print("="*80)
     print("Next-Out Version Comparison Tool")

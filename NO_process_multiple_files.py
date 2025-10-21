@@ -118,8 +118,8 @@ def single_process(
                         no_file_path = NO_file_tools.get_results_path2(output_meta_data, ".no")
                         no_file_paths.append(no_file_path)
                         logging.info(f"Finished saving {no_file_path}")
-                    except:
-                        logging.info(f"Error creating H5 File for {name}")
+                    except Exception as e:
+                        logging.error(f"Error creating H5 File for {name}: {str(e)}")
             process_status[value_index["Read Output"]] = "Done"
             processing_dictionary[pid] = process_status
             logging.info(f"Finished Parsing {name}")
@@ -229,6 +229,19 @@ class Monitor_GUI(tk.Toplevel):
         self.in_progress = True
         p = "5"  # padding
         self.title("Next-Out " + VERSION_NUMBER + " Monitor")
+        
+        # Set window icon
+        try:
+            from pathlib import Path
+            import sys
+            if getattr(sys, 'frozen', False):
+                icon_path = Path(sys._MEIPASS) / 'NO_Icon.ico'
+            else:
+                icon_path = Path(__file__).parent / 'NO_Icon.ico'
+            if icon_path.exists():
+                self.iconbitmap(str(icon_path))
+        except:
+            pass
         self.c_width = 15
         self.font_size = 12
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -642,6 +655,20 @@ class App(tk.Tk):
         self.settings = settings
         self.geometry("300x200")
         self.title("Main Window")
+        
+        # Set window icon
+        try:
+            from pathlib import Path
+            import sys
+            if getattr(sys, 'frozen', False):
+                icon_path = Path(sys._MEIPASS) / 'NO_Icon.ico'
+            else:
+                icon_path = Path(__file__).parent / 'NO_Icon.ico'
+            if icon_path.exists():
+                self.iconbitmap(str(icon_path))
+        except:
+            pass
+        
         # place a button on the root window
         ttk.Button(
             self, text="Start processes and monitor", command=self.open_window

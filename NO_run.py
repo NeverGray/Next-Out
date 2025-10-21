@@ -63,12 +63,10 @@ def single_sim(settings, gui=""):
                 try:
                     NO_file_tools.save_h5_file(data, output_meta_data, settings)
                     run_msg(gui, "Created H5 File for " + file_name + ".")
-                except:
+                except Exception as e:
                     run_msg(
                         gui,
-                        "ERROR creating No File for "
-                        + file_name
-                        + "."
+                        f"ERROR creating H5 File for {file_name}: {str(e)}"
                     )
         elif settings["file_type"] == "H5_file":
             data, output_meta_data = NO_file_tools.read_h5_file(file_path)
