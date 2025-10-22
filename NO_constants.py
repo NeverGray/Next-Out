@@ -5,7 +5,7 @@
 # This file is licensed under the MIT License.
 # You may obtain a copy of the license at https://opensource.org/licenses/MIT
 
-VERSION_NUMBER = "1.4.J"  # Fixed ABB parser issue with negative segment numbers
+VERSION_NUMBER = "1.5"  # Fixed ABB parser issue with negative segment numbers
 """ Veresion Log
     1.3.1 Last released version
     1.4.B Added Train Supplementary Data
@@ -16,7 +16,8 @@ VERSION_NUMBER = "1.4.J"  # Fixed ABB parser issue with negative segment numbers
     1.4.G Faster Excel writing and file parsing
     1.4.H Fixed ABB parser issue with negative segment numbers
     1.4.I Continued fixing parser issues with ABB files
-    1.4.J Fixing compiling issues
+    1.4.J Fixing compiling issues - Sent out for reviews.
+    1.5 Start Renaming Scripts
     """
 
 

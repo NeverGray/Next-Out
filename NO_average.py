@@ -16,6 +16,7 @@ import NO_run
 import NO_file_tools
 
 def average_outputs(settings, gui=""):
+    # TODO Update to use NO_GUI_multifile_monitor
     df_by_type = {}
     first_iteration = True
     # For each ses_output, add dataframes to a Dictionary organized by data type ('SSA', 'SST', etc...) 

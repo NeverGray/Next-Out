@@ -10,7 +10,7 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import messagebox, ttk
 
-import NO_process_multiple_files
+import NO_GUI_multifile_monitor
 import NO_run
 from NO_constants import VERSION_NUMBER
 
@@ -150,8 +150,8 @@ class command_line_screen(tk.Tk):
         self.ss.update()
 
     def open_monitor_gui(self):
-        manager = NO_process_multiple_files.Manager_Class()
-        window = NO_process_multiple_files.Monitor_GUI(self, manager, self.settings)
+        manager = NO_GUI_multifile_monitor.Manager_Class()
+        window = NO_GUI_multifile_monitor.Monitor_GUI(self, manager, self.settings)
         window.focus_force()
         window.grab_set()
 

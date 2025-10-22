@@ -10,40 +10,15 @@ from pathlib import Path
 
 import pandas as pd
 
-import NO_Excel_R01 as NV_excel
-import NO_visio as nvv
-import NO_route
-import NO_parser
 import NO_run
 import NO_file_tools
 
 def compare_outputs(settings, gui=""):
     #IF these are input files, perform SES simulations
-    if settings["file_type"] in ["input_file", "output_file"]:
-        if settings["file_type"] == "input_file":
-            for i in range(2):
-                msg = f"Running SES Simulation for {Path(settings['ses_output_str'][i]).name}"
-                NO_run.run_msg(gui, msg)
-                success = NO_run.run_SES(settings["path_exe"], settings["ses_output_str"][i], gui)
-                if success:
-                    settings["ses_output_str"][i] = NO_file_tools.output_from_input(settings["ses_output_str"][i], settings["path_exe"])
-                    settings["file_type"] = "output_file"
-                else:
-                    msg = f"Post-processing is stopped for {settings['ses_output_str'][i]}.\n"
-                    NO_run.run_msg(gui, msg)
-                    return    
-        base_file = Path(settings["ses_output_str"][0])
-        second_file = Path(settings["ses_output_str"][1])
-        base_df, base_output_meta_data = NO_parser.parse_file(base_file, gui, settings['conversion'])
-        second_df, second_output_meta_data = NO_parser.parse_file(second_file, gui, settings['conversion'])
-        if "H5_file" in settings['output']:
-            NO_file_tools.save_h5_file(base_df, base_output_meta_data, settings)
-            NO_file_tools.save_h5_file(second_df, second_output_meta_data, settings)
-    elif settings["file_type"] == "H5_file":
-        base_file = Path(settings["ses_output_str"][0])
-        second_file = Path(settings["ses_output_str"][1])
-        base_df, base_output_meta_data = NO_file_tools.read_h5_file(base_file)
-        second_df, second_output_meta_data = NO_file_tools.read_h5_file(second_file)
+    base_file = Path(settings["ses_output_str"][0])
+    second_file = Path(settings["ses_output_str"][1])
+    base_df, base_output_meta_data = NO_file_tools.read_h5_file(base_file)
+    second_df, second_output_meta_data = NO_file_tools.read_h5_file(second_file)
     base_data = dictionary_to_list(base_df)
     second_data = dictionary_to_list(second_df)
     num_df = len(base_data)
@@ -191,31 +166,6 @@ def compare_outputs(settings, gui=""):
         except:
             msg = f"CRITICAL ERROR! Constructing (not saving) Excel File {file_name}.xlsx. Close the file if opened."
             NO_run.run_msg(gui, msg)
-    if "Excel" in settings['output']: 
-        try:
-
-            NV_excel.create_excel(settings, base_df, base_output_meta_data, gui)
-            NV_excel.create_excel(settings, second_df, second_output_meta_data, gui)
-        except:
-            msg = f"ERROR Creating Excel File for single file {file_name}.xlsx."
-            NO_run.run_msg(gui, msg)
-    if "Visio" in settings['output']:
-        try:
- 
-            nvv.create_visio(settings, base_df, base_output_meta_data, gui)
-            nvv.create_visio(settings, second_df, second_output_meta_data, gui)
-        except:
-            msg = f"ERROR Creating Visio File for single file {file_name}.xlsx."
-            NO_run.run_msg(gui, msg)
-    if "Route" in settings["output"]:  # Route data
-        try:
-            NO_route.create_route_excel(settings, base_df, base_output_meta_data, gui)
-            NO_route.create_route_excel(settings, second_df, second_output_meta_data, gui)
-        except:
-            msg = "Error creating Route Data Excel Files"
-            NO_run.run_msg(gui,msg)
-    msg = "DONE! Compare and outputs complete."
-    NO_run.run_msg(gui,msg)
 
 def dictionary_to_list(dic):
     new_list = []
@@ -235,8 +185,8 @@ def remove_columns(df_list):
 if __name__ == "__main__":
     directory_str = 'C:\\Simulations\\Test\\'
     ses_output_list = [
-        directory_str + 'Test.no', 
-        directory_str + 'Test.h5'
+        directory_str + 'normal.no', 
+        directory_str + 'normal.h5'
         ]
     settings = {
         "ses_output_str": ses_output_list,

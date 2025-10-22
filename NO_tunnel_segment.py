@@ -1,3 +1,10 @@
+# Project Name: Next-Out
+# Description: Populate Visio Stencils from dataframes.
+# Copyright (c) 2024 Justin Edenbaum, Never Gray
+#
+# This file is licensed under the MIT License.
+# You may obtain a copy of the license at https://opensource.org/licenses/MIT
+
 import pandas as pd
 
 from NO_constants import IP_TO_SI as IP_TO_SI

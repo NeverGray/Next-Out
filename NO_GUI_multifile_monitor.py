@@ -24,14 +24,14 @@ import NO_file_tools
 import NO_average
 import NO_summary
 from NO_constants import VERSION_NUMBER
-import NO_process_multiple_files_progress as progress_tracker
+import NO_multifile_progress_bar as progress_tracker
 
 # logging.disable(logging.CRITICAL)
 logging.basicConfig(
     level=logging.DEBUG, format=" %(asctime)s -  %(levelname)s -  %(message)s"
 )
 
-UPDATE_FREQUENCY = 1000  # vALUE IN MILLISECONDS
+UPDATE_FREQUENCY = 200  # vALUE IN MILLISECONDS
 #COLUMN_HEADERS = ("PID", "File", "Simulation", "Read Output", "Visio", "Excel", "Route")
 DEFAULT_WIDTH = 10
 COLUMN_HEADERS_AND_WIDTH = {

@@ -9,8 +9,8 @@ import argparse
 import ast
 import multiprocessing #Needed for compiled (*.exe) version
 
-import NO_gui
-import NO_command_line
+import NO_GUI_main
+import NO_GUI_command_line
 
 def main():
     # Set up argument parser
@@ -24,12 +24,12 @@ def main():
         # Convert the settings string to a dictionary using ast.literal_eval
         settings = ast.literal_eval(args.settings)
         # Call the function with the parsed settings
-        app = NO_command_line.command_line_screen(settings)
+        app = NO_GUI_command_line.command_line_screen(settings)
         app.mainloop()
     else:
         # Launch the GUI
         multiprocessing.freeze_support()
-        NO_gui.launch_window()  # Assuming this is your GUI launch function
+        NO_GUI_main.launch_window()  # Assuming this is your GUI launch function
 
 if __name__ == "__main__":
     multiprocessing.freeze_support() #May be needed for compiled (*.exe) version

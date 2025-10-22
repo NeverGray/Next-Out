@@ -12,7 +12,7 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
-import NO_process_multiple_files
+import NO_GUI_multifile_monitor
 import NO_run
 import NO_compare
 import NO_summary
@@ -611,9 +611,17 @@ class Start_Screen(tk.Tk):
         if self.validation(self.settings):
             try:
                 # If only performing one individual simulation
-                if len(self.settings["ses_output_str"]) == 1:
-                    NO_run.single_sim(self.settings, gui=self)
-                    self.gui_text("Post processing completed.\n")
+                if len(self.settings["ses_output_str"]) == 1 or "Compare" in self.settings["output"]:
+                    if "Compare" in self.settings["output"] and len(self.settings["ses_output_str"]) != 2:
+                        messagebox.showinfo(title="Error", message="Need exactly 2 files to compare outputs.")
+                        self.gui_text("Error: Need exactly 2 files to compare outputs.\n")
+                        self.btn_run["state"] = tk.NORMAL
+                        self.btn_run["text"] = "Run"
+                        return
+                    else:
+                        #TODO Check len(self.settings["ses_output_str"]) == 2 for Compare Case
+                        NO_run.single_sim(self.settings, gui=self)
+                        self.gui_text("Post processing completed.\n")
                 elif "Compare" in self.settings["output"]:
                     NO_compare.compare_outputs(self.settings, gui=self)
                 elif self.parallel_process_files:
@@ -873,8 +881,8 @@ class Start_Screen(tk.Tk):
             self.destroy()
 
     def open_monitor_gui(self):
-        manager = NO_process_multiple_files.Manager_Class()
-        window = NO_process_multiple_files.Monitor_GUI(self, manager, self.settings)
+        manager = NO_GUI_multifile_monitor.Manager_Class()
+        window = NO_GUI_multifile_monitor.Monitor_GUI(self, manager, self.settings)
         window.focus_force()
         window.grab_set()
 
