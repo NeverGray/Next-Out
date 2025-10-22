@@ -11,9 +11,9 @@ from pathlib import Path
 import pandas as pd
 
 import NO_Excel_R01 as NV_excel
-import NO_parser
 import NO_run
 import NO_file_tools
+import NO_GUI_multifile_monitor
 
 def average_outputs(settings, gui=""):
     # TODO Update to use NO_GUI_multifile_monitor
@@ -25,29 +25,8 @@ def average_outputs(settings, gui=""):
     NO_run.run_msg(gui, msg)
     i = 1
     for ses_output in settings['ses_output_str']:
-        #Perform SES simulation if using an input file
-        #TODO - Use NO_process_multiple_files to run multiple simulations or read in output files
-        if settings["file_type"] == "input_file":
-            msg = "Running SES Simulation for " + Path(ses_output).name
-            NO_run.run_msg(gui, msg)
-            success = NO_run.run_SES(settings["path_exe"], ses_output, gui)
-            if success:
-                ses_output_path = NO_file_tools.output_from_input(ses_output, settings["path_exe"])
-                data, output_meta_data = NO_parser.parse_file(ses_output_path, gui, settings['conversion'])
-            else:
-                msg = "Post-processing is stopped for " + ses_output + ".\n"
-                NO_run.run_msg(gui, msg)
-                return
-        elif settings["file_type"] == "output_file":
-            ses_output_path = Path(ses_output)
-            data, output_meta_data = NO_parser.parse_file(ses_output_path, gui, settings['conversion'])
-        elif settings["file_type"] == "H5_file":
-            ses_output_path = Path(ses_output)
-            data, output_meta_data = NO_file_tools.read_h5_file(ses_output_path)
-        else:
-            msg = 'Something went wrong with averaging of the files.'
-            NO_run.run_msg(gui, msg)
-            return
+        ses_output_path = Path(ses_output)
+        data, output_meta_data = NO_file_tools.read_h5_file(ses_output_path)
         if first_iteration:
             # Create empty lists to append values to
             for key, value in data.items():
@@ -101,21 +80,15 @@ def average_outputs(settings, gui=""):
         output_meta_data['file_path'] = Path(both_ses_output_str)
         NV_excel.create_excel(settings, df, output_meta_data, gui)
 
-
 if __name__ == "__main__":
-    directory_str = 'C:\\Simulations\\Average Input Check\\'
-    ses_output_list = [
-        directory_str + 'NG02-N001.inp', 
-        directory_str + 'NG02-N002.inp',   
-        ]
-    settings = {
-        "ses_output_str": ses_output_list,
-        "visio_template": None,
-        "simtime": 9999.0,
-        "conversion": "tbd",
-        "control": "First",
-        "output": ["Average"],
-        "file_type": "input_file",
-        "path_exe": "C:\\simulations\\_EXE\\SESV6_32.exe"
+    # Main code copied from NV_GUi
+    settings={
+        'ses_output_str': ['C:\\Simulations\\test\\test001.prn', 'C:\\Simulations\\test\\test002.prn'],
+        'output': ['Average', 'H5_file'], 
+        'file_type': 'output_file',
+        'path_exe': 'C:/Simulations/SES41.exe',
+        'conversion': ''
     }
-    average_outputs(settings)
+    app = NO_GUI_multifile_monitor.App(settings)
+    app.mainloop()
+    print("app.mainloop finished")

@@ -106,27 +106,27 @@ def single_sim(settings, gui=""):
             run_msg(gui,msg)
     if "Compare" in settings["output"]:
         if len(settings["ses_output_str"]) == 2:
-            secondfile_path = Path(settings["ses_output_str"][1])
-            secondfile_path_settings = settings.copy()
-            secondfile_path_settings['ses_output_str'] = [str(secondfile_path)]
-            # Remove the compare option to avoid recursion
-            secondfile_path_settings['output'] = [item for item in secondfile_path_settings['output'] if item != 'Compare']
-            # Add H5 file post-processing
-            secondfile_path_settings['output'].append('H5_file')
-            # Create an H5 and other single file processing
-            single_sim(secondfile_path_settings, gui)
-        try:
-            if "H5_file" not in settings["output"]:
-                try:
-                    NO_file_tools.save_h5_file(data, output_meta_data, settings)
-                    run_msg(gui, "Created H5 File for " + file_name + ".")
-                except Exception as e:
-                    run_msg(
-                        gui,
-                        f"ERROR creating H5 File in Compare for {file_name}: {str(e)}")
-            NO_compare.compare_outputs(settings, gui)
-        except Exception as e:
-            run_msg(gui,f"ERROR comparing Files for {file_name}: {str(e)}")
+            try:# Create H5 file for first file if not already created
+                if "H5_file" not in settings["output"]:
+                    try:
+                        NO_file_tools.save_h5_file(data, output_meta_data, settings)
+                        run_msg(gui, "Created H5 File for " + file_name + ".")
+                    except Exception as e2:
+                        run_msg(
+                            gui,
+                            f"ERROR creating H5 File in Compare for {file_name}: {str(e2)}")
+                secondfile_path = Path(settings["ses_output_str"][1])
+                secondfile_path_settings = settings.copy()
+                secondfile_path_settings['ses_output_str'] = [str(secondfile_path)]
+                # Remove the compare option to avoid recursion
+                secondfile_path_settings['output'] = [item for item in secondfile_path_settings['output'] if item != 'Compare']
+                # Add H5 file post-processing
+                secondfile_path_settings['output'].append('H5_file')
+                # Create an H5 and other single file processing
+                single_sim(secondfile_path_settings, gui)
+                NO_compare.compare_outputs(settings, gui)
+            except Exception as e:
+                run_msg(gui,f"ERROR comparing Files for {file_name}: {str(e)}")
     run_msg(gui,"DONE!")
 
 def run_msg(gui, text):

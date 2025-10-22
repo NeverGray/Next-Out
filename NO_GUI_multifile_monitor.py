@@ -59,7 +59,7 @@ def single_process(
     processing_dictionary,
     done_list,
     pause_value,
-    no_file_paths,
+    H5_file_paths,
     error_messages
 ):
     pause_check(pause_value)
@@ -103,21 +103,21 @@ def single_process(
                 # Read data from NO file
                 data, output_meta_data = NO_file_tools.read_h5_file(file_path)
                 # Create a list of NO Files for averaging
-                no_file_paths.append(file_path) 
+                H5_file_paths.append(file_path) 
             else:
                 #Parse the data from the output file
                 data, output_meta_data = NO_parser.parse_file(
                     file_path, gui="", conversion_setting=settings["conversion"]
                 )
                 #Create NO File if it is an output
-                if "H5_file" in settings["output"]:
+                if "H5_file" in settings["output"] or "Average" in settings["output"]:
                     try:
                         NO_file_tools.save_h5_file(data, output_meta_data, settings)
                         logging.info(f"Created H5 File for {name}")
-                        # Create a list of NO Files for averaging
-                        no_file_path = NO_file_tools.get_results_path2(output_meta_data, ".no")
-                        no_file_paths.append(no_file_path)
-                        logging.info(f"Finished saving {no_file_path}")
+                        # Create a list of H5 Files for averaging
+                        H5_file_path = NO_file_tools.get_results_path2(output_meta_data, ".H5")
+                        H5_file_paths.append(H5_file_path)
+                        logging.info(f"Finished saving {H5_file_path}")
                     except Exception as e:
                         logging.error(f"Error creating H5 File for {name}: {str(e)}")
             process_status[value_index["Read Output"]] = "Done"
