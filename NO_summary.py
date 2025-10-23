@@ -7,6 +7,7 @@
 
 from pathlib import Path
 import pandas as pd
+from openpyxl.styles import PatternFill, Font
 
 from NO_file_tools import read_h5_file, can_write_file
 
@@ -189,6 +190,16 @@ def create_excel_summary(settings, gui=""):
             # Auto-adjust column widths for this sheet
             worksheet = writer.sheets[sheet_name]
             auto_adjust_column_widths(worksheet, df_reset, has_index=False)
+            
+            # Add AutoFilter to the header row
+            worksheet.auto_filter.ref = worksheet.dimensions
+            
+            # Format header row with orange background
+            orange_fill = PatternFill(start_color='F07F09', end_color='F07F09', fill_type='solid')
+            bold_font = Font(bold=True)
+            for cell in worksheet[1]:  # Row 1 is the header
+                cell.fill = orange_fill
+                cell.font = bold_font
         
         # Write Files_info sheet
         if file_info_data:
@@ -204,6 +215,16 @@ def create_excel_summary(settings, gui=""):
             # Auto-adjust column widths for Files_info sheet
             worksheet = writer.sheets['Files_info']
             auto_adjust_column_widths(worksheet, files_info_df, has_index=False)
+            
+            # Add AutoFilter to the header row
+            worksheet.auto_filter.ref = worksheet.dimensions
+            
+            # Format header row with orange background
+            orange_fill = PatternFill(start_color='F07F09', end_color='F07F09', fill_type='solid')
+            bold_font = Font(bold=True)
+            for cell in worksheet[1]:  # Row 1 is the header
+                cell.fill = orange_fill
+                cell.font = bold_font
     run_msg(gui, f"Summary saved to {result_path}")
     return result_path
 

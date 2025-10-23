@@ -5,7 +5,7 @@
 # This file is licensed under the MIT License.
 # You may obtain a copy of the license at https://opensource.org/licenses/MIT
 
-VERSION_NUMBER = "2.B"  # Fixed ABB parser issue with negative segment numbers
+VERSION_NUMBER = "2.C"  # Fixed ABB parser issue with negative segment numbers
 """ Veresion Log
     1.3.1 Last released version
     1.4.B Added Train Supplementary Data
@@ -20,6 +20,7 @@ VERSION_NUMBER = "2.B"  # Fixed ABB parser issue with negative segment numbers
     1.5 Start Renaming Scripts
     2.A Beta Testing Starts
     2.B Changed summary excel sheet format and optimized summary data extraction
+    2.C Summary format matches existing formatting.
     """
 
 
