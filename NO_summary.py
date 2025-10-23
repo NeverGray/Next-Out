@@ -12,7 +12,7 @@ from NO_file_tools import read_h5_file, can_write_file
 
 def summarize_segment_data(settings, gui=""):
     """
-    Process multiple NO files and extract data from multiple dataframe types.
+    Process multiple H5 files and extract data from multiple dataframe types.
     """
     from NO_visio import valid_simtime  # Import here to avoid circular import
     
@@ -69,15 +69,17 @@ def summarize_segment_data(settings, gui=""):
                     except Exception as e:
                         run_msg(gui, f"  Error processing data from {df_name}: {str(e)}")
             
-            # Combine segments for this file
+            # Collect segments for this file
             if segment_slices:
                 segment_df = pd.concat(segment_slices, axis=1)
-                segment_summary_data.append(pd.concat([segment_df], keys=[no_file_path.stem]))
+                segment_df = pd.concat([segment_df], keys=[no_file_path.stem])
+                segment_summary_data.append(segment_df)
                 
-            # Combine fire data for this file
+            # Collect fire data for this file
             if fire_slices:
                 fire_df = pd.concat(fire_slices, axis=1)
-                fire_summary_data.append(pd.concat([fire_df], keys=[no_file_path.stem]))
+                fire_df = pd.concat([fire_df], keys=[no_file_path.stem])
+                fire_summary_data.append(fire_df)
 
         except Exception as e:
             run_msg(gui, f"Error processing file {no_file_path_str}: {str(e)}")
@@ -140,6 +142,15 @@ def create_excel_summary(settings, gui=""):
     Create an Excel file from NO files based on settings, with each dataframe saved
     to a separate worksheet named according to its type.
     """
+    # Determine output file name for summary file
+    results_folder = Path(settings['ses_output_str'][0]).parent
+    result_path = results_folder / "Summary.xlsx"
+    
+    # Check if file can be written (e.g., not already open)
+    if not can_write_file(result_path, gui):
+        run_msg(gui, f"The file {result_path} cannot be written. Try closing the file.")
+        return None
+    
     # Get the summary dataframes and file info
     if valid_summary_option(settings):
         summary_dfs, file_info_data = summarize_segment_data(settings, gui)
@@ -150,14 +161,6 @@ def create_excel_summary(settings, gui=""):
     if not summary_dfs:
         return None
     
-    # Determine output file name for summary file
-    results_folder = Path(settings['ses_output_str'][0]).parent
-    result_path = results_folder / "Summary.xlsx"
-    
-    # Check if file can be written (e.g., not already open)
-    if not can_write_file(result_path, gui):
-        return None
-    
     # Create Excel writer object
     with pd.ExcelWriter(result_path, engine='openpyxl') as writer:
         
@@ -166,25 +169,26 @@ def create_excel_summary(settings, gui=""):
             # Get the name for the worksheet
             sheet_name = df.name
             
-            # Create combined index directly from the multi-index (more efficient)
+            # Reset index to move multi-index to columns
+            df_reset = df.reset_index()
+            
             # Get the original index level names (or provide defaults if unnamed)
             level_0_name = df.index.names[0] or 'File_Name'
             level_1_name = df.index.names[1] or ('Fire_Segment' if sheet_name.lower() == "fire" else 'Segment')
             
-            # Extract level 0 and level 1 values
-            level_0_values = df.index.get_level_values(0).astype(str)
-            level_1_values = df.index.get_level_values(1).astype(str)
+            # Rename the first two columns to match the level names
+            df_reset.rename(columns={df_reset.columns[0]: level_0_name, df_reset.columns[1]: level_1_name}, inplace=True)
             
-            # Create new single index by combining them
-            df.index = level_0_values + '_' + level_1_values
-            df.index.name = f'{level_0_name}_{level_1_name}'
+            # Create combined column and insert at position 2 (after File_Name and Segment)
+            combined_index = df_reset.iloc[:, 0].astype(str) + '_' + df_reset.iloc[:, 1].astype(str)
+            df_reset.insert(2, f'{level_0_name}_{level_1_name}', combined_index)
             
-            # Save to worksheet with the new index
-            df.to_excel(writer, sheet_name=sheet_name, index=True)
+            # Save to worksheet (index=False since we've moved everything to columns)
+            df_reset.to_excel(writer, sheet_name=sheet_name, index=False)
             
             # Auto-adjust column widths for this sheet
             worksheet = writer.sheets[sheet_name]
-            auto_adjust_column_widths(worksheet, df, has_index=True)
+            auto_adjust_column_widths(worksheet, df_reset, has_index=False)
         
         # Write Files_info sheet
         if file_info_data:
@@ -210,10 +214,10 @@ def run_msg(gui, text):
         print("Run msg: " + text)
 
 if __name__ == "__main__":
-    ses_output_str=[]
-    prefix = "C:/Simulations/Test/test_"
-    for i in range(1,26): #How many test files to summarize
-        ses_output_str.append(f"{prefix}{i:02d}.out")
+    # Select all files with suffix .OUT or .PRN in the directory
+    directory = Path("C:/Simulations/Test/")
+    ses_output_str = [str(f) for ext in ["*.H5", "*.NO"] for f in directory.glob(ext)]
+    
     settings = {
         'ses_output_str': ses_output_str,   
         'sim_time': -1,
