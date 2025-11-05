@@ -33,7 +33,9 @@ SHEET_NAMES ={
 def create_excel(settings, data, output_meta_data, gui=""):
     file_name = str(output_meta_data['file_path'].name)
     excel_results_path = NO_file_tools.get_results_path2(output_meta_data, ".xlsx")
-    # TODO Add error checker if excel file is open
+    if not NO_file_tools.can_write_file(excel_results_path, gui):
+        NO_run.run_msg(gui, f"The file {excel_results_path} cannot be written. Try closing the file.")
+        return None
     NO_run.run_msg(gui, "Creating Excel file " + excel_results_path.name)
     TITLES = {
         "File Name:" : output_meta_data['file_path'].name,
@@ -106,7 +108,8 @@ def create_excel(settings, data, output_meta_data, gui=""):
             writer.book.set_properties({
                 'title':    file_name,
                 'subject':  "SES Output in Next-Out Format",
-                'author':   ("Next Out " + NO_constants.VERSION_NUMBER)
+                'author':   ("Next Out " + NO_constants.VERSION_NUMBER),
+                'comments': f"Created by Next-Out {NO_constants.VERSION_NUMBER}"
             })
     except:
         NO_run.run_msg(gui, f"ERROR creating Excel file {excel_results_path.name} in MEMORY before writing. Contact Justin@NeverGray.biz for this strange error.")

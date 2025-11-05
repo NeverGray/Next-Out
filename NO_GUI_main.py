@@ -79,7 +79,7 @@ class Start_Screen(tk.Tk):
         )
         # Summary checkbox
         cb_summary = ttk.Checkbutton(
-            frame_post_processing, text="Summary", variable=self.cbo_summary, onvalue="Summary", offvalue="",
+            frame_post_processing, text="Summary*", variable=self.cbo_summary, onvalue="Summary", offvalue="",
             command=self.update_output_options
         )
         cb_route = ttk.Checkbutton(
@@ -268,7 +268,7 @@ class Start_Screen(tk.Tk):
             offvalue="",
         )
         # Visio Template - Row 4
-        lbl_image = ttk.Label(self.frame_visio, text="More Image Outputs: ")
+        lbl_image = ttk.Label(self.frame_visio, text="Convert Visio to: ")
         cb_pdf = ttk.Checkbutton(
             self.frame_visio,
             text="PDF",
@@ -290,6 +290,11 @@ class Start_Screen(tk.Tk):
             onvalue="visio_2_svg",
             offvalue="",
         )
+        # Visio Template - Row 5
+        lbl_conversion_note = ttk.Label(
+            self.frame_visio, 
+            text="Note: Conversions are time-consuming"
+        )
         # VISIO GRID
         r = 1  # Top Row
         btn_visio.grid(column=0, row=r, sticky="W", pady=py)
@@ -307,6 +312,8 @@ class Start_Screen(tk.Tk):
         cb_pdf.grid(column=1, row=r, sticky="W", pady=py)
         cb_png.grid(column=2, row=r, sticky="W", pady=py)
         cb_svg.grid(column=3, row=r, sticky="W", pady=py)
+        r = 5
+        lbl_conversion_note.grid(column=0, row=r, columnspan=4, sticky="W", pady=py)
         
         # SUMMARY OPTIONS Frame
         self.frame_summary = ttk.LabelFrame(
@@ -579,7 +586,7 @@ class Start_Screen(tk.Tk):
         pp_list.append(self.cbo_svg.get())
         pp_list = [item for item in pp_list if item]  # Remove empty strings
         # "Open Visio" should only be added if it is enabled by visio_open_off()
-        if self.cb_visio_open.cget("state") == "enable":
+        if str(self.cb_visio_open.cget("state"))== "normal":
             pp_list.append(self.cbo_visio_open_option.get())
         try:
             self.get_files_2_process_in_str()
@@ -776,12 +783,13 @@ class Start_Screen(tk.Tk):
         # Enable/disable summary frame
         if self.cbo_summary.get() == "Summary":
             summary_state = "enable"
+            self.cbo_no_file.set("H5_file")  # Check "H5_file" when Summary is enabled
         else:
             summary_state = "disable"
         self.configure_widget_state(self.frame_summary, summary_state)
         if self.cbo_average.get() == "Average":
             self.cbo_compare.set("")  # Uncheck "Average"
-            self.cbo_no_file.set("H5_file")  # Uncheck "Open Visio"
+            self.cbo_no_file.set("H5_file")  # Check "H5_file"
         self.visio_open_off()   
        
     def average_off(self, *args):

@@ -7,8 +7,8 @@
 
 from pathlib import Path
 import pandas as pd
-from openpyxl.styles import PatternFill, Font
 
+import NO_constants
 from NO_file_tools import read_h5_file, can_write_file
 
 def summarize_segment_data(settings, gui=""):
@@ -107,36 +107,23 @@ def valid_summary_option(settings):
         valid = True
     return valid
 
-def auto_adjust_column_widths(worksheet, df, has_index=True):
+def auto_adjust_column_widths(worksheet, df):
     """
     Auto-adjust column widths in an Excel worksheet to fit content.
     
     Args:
-        worksheet: openpyxl worksheet object
+        worksheet: xlsxwriter worksheet object
         df: pandas DataFrame that was written to the worksheet
-        has_index: Whether the DataFrame was written with index=True
     """
-    # Start column offset (1 if index is written, 0 if not)
-    col_offset = 1 if has_index else 0
-    
-    # Auto-size index column if present
-    if has_index:
-        index_name = df.index.name or 'Index'
-        # Convert index to list and calculate max string length
-        max_length = max(
-            max(len(str(val)) for val in df.index),
-            len(str(index_name))
-        )
-        worksheet.column_dimensions['A'].width = max_length + 2
-    
     # Auto-size data columns
     for idx, col in enumerate(df.columns):
+        # Calculate max length for column
         max_length = max(
             df[col].astype(str).apply(len).max(),
             len(str(col))
         )
-        col_letter = worksheet.cell(1, idx + col_offset + 1).column_letter
-        worksheet.column_dimensions[col_letter].width = max_length + 2
+        # Set column width (add padding)
+        worksheet.set_column(idx, idx, max_length + 2)
 
 def create_excel_summary(settings, gui=""):
     """
@@ -162,8 +149,21 @@ def create_excel_summary(settings, gui=""):
     if not summary_dfs:
         return None
     
-    # Create Excel writer object
-    with pd.ExcelWriter(result_path, engine='openpyxl') as writer:
+    # Create Excel writer object with xlsxwriter engine
+    with pd.ExcelWriter(result_path, engine='xlsxwriter') as writer:
+        # Set workbook properties
+        writer.book.set_properties({
+            'title': "Summary",
+            'subject': "Summary of SES Outputs",
+            'author': f"Next-Out {NO_constants.VERSION_NUMBER}",
+            'comments': f"Created by Next-Out {NO_constants.VERSION_NUMBER}"
+        })
+        
+        # Create format for header row (orange background, bold)
+        format_header = writer.book.add_format({
+            'bold': True,
+            'bg_color': '#F07F09',
+        })
         
         # Write each dataframe to its own worksheet
         for df in summary_dfs:
@@ -187,19 +187,19 @@ def create_excel_summary(settings, gui=""):
             # Save to worksheet (index=False since we've moved everything to columns)
             df_reset.to_excel(writer, sheet_name=sheet_name, index=False)
             
-            # Auto-adjust column widths for this sheet
+            # Get worksheet object
             worksheet = writer.sheets[sheet_name]
-            auto_adjust_column_widths(worksheet, df_reset, has_index=False)
+            
+            # Auto-adjust column widths for this sheet
+            auto_adjust_column_widths(worksheet, df_reset)
             
             # Add AutoFilter to the header row
-            worksheet.auto_filter.ref = worksheet.dimensions
+            max_col = len(df_reset.columns) - 1
+            worksheet.autofilter(0, 0, 0, max_col)
             
             # Format header row with orange background
-            orange_fill = PatternFill(start_color='F07F09', end_color='F07F09', fill_type='solid')
-            bold_font = Font(bold=True)
-            for cell in worksheet[1]:  # Row 1 is the header
-                cell.fill = orange_fill
-                cell.font = bold_font
+            for col_num, value in enumerate(df_reset.columns):
+                worksheet.write(0, col_num, value, format_header)
         
         # Write Files_info sheet
         if file_info_data:
@@ -212,19 +212,20 @@ def create_excel_summary(settings, gui=""):
             
             files_info_df.to_excel(writer, sheet_name='Files_info', index=False)
             
-            # Auto-adjust column widths for Files_info sheet
+            # Get worksheet object
             worksheet = writer.sheets['Files_info']
-            auto_adjust_column_widths(worksheet, files_info_df, has_index=False)
+            
+            # Auto-adjust column widths for Files_info sheet
+            auto_adjust_column_widths(worksheet, files_info_df)
             
             # Add AutoFilter to the header row
-            worksheet.auto_filter.ref = worksheet.dimensions
+            max_col = len(files_info_df.columns) - 1
+            worksheet.autofilter(0, 0, 0, max_col)
             
             # Format header row with orange background
-            orange_fill = PatternFill(start_color='F07F09', end_color='F07F09', fill_type='solid')
-            bold_font = Font(bold=True)
-            for cell in worksheet[1]:  # Row 1 is the header
-                cell.fill = orange_fill
-                cell.font = bold_font
+            for col_num, value in enumerate(files_info_df.columns):
+                worksheet.write(0, col_num, value, format_header)
+                
     run_msg(gui, f"Summary saved to {result_path}")
     return result_path
 

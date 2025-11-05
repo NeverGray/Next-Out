@@ -187,7 +187,7 @@ INPUT = {
     ),
     "f8f": re.compile(
         r"""(
-        ^\s{27,29}
+        ^\s{26,29}
         (?:(?P<Section>-?\d+)\s+)?
         (?P<Segment>-?\d+)\s+
         (?P<Backward>\d+\.\d+)\s+TO\s+
