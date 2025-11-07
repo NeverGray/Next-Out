@@ -123,8 +123,9 @@ class Start_Screen(tk.Tk):
             offvalue="",
             command=self.average_off
         )
-        analysis_label = ttk.Label(
-            self.frame_analysis, text="* Requires H5 Files")
+        # Label for H5 requirement (will be placed outside frame)
+        h5_requirement_label = ttk.Label(
+            self.left_column, text="* Requires H5 Files")
         # POST PROCESSING grid
         cb_excel.grid(column=0, row=0, sticky="W", pady=py)
         cb_visio.grid(column=0, row=10, sticky="W", pady=py)
@@ -138,7 +139,6 @@ class Start_Screen(tk.Tk):
         # Analysis grid
         self.cb_compare.grid(column=0, row=20, sticky="W", pady=py)
         cb_average.grid(column=0, row=30, sticky="W", pady=py)
-        analysis_label.grid(column=0, row=40, sticky="W", pady=py)
         # SES Files to Process
         frame_ses_files = ttk.LabelFrame(
             self.ss, borderwidth=5, text="SES Files to Process", padding=p
@@ -397,6 +397,7 @@ class Start_Screen(tk.Tk):
 
         frame_output_conversion.pack(side="top", fill="x", pady=py, padx=px)
         self.frame_analysis.pack(side="top", fill="x", pady=py, padx=px)
+        h5_requirement_label.pack(side="top", fill="x", pady=py, padx=px)
 
         # Switch left-hand and right-hand elements
         frame_post_processing.grid(column=1, row=0, sticky=["NSEW"], pady=py, padx=px)

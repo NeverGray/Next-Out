@@ -529,6 +529,8 @@ def create_visio(settings, data, output_meta_data, gui=""):
     time_4_name = int(settings["simtime"])
     time_suffix = "-" + str(time_4_name) + ".vsdx"
     settings["new_visio"] = NO_file_tools.get_results_path2(output_meta_data, time_suffix)
+    if not NO_file_tools.can_write_file(settings["new_visio"], gui):
+        return
     msg = "Creating Visio diagram " + settings["new_visio"].name + " for simulation time " + str(settings["simtime"]) + "."
     NO_run.run_msg(gui, msg)
     # Read in VISIO Template and update with SES OUtput

@@ -128,9 +128,9 @@ def get_step_weight(step_name):
     weights = {
         'Simulation': 3.0,      # SES simulation takes longest
         'Read Output': 2.0,     # Parsing is moderately slow
-        'Visio': 1.5,           # Visio creation is moderate
-        'Excel': 1.0,           # Excel is faster
-        'Route': 1.0,           # Route is fast
+        'Visio': 1.0,           # Visio creation is fast
+        'Excel': 2.0,           # Excel is moderately slow
+        'Route': 2.0,           # Route is moderately slow
     }
     return weights.get(step_name, 1.0)
 

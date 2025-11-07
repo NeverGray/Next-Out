@@ -77,7 +77,8 @@ def save_h5_file(data, output_meta_data, settings=None):
         no_file_path = output_meta_data['file_path'].with_suffix('.h5')
     else:
         no_file_path = get_results_path2(output_meta_data, '.h5')
-    
+    if not can_write_file(no_file_path):
+        return None
     # Use PyTables for writing
     if tables is not None:
         try:
@@ -168,11 +169,19 @@ def read_h5_file(file_path):
                     if 'data/SSA' in store:
                         try:
                             metadata = store.get_storer('data/SSA').attrs.metadata
+                            # List of metadata keys that should have integer dictionary keys
+                            integer_key_dicts = ['damper_position', 'form3_pressure']
+                            
                             for key, value in metadata.items():
                                 if key not in output_meta_data:
                                     if isinstance(value, str) and (value.startswith('{') or value.startswith('[')):
                                         try:
-                                            output_meta_data[key] = json.loads(value)
+                                            parsed_value = json.loads(value)
+                                            # Convert string keys to integers for dictionaries that should have integer keys
+                                            if isinstance(parsed_value, dict) and key in integer_key_dicts:
+                                                output_meta_data[key] = {int(k): v for k, v in parsed_value.items()}
+                                            else:
+                                                output_meta_data[key] = parsed_value
                                         except json.JSONDecodeError:
                                             output_meta_data[key] = value
                                     else:
@@ -219,3 +228,6 @@ if __name__ == "__main__":
     file_path = Path(directory_str + output_file_name)
     data, output_meta_data = NO_parser.parse_file(file_path)
     save_h5_file(data, output_meta_data)
+    read_data, read_output_meta_data = read_h5_file(file_path)
+    print(read_data)
+    print(read_output_meta_data)

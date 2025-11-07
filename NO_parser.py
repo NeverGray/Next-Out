@@ -187,11 +187,14 @@ INPUT = {
     ),
     "f8f": re.compile(
         r"""(
-        ^\s{26,29}
-        (?:(?P<Section>-?\d+)\s+)?
-        (?P<Segment>-?\d+)\s+
+        ^(?:
+            \s{26,29}(?P<Section>-?\d+)\s+     # Case with Section: 26–29 leading spaces,
+        |                                      # OR
+            \s{46,49}                          # Case without Section: 46–49 spaces
+        )
+        (?P<Segment>-?\d+)\s+                  # Segment number
         (?P<Backward>\d+\.\d+)\s+TO\s+
-        (?P<Forward>\d+\.\d+)\n
+        (?P<Forward>\d+\.\d+)\s
         )""",
         re.VERBOSE
     ),
