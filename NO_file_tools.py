@@ -100,7 +100,9 @@ def _save_h5_with_pytables(data, output_meta_data, no_file_path):
     except:
         complib = 'zlib'
     
-    with pd.HDFStore(no_file_path, mode='w', complevel=9, complib=complib) as store:
+    # Use complevel=3 for good balance between speed and compression
+    # Level 9 was too slow, level 3 gives ~80-90% of the compression benefit at 3-5x faster speed
+    with pd.HDFStore(no_file_path, mode='w', complevel=3, complib=complib) as store:
         # Save all DataFrames from data dictionary
         for key, value in data.items():
             if isinstance(value, pd.DataFrame):
