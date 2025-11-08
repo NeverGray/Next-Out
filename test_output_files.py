@@ -27,16 +27,8 @@ def get_output_files(directory_str):
     all_files.sort()
     return all_files
 
-if __name__ == "__main__":
-    directory_str = "C:\\Simulations\\TEST"
-    settings = {
-        'ses_output_str':'',
-        'file_type': 'output_file',
-        'visio_template': '', 
-        'simtime': -1, 
-        'conversion': '', 
-        'output': ['Excel', "H5_file", '', '', '', '', '', '', '']
-    }
+def profile_test_output_files(settings, gui=""):
+    directory_str = Path(settings["ses_output_str"][0]).parent
     wall_time_dict = dict()
     out_files = get_output_files(directory_str)
     for path_name in out_files:
@@ -46,7 +38,7 @@ if __name__ == "__main__":
         prof = cProfile.Profile()
         prof.enable() 
         start_post_processing = time.perf_counter() 
-        NO_run.single_sim(settings)
+        NO_run.single_sim(settings, gui=gui)
         end_post_processing = time.perf_counter()
         prof.disable()
         # Record data for post processing
@@ -65,3 +57,17 @@ if __name__ == "__main__":
     # Print summary to console
     print("\nSummary of wall times:")
     print(df_wall_time_dict)
+    return
+
+if __name__ == "__main__":
+    output_file = "C:\\Simulations\\TEST\\text.out"
+    settings = {
+        'ses_output_str':[output_file],
+        'file_type': 'output_file',
+        'visio_template': '', 
+        'simtime': -1, 
+        'conversion': '', 
+        'output': ['Excel', "H5_file", 'no_file', '', '', '', '', '', '']
+    }
+    profile_test_output_files(settings)
+    print('Finished')

@@ -7,7 +7,7 @@
 
 
 Set-Location "c:\bin\code"
-..\python313\Scripts\Activate.ps1
+..\python3.13\Scripts\Activate.ps1
 Remove-Item "C:\Bin\code\*.*" -Force
 
 Copy-Item "$PSScriptRoot\*.py" "C:\bin\code\"

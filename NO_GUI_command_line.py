@@ -12,6 +12,7 @@ from tkinter import messagebox, ttk
 
 import NO_GUI_multifile_monitor
 import NO_run
+import test_output_files
 from NO_constants import VERSION_NUMBER
 
 class command_line_screen(tk.Tk):
@@ -76,14 +77,12 @@ class command_line_screen(tk.Tk):
 
     def run(self, *args):
         if self.validation(self.settings):
-            pp_list = self.settings["output"]
+            if "test_output_files" in self.settings["output"]:
+                test_output_files.profile_test_output_files(self.settings, gui=self)
+                return
             try:
                 # If only performing one individual simulation
-                if (
-                    len(self.settings["ses_output_str"]) == 1
-                    or ("Average" in pp_list)
-                    or ("Compare" in pp_list)
-                    ):
+                if len(self.settings["ses_output_str"]) == 1:
                     NO_run.single_sim(self.settings, gui=self)
                     self.gui_text("Post processing completed. You can close this window.\n")
                 else:
@@ -109,6 +108,9 @@ class command_line_screen(tk.Tk):
     #TODO Change Validation in NO_Gui to a standalone function that can be called here or in NO_run. 
     def validation(self, settings):
         try:
+            # Add "H5_file" for backward compatibility with Next-In 4.1 that used "no_file".
+            if "no_file" in settings['output']:
+                settings['output'].append("H5_file")
             valid = True
             msg = ""
             # Check if settings are valid for Visio Files
@@ -140,8 +142,6 @@ class command_line_screen(tk.Tk):
             msg = "Error with Validation"
             messagebox.showinfo(message=msg)
     
-
-
     def gui_text(self, status):
         self.txt_status["state"] = tk.NORMAL
         self.txt_status.insert("end", status + "\n")
@@ -157,11 +157,11 @@ class command_line_screen(tk.Tk):
 
 if __name__ == "__main__":
     directory_str = "C:\\simulations\\test\\"
-    input_file_name = "test.inp"
+    input_file_name = "test.out"
     settings = {
         'conversion': '',
-        'file_type': 'input_file',
-        'output': ['Excel', 'Visio', '', '', '', '', '', '', ''],
+        'file_type': 'output_file',
+        'output': ['Excel', 'H5_file','no_file', 'test_output_files', '', '', '', '', ''],
         'path_exe': 'C:/Simulations/_Exe/SESV6_32.exe',
         'ses_output_str': [directory_str + input_file_name],
         'simtime': -1,

@@ -34,7 +34,10 @@ def main():
 if __name__ == "__main__":
     multiprocessing.freeze_support() #May be needed for compiled (*.exe) version
     main()
-    '''
+    r'''
     Use the text below in a terminal to test the command line options.
-    python main.py --settings "{'conversion': '', 'file_type': 'input_file', 'output': ['Excel', 'Visio', 'H5_file', '', '', '', '', '', ''], 'path_exe': 'C:/Simulations/_Exe/SESV6_32.exe', 'ses_output_str': ['C:/simulations/test/test.inp'], 'simtime': -1, 'visio_template': 'C:/Simulations/Test/Test.vsdx'}"
+    python main.py --settings "{'conversion': '', 'file_type': 'output_file', 'output': ['Excel', 'Visio', 'H5_file', 'test_output_files', '', '', '', '', ''], 'path_exe': 'C:/Simulations/_Exe/SESV6_32.exe', 'ses_output_str': ['C:/simulations/test/test.inp'], 'simtime': -1, 'visio_template': 'C:/Simulations/Test/Test.vsdx'}"
+
+    Use the text below to run from the executable
+    "C:\Simulations\_exe\Next-Out.exe" --settings "{'conversion': '', 'file_type': 'output_file', 'output': [' '], 'path_exe': '', 'results_folder_str': None, 'ses_output_str': ['C:/Simulations/Test/test2.inp'], 'simtime': -1, 'visio_template': ''}"
     '''
