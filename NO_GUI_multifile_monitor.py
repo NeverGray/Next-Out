@@ -437,9 +437,21 @@ class Monitor_GUI(tk.Toplevel):
     def update_progress_bar(self):
         """Update progress bar based on current processing status"""
         # Calculate completed work from processing dictionary
+        processing_files = []
+        for status_list in self.manager.processing_dictionary.values():
+            file_name = status_list[0]
+            processing_files.append(file_name)
+        
+        number_of_done_files = len(self.manager.done_files)
+
+        for file in processing_files:
+            if file in self.manager.done_files:
+                number_of_done_files -=1
+
         completed = progress_tracker.calculate_progress_from_status(
             self.manager.processing_dictionary,
-            self.process_settings["process_status_value_index"]
+            self.process_settings,
+            number_of_done_files
         )
         
         # Update the progress tracker
