@@ -178,10 +178,12 @@ def single_process(
 def run_SES(ses_exe_path, ses_input_file_path, gui=""):
     try:
         # Check the proces is successful, see https://realpython.com/python-subprocess/
+        input_file_dir = Path(ses_input_file_path).parent
         subprocess.run(
             [ses_exe_path, ses_input_file_path],
             check=True,
             creationflags=subprocess.CREATE_NO_WINDOW,
+            cwd=input_file_dir  
         )
         return True
     except FileNotFoundError as exc:
@@ -582,7 +584,8 @@ class Monitor_GUI(tk.Toplevel):
         # Make message box appear above the status window using code from https://stackoverflow.com/questions/52345195/getting-tkinter-messagebox-at-top-of-the-screen-in-python
         self.wm_attributes("-topmost", -1)
         msg_type(title=title_msg, message=msg_all, parent=self)
-        self.destroy()
+        # Use after_idle to ensure destroy happens after messagebox closes and event loop processes
+        self.after_idle(self.destroy)
 
     def create_process_settings(self):
         settings = self.settings
