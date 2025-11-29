@@ -5,26 +5,7 @@
 # This file is licensed under the MIT License.
 # You may obtain a copy of the license at https://opensource.org/licenses/MIT
 
-VERSION_NUMBER = "2.0"  # Fixed ABB parser issue with negative segment numbers
-""" Veresion Log
-    1.3.1 Last released version
-    1.4.B Added Train Supplementary Data
-    1.4.C Summary feature and speed test
-    1.4.D Updated Parser for abbreviated prints and faster processing
-    1.4.E Added Summary Feature
-    1.4.F Major changes- Eliminate result folder option, move summary to main gui
-    1.4.G Faster Excel writing and file parsing
-    1.4.H Fixed ABB parser issue with negative segment numbers
-    1.4.I Continued fixing parser issues with ABB files
-    1.4.J Fixing compiling issues - Sent out for reviews.
-    1.5 Start Renaming Scripts
-    2.A Beta Testing Starts
-    2.B Changed summary excel sheet format and optimized summary data extraction
-    2.C Summary format matches existing formatting.
-    2.D Fixed parser issue for routing with negative segment numbers
-    2.0 Official Release
-    """
-
+VERSION_NUMBER = "2.1"  # Fixed ABB parser issue with negative segment numbers
 
 #Column name : [SI Unit, IP Unit]
 COLUMN_UNITS={

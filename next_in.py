@@ -1,5 +1,5 @@
 # Project Name: Next-Out
-# Description: Perform SES simulations. Post-processes and analyze output data.
+# Description: Future script to creatie multiple input files from a Next-In Excel file.
 # Copyright (c) 2024 Justin Edenbaum, Never Gray
 #
 # This file is licensed under the MIT License.
@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 import openpyxl
 
-
+# TODO - Add functionality to GUI or command line to create multiple input files from a Next-In Excel file
 class Next_In:
     def __init__(self, next_in_path, save_path, ses_version):
         # Read in next-in excel to a dataframe
@@ -43,6 +43,7 @@ class Next_In:
         self.form_12()
         self.form_13()
         self.form_14()
+        self.form_01_restart()
         self.create_base_string()
 
     def create_iterations(self, iteration_worksheet_name):
@@ -314,13 +315,14 @@ class Next_In:
             "environment_control_zones": 42,
             "trains_in_operation": 44,
             "impulse_fan_types": 45,
+            "reading_options": 47,
             "air_curtain_fan_types": 64,
             "cooling_pipes": 68,
         }
         # Create variables from the Variable row aboove.
         for key, value in variable_row.items():
             exec(f"self.{key} = worksheet_df.iloc[{value},column]")
-        self.restart_file_name = worksheet_df.iloc[47, 5]
+        self.restart_file_name = worksheet_df.iloc[47, 6]
 
     def form_02(self):
         # Form 2A
@@ -913,6 +915,13 @@ class Next_In:
                         )
                         col_14C += 1
 
+    #Add the restart file name if reading options is greater than 0
+    def form_01_restart(self):
+        if int(self.reading_options) > 0:
+            print("hellow world")
+            split_restart_file_name = self.split_text_to_list(self.restart_file_name, 8)
+            self.input_df.loc[len(self.input_df)] = split_restart_file_name
+
     def create_base_string(self):
         self.base_string = ""
         for _, row in self.input_df.iterrows():
@@ -969,28 +978,18 @@ class Next_In:
         # Set the row limit to the last row with a valid file name
         row_limit = worksheet_df.iloc[:, 1].last_valid_index()
         # Set the column limit to the row before the word Output
-        output_column = worksheet_df.iloc[1].eq("Output").idxmax()
-        end_input_column = output_column - 1
+        # TODO Make this automatic for file with content
+        end_input_column = worksheet_df.iloc[2,:].last_valid_index() + 1
         self.iteration_input = worksheet_df.iloc[
             start_row : row_limit + 1, 0:end_input_column
         ]
-        # Setup the titles for the interation input data frame
+        # Setup the titles for the interation input data frame. Columns 2 and beyond are the linked formulas.
         column_titles = worksheet_df.iloc[2, 0:end_input_column]
+        #Replace first two column titles
         column_titles[0] = "Number"
         column_titles[1] = "File Name"
+        # Write column titles
         self.iteration_input.columns = column_titles
-
-        # Set up iteration output worksheet
-        column_limit = worksheet_df.iloc[3].last_valid_index() + 1
-        self.iteration_output = worksheet_df.iloc[
-            start_row : row_limit + 1, 0:column_limit
-        ]
-        column_titles = worksheet_df.iloc[3, 0:column_limit]
-        self.iteration_output.columns = column_titles
-        column_titles[0] = "Number"
-        column_titles[1] = "File Name"
-        column_titles[output_column - 1] = "Output_Starts"
-        self.iteration_output.name = output_column
 
     def create_input_from_iteration(self):
         # Create dictionary of mapping information for columns in iterations input data
@@ -1061,7 +1060,7 @@ def run_iterations(next_in_path, save_path, ses_version="SI"):
         "visio_template": "c:\\Users\\msn\\OneDrive - Gruppo Ferrovie Dello Stato\\TVS-FLS Task\\SES-PTUS\\Calculations\\SES-439 Congestion Result Diagram.vsdx",
         "simtime": -1,
         "conversion": "",
-        "output": ["Excel", "", "", "", "", "", "", "", ""],
+        "output": ["Excel", "Visio", "", "", "", "", "", "", ""],
         "file_type": "input_file",
         "path_exe": "C:/Simulations/_Exe/SESV6_32.exe",
     }
