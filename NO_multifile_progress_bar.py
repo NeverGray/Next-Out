@@ -83,7 +83,7 @@ class ProgressTracker:
         self.completed_work_units = 0
 
 
-def calculate_progress_from_status(processing_dictionary, process_status_value_index):
+def calculate_progress_from_status(processing_dictionary, process_settings,number_of_done_files):
     """
     Calculate completed work units from the current processing status dictionary.
     
@@ -95,7 +95,10 @@ def calculate_progress_from_status(processing_dictionary, process_status_value_i
     Returns:
         int: Number of completed work units
     """
-    completed = 0
+    process_status_value_index = process_settings["process_status_value_index"]
+    steps_per_file = sum(1 for value in process_settings.values() 
+                                   if isinstance(value, bool) and value)
+    completed = number_of_done_files * steps_per_file
     
     # Define which statuses count as "done"
     done_statuses = {"Done"}

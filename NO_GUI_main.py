@@ -581,7 +581,8 @@ class Start_Screen(tk.Tk):
         pp_list.append(self.cbo_route.get())
         pp_list.append(self.cbo_compare.get())
         pp_list.append(self.cbo_average.get())
-        pp_list.append(self.cbo_no_file.get())
+        if self.file_type.get() != "H5_file":
+            pp_list.append(self.cbo_no_file.get())
         pp_list.append(self.cbo_pdf.get())
         pp_list.append(self.cbo_png.get())
         pp_list.append(self.cbo_svg.get())
@@ -615,7 +616,6 @@ class Start_Screen(tk.Tk):
             "lookup_fire_data": lookup_fire_data,
             "segments_2_lookup": segments_2_lookup
         }
-
         if self.validation(self.settings):
             try:
                 # If only performing one individual simulation

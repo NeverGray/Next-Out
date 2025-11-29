@@ -29,17 +29,37 @@ def can_write_file(file_path, gui=""):
     """
     from NO_run import run_msg  # Import here to avoid circular import
     
-    try:
-        # Try to open file in write mode to check if it's accessible
-        with open(file_path, 'a') as test_file:
-            pass  # Just testing if we can access it
-        return True
-    except PermissionError:
-        run_msg(gui, f"Error: Cannot write to {file_path}. File may be open in another program. Please close it and try again.")
-        return False
-    except Exception as e:
-        run_msg(gui, f"Error: Cannot access {file_path}. {str(e)}")
-        return False
+    file_path = Path(file_path)
+    
+    # If file exists, check if we can open it for writing
+    if file_path.exists():
+        try:
+            # Open in 'r+' mode which requires file to exist and be writable
+            with open(file_path, 'r+'):
+                pass
+            return True
+        except PermissionError:
+            run_msg(gui, f"Error: Cannot write to {file_path}. File may be open in another program. Please close it and try again.")
+            return False
+        except Exception as e:
+            run_msg(gui, f"Error: Cannot access {file_path}. {str(e)}")
+            return False
+    else:
+        # File doesn't exist - check if we can create it in the directory
+        try:
+            # Check if parent directory exists and is writable
+            parent_dir = file_path.parent
+            if not parent_dir.exists():
+                run_msg(gui, f"Error: Directory {parent_dir} does not exist.")
+                return False
+            if not parent_dir.is_dir():
+                run_msg(gui, f"Error: {parent_dir} is not a directory.")
+                return False
+            # Directory exists, assume we can write (actual write will fail if permissions issue)
+            return True
+        except Exception as e:
+            run_msg(gui, f"Error: Cannot access directory for {file_path}. {str(e)}")
+            return False
 
 def output_from_input(file_path_string, path_exe):
     file_path = Path(file_path_string)

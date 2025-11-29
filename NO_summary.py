@@ -24,6 +24,8 @@ def summarize_segment_data(settings, gui=""):
     #Initialize lists to hold data from all files
     segment_summary_data = []
     fire_summary_data = []
+    sub_segment_summary_data = []
+    train_summary_data = []
     summary_dfs = []
     file_info_data = []  # Store file metadata for Files_info sheet
     for no_file_path_str in settings['ses_output_str']:
@@ -42,8 +44,10 @@ def summarize_segment_data(settings, gui=""):
             
             requested_time = settings.get('sim_time', -1)
             segment_slices = []
+            train_slices = []
+            sub_segment_slices = []
             fire_slices = []
-            for df_name in ["SSA","SA"]:
+            for df_name in ["SSA","SA","TRA"]:
                 if df_name in data:          
                     try:
                         valid_time = valid_simtime(requested_time, data[df_name])
@@ -55,9 +59,11 @@ def summarize_segment_data(settings, gui=""):
                         valid_segments = time_slice.index.intersection(segment_numbers_2_lookup)
                         
                         # Only slice if we have segments available
-                        if len(valid_segments) > 0:
+                        if df_name != "TRA" and len(valid_segments) > 0:
                             df_slice = time_slice.loc[valid_segments]
                             segment_slices.append(df_slice)
+                        elif df_name=="TRA" and not time_slice.empty:
+                            train_slices.append(time_slice)
                         else:
                             run_msg(gui, f"  No requested segments found in {df_name}")
                         
@@ -75,13 +81,50 @@ def summarize_segment_data(settings, gui=""):
                 segment_df = pd.concat(segment_slices, axis=1)
                 segment_df = pd.concat([segment_df], keys=[no_file_path.stem])
                 segment_summary_data.append(segment_df)
-                
+            
+            # Collect train data for this file (added last)
+            if train_slices:
+                train_df = pd.concat(train_slices, axis=1)
+                train_df = pd.concat([train_df], keys=[no_file_path.stem])
+                train_summary_data.append(train_df)
+
             # Collect fire data for this file
             if fire_slices:
                 fire_df = pd.concat(fire_slices, axis=1)
                 fire_df = pd.concat([fire_df], keys=[no_file_path.stem])
                 fire_summary_data.append(fire_df)
 
+            for df_name in ["SST","ST","HSA"]:
+                if df_name in data:          
+                    try:
+                        valid_time = valid_simtime(requested_time, data[df_name])
+                        # Get the time slice first
+                        if df_name == "HSA":
+                            # HSA has 3 index levels: (Time, ZN, Segment, Sub_Segment)
+                            # Remove ZN level by taking xs on Time, then droplevel('ZN')
+                            time_slice = data[df_name].xs(valid_time, level='Time').droplevel('ZN')
+                        else:
+                            time_slice = data[df_name].xs(valid_time, level='Time')
+                        
+                        # Find which segments actually exist in the index
+                        valid_segments = time_slice.index.get_level_values(0).intersection(segment_numbers_2_lookup).tolist()
+                        
+                        # Only slice if we have segments available
+                        if len(valid_segments) > 0:
+                            df_slice = time_slice.loc[valid_segments]
+                            sub_segment_slices.append(df_slice)
+                        else:
+                            run_msg(gui, f"No requested segments found in {df_name}")
+                        
+                    except Exception as e:
+                        run_msg(gui, f"  Error processing data from {df_name}: {str(e)}")
+            
+            # Collect segments for this file
+            if sub_segment_slices:
+                sub_segment_df = pd.concat(sub_segment_slices, axis=1)
+                sub_segment_df = pd.concat([sub_segment_df], keys=[no_file_path.stem])
+                sub_segment_summary_data.append(sub_segment_df)
+            
         except Exception as e:
             run_msg(gui, f"Error processing file {no_file_path_str}: {str(e)}")
     
@@ -90,11 +133,23 @@ def summarize_segment_data(settings, gui=""):
         df = pd.concat(segment_summary_data)
         df.name = "Segments"
         summary_dfs.append(df)
-        
+
     # Combine all fire data if we have any
     if fire_summary_data:
         df = pd.concat(fire_summary_data)
         df.name = "Fire"
+        summary_dfs.append(df)
+
+    # Combine all fire data if we have any
+    if sub_segment_summary_data:
+        df = pd.concat(sub_segment_summary_data)
+        df.name = "Sub_Segments"
+        summary_dfs.append(df)
+
+    # Combine all train data if we have any
+    if train_summary_data:
+        df = pd.concat(train_summary_data)
+        df.name = "Train"
         summary_dfs.append(df)
     
     return summary_dfs, file_info_data
@@ -176,13 +231,20 @@ def create_excel_summary(settings, gui=""):
             # Get the original index level names (or provide defaults if unnamed)
             level_0_name = df.index.names[0] or 'File_Name'
             level_1_name = df.index.names[1] or ('Fire_Segment' if sheet_name.lower() == "fire" else 'Segment')
-            
-            # Rename the first two columns to match the level names
-            df_reset.rename(columns={df_reset.columns[0]: level_0_name, df_reset.columns[1]: level_1_name}, inplace=True)
-            
-            # Create combined column and insert at position 2 (after File_Name and Segment)
-            combined_index = df_reset.iloc[:, 0].astype(str) + '_' + df_reset.iloc[:, 1].astype(str)
-            df_reset.insert(2, f'{level_0_name}_{level_1_name}', combined_index)
+            if df.name.lower() == "sub_segments":
+                level_2_name = df.index.names[2] or 'Sub_Segment'
+                #Rname first three columns to match the level names
+                df_reset.rename(columns={df_reset.columns[0]: level_0_name, df_reset.columns[1]: level_1_name, df_reset.columns[2]: level_2_name}, inplace=True)
+                # Create combined column and insert at position 3 (after File_Name, Segment, and Sub_Segment)
+                combined_index = df_reset.iloc[:, 0].astype(str) + '_' + df_reset.iloc[:, 1].astype(str) + '_' + df_reset.iloc[:, 2].astype(str)
+                df_reset.insert(3, f'{level_0_name}_{level_1_name}_{level_2_name}', combined_index)
+            else:
+                level_2_name = None
+                # Rename the first two columns to match the level names
+                df_reset.rename(columns={df_reset.columns[0]: level_0_name, df_reset.columns[1]: level_1_name}, inplace=True)            
+                # Create combined column and insert at position 2 (after File_Name and Segment)
+                combined_index = df_reset.iloc[:, 0].astype(str) + '_' + df_reset.iloc[:, 1].astype(str)
+                df_reset.insert(2, f'{level_0_name}_{level_1_name}', combined_index)
             
             # Save to worksheet (index=False since we've moved everything to columns)
             df_reset.to_excel(writer, sheet_name=sheet_name, index=False)

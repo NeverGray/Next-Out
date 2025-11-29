@@ -112,9 +112,6 @@ def create_route_excel(settings, data, output_meta_data, gui=""):
             new_file_name = file_path.name[:-4] + "-Routes.out"
             new_file_path = file_path.parent/new_file_name
             output_meta_data['file_path'] = new_file_path
-            if not NO_file_tools.can_write_file(new_file_path, gui):
-                run_msg(gui, f"The file {new_file_path} cannot be written. Try closing the file.")
-                return None
             NV_excel.create_excel(settings, route_data, output_meta_data, gui)
             #Revert back to original output_meta_data name (incase needed elsewhere)
             output_meta_data['file_path'] = file_path
@@ -133,7 +130,7 @@ def run_msg(gui, text):
 
 if __name__ == "__main__":
     import NO_parser
-    one_output_file = ['C:/Simulations/ng01/NG01-X001.out']
+    one_output_file = ['C:/Simulations/test/test.out']
     settings = {
         'ses_output_str': one_output_file, 
         'visio_template': 'C:/Simulations/Demonstration/Next Vis Samples1p21.vsdx', 

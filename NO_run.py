@@ -138,8 +138,10 @@ def run_msg(gui, text):
 
 def run_SES(ses_exe_path, ses_input_file_path, gui =""):
     try: 
+        # Set working directory to the directory containing the input file
+        input_file_dir = Path(ses_input_file_path).parent
         # Check the proces is successful, see https://realpython.com/python-subprocess/ 
-        subprocess.run([ses_exe_path, ses_input_file_path], check=True) 
+        subprocess.run([ses_exe_path, ses_input_file_path], check=True, cwd=input_file_dir) 
         return True
     except FileNotFoundError as exc: 
         msg = (f"Process failed because the executable could not be found.\n{exc}")
