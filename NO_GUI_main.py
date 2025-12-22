@@ -14,6 +14,7 @@ from tkinter import filedialog, messagebox, ttk
 
 import NO_GUI_multifile_monitor
 import NO_run
+import NO_average
 import NO_compare
 import NO_summary
 from NO_constants import VERSION_NUMBER
@@ -618,32 +619,35 @@ class Start_Screen(tk.Tk):
         }
         if self.validation(self.settings):
             try:
+                multiprocess_required = ['Excel','Visio','Route']
                 # If only performing one individual simulation
-                if len(self.settings["ses_output_str"]) == 1 or "Compare" in self.settings["output"]:
-                    if "Compare" in self.settings["output"] and len(self.settings["ses_output_str"]) != 2:
-                        messagebox.showinfo(title="Error", message="Need exactly 2 files to compare outputs.")
-                        self.gui_text("Error: Need exactly 2 files to compare outputs.\n")
-                        self.btn_run["state"] = tk.NORMAL
-                        self.btn_run["text"] = "Run"
-                        return
-                    else:
-                        #TODO Check len(self.settings["ses_output_str"]) == 2 for Compare Case
-                        NO_run.single_sim(self.settings, gui=self)
-                        self.gui_text("Post processing completed.\n")
-                elif "Compare" in self.settings["output"]:
-                    NO_compare.compare_outputs(self.settings, gui=self)
-                elif self.parallel_process_files:
-                    # Launch process and monitor files when using multiple files
-                    self.gui_text(
-                        "Processing multiple files, openning monitor window."
-                    )
+                if len(self.settings["ses_output_str"]) == 1:
+                    NO_run.single_sim(self.settings, gui=self)
+                    self.gui_text("Post processing completed.\n")
+                # Check if multiprocessing is required or not
+                elif any(option in self.settings['output'] for option in multiprocess_required):
                     self.open_monitor_gui()
-                elif "Summary" in self.settings["output"]:
-                    try:
-                        NO_summary.create_excel_summary(self.settings, gui=self)
-                    except Exception as e:
-                        error_msg = f"Error with summary creation: {str(e)}\n"
-                        self.gui_text(error_msg)
+                elif self.settings["file_type"] != "H5_file":
+                    self.open_monitor_gui()
+                elif self.settings["file_type"] == "H5_file":
+                    if "Average" in self.settings["output"]:
+                        try:
+                            NO_average.compare_outputs(self.settings, gui=self)
+                        except Exception as e:
+                            error_msg = f"Error with compare outputs: {str(e)}\n"
+                            self.gui_text(error_msg)
+                    if "Compare" in self.settings["output"]:
+                        try:
+                            NO_compare.compare_outputs(self.settings, gui=self)
+                        except Exception as e:
+                            error_msg = f"Error with compare outputs: {str(e)}\n"
+                            self.gui_text(error_msg)
+                    if "Summary" in self.settings['output']:
+                        try:
+                            NO_summary.create_excel_summary(self.settings, gui=self)
+                        except Exception as e:
+                            error_msg = f"Error with summary creation: {str(e)}\n"
+                            self.gui_text(error_msg)
             except:
                 self.gui_text(
                     "Error after validation, before single_sim or multiple_sim. \n"
@@ -690,15 +694,9 @@ class Start_Screen(tk.Tk):
             "output_file": [".OUT", ".PRN"],
             "H5_file": [".H5"],
         }
-        # Get the selected file type
-        file_type = self.file_type.get()
-        if file_type == "H5_file" and settings['output'] == ['Summary']:
-            self.parallel_process_files = False
-        else:
-            self.parallel_process_files = True  # Changed from self.parallel_processing_needed
         # Get the valid extensions for the selected file type
+        file_type = self.file_type.get()
         allowed_extensions = valid_extensions.get(file_type, [])
-
         # Check each file in ses_output_str
         invalid_files = []
         for file_path in self.settings["ses_output_str"]:
@@ -712,15 +710,19 @@ class Start_Screen(tk.Tk):
             messagebox.showerror("Invalid File Types", msg_about_files)
             valid = False
             msg = msg + "Invalid file extensions to progress.\n"
+        # Add H5 
+        h5_required_options = ["Average", "Compare", "Summary"]
+        if any(option in settings["output"] for option in h5_required_options):
+            if "H5_file" not in settings["output"]:
+                settings["output"].append("H5_file")
         if "Average" in settings["output"]:
             if len(settings["ses_output_str"]) < 2:
                 msg = msg + "Need at least 2 files to for average analysis.\n"
                 valid = False
-            if "H5_file" not in settings["output"]:
-                settings["output"].append("H5_file")
-        if "Compare" in settings["output"] and len(settings["ses_output_str"]) != 2:
-            msg = msg + "Need excatly 2 files to compare files.\n"
-            valid = False
+        if "Compare" in settings["output"]:
+            if len(settings["ses_output_str"]) != 2:
+                msg = msg + "Need excatly 2 files to compare files.\n"
+                valid = False
         if not valid:
             messagebox.showinfo(title="Error with settings", message=msg)
         return valid

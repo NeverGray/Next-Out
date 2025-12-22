@@ -22,6 +22,7 @@ import NO_visio
 import NO_file_tools
 import NO_file_tools
 import NO_average
+import NO_compare
 import NO_summary
 from NO_constants import VERSION_NUMBER
 import NO_multifile_progress_bar as progress_tracker
@@ -542,6 +543,27 @@ class Monitor_GUI(tk.Toplevel):
                 messagebox.showerror(
                     title="Averaging Error",
                     message=f"Failed to create average output:\n\n{str(e)}",
+                    parent=self
+                )
+                # Average results from NO Files
+        if "Compare" in self.settings["output"]: 
+            # Update progress label to show post-processing
+            self.progress_label.config(text="Post-processing: Comparing output...")
+            self.update()
+            try:
+                unsorted_no_file_paths = list(self.manager.no_file_paths)
+                no_file_paths = sorted(unsorted_no_file_paths)
+                logging.info(f"NO File Paths: {list(self.manager.no_file_paths)}")
+                self.settings["ses_output_str"] = no_file_paths
+                NO_compare.compare_outputs(self.settings, gui="")
+            except Exception as e:
+                error_msg = f"CRITICAL: Error with comparing - {str(e)}"
+                self.manager.error_messages.append(error_msg)
+                self.update_error_log()
+                self.wm_attributes("-topmost", -1)
+                messagebox.showerror(
+                    title="Comparing Error",
+                    message=f"Failed to compare output:\n\n{str(e)}",
                     parent=self
                 )
         if "Summary" in self.settings["output"]:

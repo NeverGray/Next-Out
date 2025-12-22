@@ -1057,10 +1057,10 @@ def run_iterations(next_in_path, save_path, ses_version="SI"):
     input_string_list = next_in.create_iterations("Iteration")
     settings = {
         "ses_output_str": input_string_list,
-        "visio_template": "c:\\Users\\msn\\OneDrive - Gruppo Ferrovie Dello Stato\\TVS-FLS Task\\SES-PTUS\\Calculations\\SES-439 Congestion Result Diagram.vsdx",
+        "visio_template": "C:\\simulations\\test\\test.vsdx",
         "simtime": -1,
         "conversion": "",
-        "output": ["Excel", "Visio", "", "", "", "", "", "", ""],
+        "output": ["Excel", "Visio", "H5_file", "", "", "", "", "", ""],
         "file_type": "input_file",
         "path_exe": "C:/Simulations/_Exe/SESV6_32.exe",
     }
@@ -1074,8 +1074,8 @@ def run_iterations(next_in_path, save_path, ses_version="SI"):
 
 if __name__ == "__main__":
     ses_version = "SI"
-    directory_string = "C:\\Users\\msn\\OneDrive - Gruppo Ferrovie Dello Stato\\TVS-FLS Task\\SES-PTUS\\Calculations\\SES-438 Congested Journal PT12-C\\"
-    file_name = "PT12-N Next-In 4.3 Development.xlsm"
+    directory_string = "C:\\simulations\\test\\"
+    file_name = "test.xlsm"
     path_string = directory_string + file_name
     next_in_path = Path(path_string)
     save_path = Path(directory_string)
