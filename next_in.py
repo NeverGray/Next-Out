@@ -1001,7 +1001,8 @@ class Next_In:
                 column
             ):  # If there is a value of some kind, check for an equal sign
                 if column[0] == "=":
-                    form_name = column.split("'")[1]
+                    # Extract the form name in format ='F03'!$I$5 or =F08A!$f$7 or 
+                    form_name = column.split('!')[0].strip("='")
                     excel_rc = column.split("!")[1].replace("$", "")
                     excel_column_letters = re.findall(r"[A-Za-z]", excel_rc)[0]
                     excel_row = re.findall(r"\d+", excel_rc)[0]
@@ -1050,33 +1051,27 @@ class Next_In:
         with open(save_name, "w") as f:
             f.write(string)
 
-
-def run_iterations(next_in_path, save_path, ses_version="SI"):
-    next_in = Next_In(next_in_path, save_path, ses_version)
-    
-    input_string_list = next_in.create_iterations("Iteration")
+if __name__ == "__main__":
+    ses_version = "SI"
+    directory_string = "C:/simulations/test/"
+    file_name = "test.xlsm"
+    visio_template_name = "test.vsdx"
     settings = {
-        "ses_output_str": input_string_list,
-        "visio_template": "C:\\simulations\\test\\test.vsdx",
+        "ses_output_str": "",
+        "visio_template": directory_string + visio_template_name,
         "simtime": -1,
         "conversion": "",
-        "output": ["Excel", "Visio", "H5_file", "", "", "", "", "", ""],
+        "output": ["Visio", "H5_file", "visio_2_pdf"],
         "file_type": "input_file",
         "path_exe": "C:/Simulations/_Exe/SESV6_32.exe",
     }
-    # Attempt to launch monitor and processing
+    next_in_path = Path(directory_string + file_name)
+    save_path = Path(directory_string)
+    next_in = Next_In(next_in_path, save_path, ses_version)
+    input_string_list = next_in.create_iterations("Iteration")
+    settings["ses_output_str"] = input_string_list
+    # Ask the user to start multifile monitor to process files.
     import NO_GUI_multifile_monitor
-
     app = NO_GUI_multifile_monitor.App(settings)
     app.mainloop()
     print("app.mainloop finished")
-
-
-if __name__ == "__main__":
-    ses_version = "SI"
-    directory_string = "C:\\simulations\\test\\"
-    file_name = "test.xlsm"
-    path_string = directory_string + file_name
-    next_in_path = Path(path_string)
-    save_path = Path(directory_string)
-    run_iterations(next_in_path, save_path, ses_version)

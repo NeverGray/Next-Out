@@ -492,6 +492,7 @@ def write_visio(vxmls, visio_template, new_visio ,gui=""):
 def convert_visio(new_visio,settings_output,gui):
     try:
         #https://stackoverflow.com/questions/10214003/can-python-win32com-use-visio-or-any-program-without-popping-up-a-gui
+        NO_run.run_msg(gui,f'Preparing to convert Visio files {new_visio.name}')
         visio = win32com.client.Dispatch("Visio.InvisibleApp")
         doc = visio.Documents.Open(str(new_visio))
         if "visio_2_pdf" in settings_output:
