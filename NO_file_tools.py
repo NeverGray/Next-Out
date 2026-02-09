@@ -213,6 +213,8 @@ def read_h5_file(file_path):
                 
                 if 'file_path' in output_meta_data and isinstance(output_meta_data['file_path'], str):
                     output_meta_data['file_path'] = Path(output_meta_data['file_path'])
+                # Update file_path to current H5 location, not the cached original path
+                output_meta_data['file_path'] = no_file_path.with_suffix('.out')
                 return data, output_meta_data
             except Exception as e:
                 raise Exception(f"Failed to read H5 file with PyTables: {e}") from e

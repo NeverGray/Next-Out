@@ -494,6 +494,10 @@ def convert_visio(new_visio,settings_output,gui):
         #https://stackoverflow.com/questions/10214003/can-python-win32com-use-visio-or-any-program-without-popping-up-a-gui
         NO_run.run_msg(gui,f'Preparing to convert Visio files {new_visio.name}')
         visio = win32com.client.Dispatch("Visio.InvisibleApp")
+        # Optimize Visio COM performance to be tested
+        visio.ScreenUpdating = False  # Disable screen refresh during automation
+        visio.EventsEnabled = False   # Disable event callbacks
+        visio.DeferRecalc = True      # Defer recalculations until needed
         doc = visio.Documents.Open(str(new_visio))
         if "visio_2_pdf" in settings_output:
             new_pdf = new_visio.with_suffix('.pdf')
