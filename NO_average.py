@@ -16,7 +16,6 @@ import NO_file_tools
 import NO_GUI_multifile_monitor
 
 def average_outputs(settings, gui=""):
-    # TODO Update to use NO_GUI_multifile_monitor
     df_by_type = {}
     first_iteration = True
     # For each ses_output, add dataframes to a Dictionary organized by data type ('SSA', 'SST', etc...) 
@@ -79,11 +78,17 @@ def average_outputs(settings, gui=""):
         both_ses_output_str = parent + '/' + first_ses_output_str + second_ses_output_str
         output_meta_data['file_path'] = Path(both_ses_output_str)
         NV_excel.create_excel(settings, df, output_meta_data, gui)
+        #Create an H5_file of the mean, max, and min dataframes
+        if "H5_file" in settings['output']:
+            NO_file_tools.save_h5_file(df, output_meta_data, settings)
 
 if __name__ == "__main__":
     # Main code copied from NV_GUi
     settings={
-        'ses_output_str': ['C:\\Simulations\\test\\test001.prn', 'C:\\Simulations\\test\\test002.prn'],
+        'ses_output_str': ['C:\\Simulations\\test\\PT12-N041.out', 
+                           'C:\\Simulations\\test\\PT12-N042.out',
+                           'C:\\Simulations\\test\\PT12-N043.out',
+                           'C:\\Simulations\\test\\PT12-N044.out',],
         'output': ['Average', 'H5_file'], 
         'file_type': 'output_file',
         'path_exe': 'C:/Simulations/SES41.exe',

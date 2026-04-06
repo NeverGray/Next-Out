@@ -22,6 +22,7 @@ import NO_visio
 import NO_file_tools
 import NO_file_tools
 import NO_average
+import NO_compare
 import NO_summary
 from NO_constants import VERSION_NUMBER
 import NO_multifile_progress_bar as progress_tracker
@@ -229,6 +230,7 @@ class Monitor_GUI(tk.Toplevel):
         self.settings = start_screen_settings
         self.create_process_settings()  # Create settings for processing
         self.in_progress = True
+        self.processing_row_widgets = {}  # Cache for processing table rows
         p = "5"  # padding
         self.title("Next-Out " + VERSION_NUMBER + " Monitor")
         
@@ -399,31 +401,72 @@ class Monitor_GUI(tk.Toplevel):
         self.update_error_log()
         # Update progress bar
         self.update_progress_bar()
+        
+        # Get current PIDs from processing dictionary
+        current_pids = set(self.manager.processing_dictionary.keys())
+        cached_pids = set(self.processing_row_widgets.keys())
+        
+        # Remove widgets for PIDs that are no longer being processed
+        for pid in cached_pids - current_pids:
+            for widget in self.processing_row_widgets[pid]:
+                widget.destroy()
+            del self.processing_row_widgets[pid]
+        
+        # Update or create rows for current PIDs
         row_number = 20
-        for key, values in self.manager.processing_dictionary.items():
-            column_number = 10
-            self.entry = tk.Entry(
-                self.processing_frame,
-                width=self.column_width[column_number],
-                fg="blue",
-                font=("Arial", self.font_size, ""),
-            )
-            self.entry.grid(row=row_number, column=column_number)
-            # First entry is the PID for the process
-            self.entry.insert(tk.END, key)
-            column_number += 10
-            # Update the status of the process for the PID
-            for value in values:
-                font_color_text = STATUS_FONT_COLOR.get(value, "black")
-                self.entry = tk.Entry(
+        for pid in sorted(current_pids):
+            values = self.manager.processing_dictionary[pid]
+            
+            # Create widgets for this PID if they don't exist
+            if pid not in self.processing_row_widgets:
+                self.processing_row_widgets[pid] = []
+                column_number = 10
+                
+                # Create PID entry
+                entry = tk.Entry(
                     self.processing_frame,
                     width=self.column_width[column_number],
-                    fg=font_color_text,
+                    fg="blue",
                     font=("Arial", self.font_size, ""),
                 )
-                self.entry.grid(row=row_number, column=column_number)
-                self.entry.insert(tk.END, value)
+                entry.grid(row=row_number, column=column_number)
+                entry.insert(tk.END, pid)
+                self.processing_row_widgets[pid].append(entry)
                 column_number += 10
+                
+                # Create entries for each status value
+                for value in values:
+                    font_color_text = STATUS_FONT_COLOR.get(value, "black")
+                    entry = tk.Entry(
+                        self.processing_frame,
+                        width=self.column_width[column_number],
+                        fg=font_color_text,
+                        font=("Arial", self.font_size, ""),
+                    )
+                    entry.grid(row=row_number, column=column_number)
+                    entry.insert(tk.END, value)
+                    self.processing_row_widgets[pid].append(entry)
+                    column_number += 10
+            else:
+                # Update existing widgets
+                widgets = self.processing_row_widgets[pid]
+                # Update grid row in case order changed
+                for col_idx, widget in enumerate(widgets):
+                    current_grid = widget.grid_info()
+                    if current_grid.get('row') != row_number:
+                        widget.grid(row=row_number)
+                
+                # Update text content and colors
+                widget_idx = 1  # Skip PID widget
+                for value_idx, value in enumerate(values):
+                    if widget_idx < len(widgets):
+                        widget = widgets[widget_idx]
+                        widget.delete(0, tk.END)
+                        widget.insert(tk.END, value)
+                        font_color_text = STATUS_FONT_COLOR.get(value, "black")
+                        widget.config(fg=font_color_text)
+                        widget_idx += 1
+            
             row_number += 10
 
     def update_error_log(self):
@@ -542,6 +585,27 @@ class Monitor_GUI(tk.Toplevel):
                 messagebox.showerror(
                     title="Averaging Error",
                     message=f"Failed to create average output:\n\n{str(e)}",
+                    parent=self
+                )
+                # Average results from NO Files
+        if "Compare" in self.settings["output"]: 
+            # Update progress label to show post-processing
+            self.progress_label.config(text="Post-processing: Comparing output...")
+            self.update()
+            try:
+                unsorted_no_file_paths = list(self.manager.no_file_paths)
+                no_file_paths = sorted(unsorted_no_file_paths)
+                logging.info(f"NO File Paths: {list(self.manager.no_file_paths)}")
+                self.settings["ses_output_str"] = no_file_paths
+                NO_compare.compare_outputs(self.settings, gui="")
+            except Exception as e:
+                error_msg = f"CRITICAL: Error with comparing - {str(e)}"
+                self.manager.error_messages.append(error_msg)
+                self.update_error_log()
+                self.wm_attributes("-topmost", -1)
+                messagebox.showerror(
+                    title="Comparing Error",
+                    message=f"Failed to compare output:\n\n{str(e)}",
                     parent=self
                 )
         if "Summary" in self.settings["output"]:
