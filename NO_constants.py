@@ -5,7 +5,8 @@
 # This file is licensed under the MIT License.
 # You may obtain a copy of the license at https://opensource.org/licenses/MIT
 
-VERSION_NUMBER = "2.2"  # Fixed ABB parser issue with negative segment numbers
+VERSION_NUMBER = "2.2 a"
+#Added pressure data to summary file.
 
 #Column name : [SI Unit, IP Unit]
 COLUMN_UNITS={

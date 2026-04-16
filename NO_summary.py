@@ -47,7 +47,7 @@ def summarize_segment_data(settings, gui=""):
             train_slices = []
             sub_segment_slices = []
             fire_slices = []
-            for df_name in ["SSA","SA","TRA"]:
+            for df_name in ["SSA","SSP","SA","TRA"]:
                 if df_name in data:          
                     try:
                         valid_time = valid_simtime(requested_time, data[df_name])
