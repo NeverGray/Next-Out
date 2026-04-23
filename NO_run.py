@@ -8,8 +8,6 @@
 import subprocess
 from pathlib import Path
 
-import NO_average
-import NO_compare
 import NO_Excel_R01 as nve
 import NO_parser
 import NO_route

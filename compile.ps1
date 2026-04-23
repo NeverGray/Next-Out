@@ -17,4 +17,8 @@ Copy-Item "$PSScriptRoot\NO_Icon.ico" "C:\bin\code\"
 pyinstaller -F main.py --noconsole --onefile --icon NO_Icon.ico --add-data "NO_Icon.ico;." `
  #   --exclude matplotlib --exclude scipy --exclude PIL --exclude unittest --exclude test --exclude tests `
  #   --hidden-import=h5py --copy-metadata h5py
-Rename-Item -Path "C:\Bin\code\dist\main.exe" -NewName "Next-Out.exe"
+$constantsPath = Join-Path $PSScriptRoot "NO_constants.py"
+$versionMatch = Select-String -Path $constantsPath -Pattern '^\s*VERSION_NUMBER\s*=\s*"([^"]+)"' | Select-Object -First 1
+$version = if ($versionMatch -and $versionMatch.Matches.Count -gt 0) { $versionMatch.Matches[0].Groups[1].Value } else { "Unknown" }
+$newExeName = "Next-Out $version.exe"
+Rename-Item -Path "C:\Bin\code\dist\main.exe" -NewName $newExeName

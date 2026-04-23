@@ -1016,7 +1016,7 @@ def create_ss_dfs(
     df_ssp = pd.DataFrame()
     if len(pressure_pit) > 0:
         df_ssp = to_dataframe2(pressure_pit, ["Section"], ["Time", "Section"])
-    df_ssp.name = "SSP"
+        df_ssp.name = "SSP"
     # Merge additional data based on https://pandas.pydata.org/pandas-docs/stable/user_guide/merging.html
     if len(wall_pit) > 0:  # If wall tempature exists
         df_wall_pit = to_dataframe2(wall_pit)
@@ -1071,44 +1071,20 @@ def create_ss_dfs(
             + "_"
             + df_sst.index.get_level_values(2).astype(str)
     )
-    column_names = df_sst.columns.values.tolist()
-    if len(column_names) == 5:
-        df_sst = df_sst[
-            [
-                "ID",
-                "Air_Temp",
-                "Humidity",
-                "Sensible",
-                "Latent",
-            ]
-        ]
-    elif len(column_names) == 7:
-        df_sst = df_sst[
-            [
-                "ID",
-                "Air_Temp",
-                "Humidity",
-                "Sensible",
-                "Latent",
-                'Working_Fluid_Temp',
-                'Heat_Absorbed_by_Pipe'
-            ]
-        ]
-    elif len(column_names) == 8:
-        df_sst = df_sst[
-            [
-                "ID",
-                "Air_Temp",
-                "Humidity",
-                "Sensible",
-                "Latent",
-                'Wall_Temp',
-                'Convection_to_Wall',
-                'Radiation_to_Wall',
-            ]
-        ]
-    else:
-        df_sst = df_sst[["ID", "Air_Temp", "Humidity", "Sensible", "Latent", ]]
+    sst_column_order = [
+        "ID",
+        "Air_Temp",
+        "Humidity",
+        "Sensible",
+        "Latent",
+        "Wall_Temp",
+        "Convection_to_Wall",
+        "Radiation_to_Wall",
+        "Working_Fluid_Temp",
+        "Heat_Absorbed_by_Pipe",
+    ]
+    # Keep a stable, readable order while skipping columns not in this dataframe.
+    df_sst = df_sst[[col for col in sst_column_order if col in df_sst.columns]]
 
     df_sst.name = "SST"
 
