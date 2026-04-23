@@ -7,6 +7,7 @@
 
 import re
 from pathlib import Path
+from tkinter import messagebox
 
 import numpy as np
 import pandas as pd
@@ -14,10 +15,10 @@ import openpyxl
 
 # TODO - Add functionality to GUI or command line to create multiple input files from a Next-In Excel file
 class Next_In:
-    def __init__(self, next_in_path, save_path, ses_version):
+    def __init__(self, next_in_path, iteration_path, ses_version):
         # Read in next-in excel to a dataframe
         self.ses_version = ses_version
-        self.save_path = save_path
+        self.save_path = iteration_path
         self.next_in_path = next_in_path
         self.read_in_next_in()
         # Create blank dataframe with 8 columns
@@ -1051,6 +1052,13 @@ class Next_In:
         with open(save_name, "w") as f:
             f.write(string)
 
+def create_iterations_from_next_in(next_in_path, iteration_path, ses_version):
+    iteration_path = Path(iteration_path)
+    next_in = Next_In(next_in_path, iteration_path, ses_version)
+    input_string_list = next_in.create_iterations("Iteration")
+    number_of_iterations = len(input_string_list)
+    messagebox.showinfo("Iterations Created", f"{number_of_iterations} iterations are created")
+
 if __name__ == "__main__":
     ses_version = "SI"
     directory_string = "C:/simulations/test/"
@@ -1061,8 +1069,8 @@ if __name__ == "__main__":
         "visio_template": directory_string + visio_template_name,
         "simtime": -1,
         "conversion": "",
-        "output": ["Visio", "H5_file", "visio_2_pdf"],
-        "file_type": "input_file",
+        "output": ["Visio", "H5_file"],
+        "file_type": "iteration",
         "path_exe": "C:/Simulations/_Exe/SESV6_32.exe",
     }
     next_in_path = Path(directory_string + file_name)

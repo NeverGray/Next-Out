@@ -11,6 +11,7 @@ import multiprocessing #Needed for compiled (*.exe) version
 
 import NO_GUI_main
 import NO_GUI_command_line
+import next_in
 
 def main():
     # Set up argument parser
@@ -24,8 +25,14 @@ def main():
         # Convert the settings string to a dictionary using ast.literal_eval
         settings = ast.literal_eval(args.settings)
         # Call the function with the parsed settings
-        app = NO_GUI_command_line.command_line_screen(settings)
-        app.mainloop()
+        if settings.get("file_type") == "iteration":
+            next_in_path = settings['ses_output_str'][0]
+            iteration_path = settings['iteration_path']
+            ses_version = settings['ses_version']
+            next_in.create_iterations_from_next_in(next_in_path, iteration_path, ses_version)
+        else:
+            app = NO_GUI_command_line.command_line_screen(settings)
+            app.mainloop()
     else:
         # Launch the GUI
         multiprocessing.freeze_support()
@@ -36,7 +43,7 @@ if __name__ == "__main__":
     main()
     r'''
     Use the text below in a terminal to test the command line options.
-    python main.py --settings "{'conversion': '', 'file_type': 'output_file', 'output': ['Excel', 'Visio', 'H5_file', 'test_output_files', '', '', '', '', ''], 'path_exe': 'C:/Simulations/_Exe/SESV6_32.exe', 'ses_output_str': ['C:/simulations/test/test.inp'], 'simtime': -1, 'visio_template': 'C:/Simulations/Test/Test.vsdx'}"
+    python main.py --settings "{'conversion': '', 'file_type': 'iteration', 'output': ['Excel', 'Visio', 'H5_file', 'test_output_files', '', '', '', '', ''], 'path_exe': 'C:/Simulations/_Exe/SESV6_32.exe', 'ses_output_str': ['C:/simulations/test/test.xlsm'], 'simtime': -1, 'visio_template': 'C:/Simulations/Test/Test.vsdx', 'save_path': path(c:/simulations/test', 'ses_version': 'SI'    }"
 
     Use the text below to run from the executable
     "C:\Simulations\_exe\Next-Out.exe" --settings "{'conversion': '', 'file_type': 'output_file', 'output': [' '], 'path_exe': '', 'results_folder_str': None, 'ses_output_str': ['C:/Simulations/Test/test2.inp'], 'simtime': -1, 'visio_template': ''}"

@@ -5,8 +5,9 @@
 # This file is licensed under the MIT License.
 # You may obtain a copy of the license at https://opensource.org/licenses/MIT
 
-VERSION_NUMBER = "2.2 a"
+VERSION_NUMBER = "2.3 b"
 #Added pressure data to summary file.
+#Added next-in iterations from command line
 
 #Column name : [SI Unit, IP Unit]
 COLUMN_UNITS={

@@ -141,6 +141,6 @@ if __name__ == "__main__":
         'file_type':'', #'input_file', 
         'path_exe': 'C:/Simulations/_Exe/SVSV6_32.exe'}
     file_path = Path(settings['ses_output_str'][0])
-    data, output_meta_data = NO_parser.parse_file(file_path, gui="", conversion_setting=settings['conversion'])
+    data, output_meta_data = NO_parser.parse_file(file_path, gui="", conversion_setting=settings.get('conversion', ''))
     create_route_excel(settings, data, output_meta_data)
     print('Finished')
