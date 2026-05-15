@@ -21,6 +21,9 @@ def summarize_segment_data(settings, gui=""):
     run_msg(gui, "Creating Summary file")
     segment_numbers_2_lookup = settings.get('segments_2_lookup', [])
     fire_summary = settings.get('lookup_fire_data', False)
+    # Limit H5 reads to summary-relevant tables to reduce I/O and deserialization time.
+    required_data_keys = ["SSA", "SSP", "SA", "TRA", "SST", "ST", "HSA"]
+    required_metadata_keys = ["form4_df"] if fire_summary else []
     #Initialize lists to hold data from all files
     segment_summary_data = []
     fire_summary_data = []
@@ -31,7 +34,12 @@ def summarize_segment_data(settings, gui=""):
     for no_file_path_str in settings['ses_output_str']:
         try:
             no_file_path = Path(no_file_path_str)
-            data, output_meta_data = read_h5_file(no_file_path)
+            data, output_meta_data = read_h5_file(
+                no_file_path,
+                data_keys=required_data_keys,
+                metadata_keys=required_metadata_keys,
+                read_metadata_attributes=True,
+            )
             
             # Collect file metadata for Files_info sheet
             file_info = {

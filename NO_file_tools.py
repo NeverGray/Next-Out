@@ -152,7 +152,12 @@ def _save_h5_with_pytables(data, output_meta_data, no_file_path):
             store.get_storer('data/SSA').attrs.metadata = metadata
 
 # Read the data and output_meta_data from the HDF5 file
-def read_h5_file(file_path):
+def read_h5_file(
+    file_path,
+    data_keys=None,
+    metadata_keys=None,
+    read_metadata_attributes=True,
+):
     # Support both legacy .no files and new .h5 files
     no_file_path_h5 = get_file_path_with_suffix(file_path, '.h5')
     no_file_path_legacy = get_file_path_with_suffix(file_path, '.no')
@@ -172,6 +177,8 @@ def read_h5_file(file_path):
         # Read with PyTables
         data = {}
         output_meta_data = {}
+        requested_data_keys = set(data_keys) if data_keys else None
+        requested_metadata_keys = set(metadata_keys) if metadata_keys else None
         
         if tables is not None:
             try:
@@ -180,15 +187,19 @@ def read_h5_file(file_path):
                     for key in store.keys():
                         if key.startswith('/data/'):
                             df_key = key.replace('/data/', '')
+                            if requested_data_keys is not None and df_key not in requested_data_keys:
+                                continue
                             data[df_key] = store[key]
                             data[df_key].name = df_key
                         elif key.startswith('/metadata/'):
                             # Read DataFrame metadata
                             meta_key = key.replace('/metadata/', '')
+                            if requested_metadata_keys is not None and meta_key not in requested_metadata_keys:
+                                continue
                             output_meta_data[meta_key] = store[key]
                     
                     # Read metadata attributes from the SSA DataFrame if it exists
-                    if 'data/SSA' in store:
+                    if read_metadata_attributes and 'data/SSA' in store:
                         try:
                             metadata = store.get_storer('data/SSA').attrs.metadata
                             # List of metadata keys that should have integer dictionary keys
