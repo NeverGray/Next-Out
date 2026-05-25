@@ -5,10 +5,11 @@
 # This file is licensed under the MIT License.
 # You may obtain a copy of the license at https://opensource.org/licenses/MIT
 
-VERSION_NUMBER = "2.3 E"
+VERSION_NUMBER = "2.3 F"
 #Added pressure data to summary file.
 #Added next-in iterations from command line
 #Version C is skipped. New Version is D.
+#Next-In SI inputs to IP
 
 #Column name : [SI Unit, IP Unit]
 COLUMN_UNITS={
@@ -146,7 +147,7 @@ COLUMN_UNITS={
     "EC_Requirement_Latent":["W","Btu/h","ECS"],
     "EC_Requirement_Total":["W","Btu/h","ECS"]
 }
-# IP Unit : Conversion to SI
+# IP Unit : Conversion Output to SI
 IP_TO_SI={
     "Btu/h":	    0.2930711,
     "Btu/s":	    1055.056, 
@@ -161,5 +162,88 @@ IP_TO_SI={
     "mph":	        1.609344,
     "mph/s":	    0.447,
 }
+#Values to convert SI input to IP input
+SI_Conversion = {
+    1.0: 1.0, 
+    "C_F":          1.8,
+    "C_F_Increment": 1.8, # Used for max and min temps where the increment should be converted but not the value itself.
+    "C_F_Not_Zero": 0, # Used for average temps columns (ST_temp_exception) where some zero values should not be converted.
+    "J/kg-K_Btu/lb-F": 0.238846/1000,
+    "kPa_inhg":     0.2953,
+    "kg/m^3_lb/ft^3": 0.06242796,
+    "kg_lbs":        2.20462,
+    "kg_lbs/ton-mph/s": 0.000621371,
+    "kph_mph":      0.621371,
+    "m/s_fpm":      196.8504,
+    "m/s^2_mph/s":  2.236936,
+    "m^2/s_ft^2/hr": 38750.0775,
+    "m^2_ft^2":     10.7639,
+    "m^3/s_cfm":    2118.88,
+    "m_ft":         3.28084,
+    "mm_ft":        0.00328084,
+    "mm_in":        0.0393701,
+    "N-m^2_lbs-ft^2": 0.04214, # Reverse calculated from normal2SI.inp
+    "N_lbs":        0.224809,
+    "Pa_inwg":      0.00401463,
+    "tonnes_tons":  1.10231,
+    "W/m-K_Btu/ft-hr-F": 0.577789,
+    "W_Btu/hr":     3.41214,
+    "Rolling_C1": 1.3/6.374, #Reverse calculated
+    "Rolling_C2": 116/515.994, #Reverse calculated from inferno.inp
+    "Rolling_C3": .045/0.1371, #Reverse calculated from inferno.inp
+    "Equivalent_Mass": 8.8/2626.0613, #Reverse calculated from Normal2SI.inp
+    "R_air": 287.058, #Specific gas constant for air, used for calculating density from pressure and temperature"
+    "Zero": 0, # Use to erase values, such as Air Density in Form 7C.
+    #TODO Inferno and Normal give difference values for equivalent mass
+}
+Form_SI_2_IP = {
+    "Form 1B": [1]*3,
+    "Form 1C": [1]*8,
+    "Form 1D": [1]*7,
+    "Form 1E": [1]*8,
+    "Form 1F": ["C_F","C_F","kPa_inhg","C_F","C_F","C_F","C_F","C_F_Increment"],
+    "Form 1G": ["kg_lbs",1,1,1,1,"kph_mph",1,1],
+    "Form 1H": [1]*5,    
+    "Form_3A_2": ["m_ft","m^2_ft^2","m_ft",1,1],
+    "Form_3B_1": ["m_ft"] * 8,
+    "Form_3B_2": ["mm_ft"] * 8,
+    "Form_3D": [1,1,1,"W_Btu/hr","W_Btu/hr",1,1,1],
+    "Form_3E": [1,1,"C_F","C_F","C_F"],
+    "Form_3F": ["m_ft","m_ft","W/m-K_Btu/ft-hr-F","m^2/s_ft^2/hr","W/m-K_Btu/ft-hr-F","m^2/s_ft^2/hr","C_F"],
+    "Form_4B": ["W_Btu/hr","W_Btu/hr",1,1,"C_F","m^2_ft^2" ],
+    "Form_5B": [1,1,"m^2_ft^2","m/s_fpm","C_F","C_F","C_F","m_ft"],
+    "Form_5D": ["m_ft","m^2_ft^2","m_ft",1,1,1,1],
+    "Form_6B": ["C_F_Not_Zero"] * 6,
+    "Form_7A": [1,1,1,1,"kg/m^3_lb/ft^3",1,"m^3/s_cfm","m^3/s_cfm"],
+    "Form_7B": ["Pa_inwg", "m^3/s_cfm"] *4,
+    "Form_7C": ["Thrust_2_cfm",1,"m/s_fpm",1,1,"Zero","Zero"],
+    #TODO Form 7C Change "Zero" to "One" when jet fan derating is added.
+    "Form_8A_2": ["m_ft",1,1,1,1,"kph_mph",1],
+    "Form_8C": ["m_ft", "m_ft",1,"m_ft","kph_mph",1,1,1],
+    "Form_8D": ["m_ft",1,1],
+    "Form_8E": [1,"kph_mph",1,1,1],
+    "Form_8F_1":[1,"m_ft"],
+    "Form_9A": [1,1,1,1,1,1,"m_ft","m^2_ft^2"],
+    "Form_9B": ["m_ft",1,"m^2_ft^2",1,1],
+    "Form_9C": ["W_Btu/hr","W_Btu/hr","W_Btu/hr","W_Btu/hr",1,1],
+    "Form_9D_1": ["kg_lbs","kg_lbs","mm_in","mm_in","m^2_ft^2","m^2_ft^2","m^2_ft^2","m^2_ft^2"],
+    "Form_9D_2": [1,1,"J/kg-K_Btu/lb-F","J/kg-K_Btu/lb-F","C_F","C_F","m/s_fpm","m/s_fpm"],
+    "Form_9E"  :   ["tonnes_tons",1,"Rolling_C1","Rolling_C2","Rolling_C3","Equivalent_Mass"],
+    "Form_9F_1" : [1,1,1,1,"mm_in","mm_in"],
+    "Form_9F_2" : [1] * 5,
+    "Form_9G_1" : ["kph_mph","kph_mph","kph_mph","kph_mph"],
+    "Form_9G_2" : ["N_lbs"] * 4,    
+    "Form_9G_3" : [1] * 4,
+    "Form_9G_4" : [1],
+    "Form_9H_1" : [1,1,1,1,1],
+    "Form_9H_2" : [1,"kph_mph",1,1,1],
+    "Form_9I" : ["kph_mph","kph_mph",1,1,1],
+    "Form_9J" : ["m/s^2_mph/s","m/s^2_mph/s","kph_mph","m/s^2_mph/s","kph_mph","m/s^2_mph/s"],
+    "Form_9K" : ["N-m^2_lbs-ft^2",1,1,1,1],
+    "Form_10" : ["m_ft","kph_mph",1,1,"C_F","C_F",1,1],
+    "Form_11A" : [1,1,"C_F","C_F","C_F","C_F"],
+    "Form_12" : ["C_F_Increment",1],
+    }
+
 # Added to allow minify to work on all other modules
 DEGREE_SYMBOL="\u00B0"

@@ -1,17 +1,19 @@
 # Project Name: Next-Out
-# Description: Future script to creatie multiple input files from a Next-In Excel file.
-# Copyright (c) 2024 Justin Edenbaum, Never Gray
+# Description: Create input files from a Next-In Excel file.
+# Copyright (c) 2026 Justin Edenbaum, Never Gray
 #
 # This file is licensed under the MIT License.
 # You may obtain a copy of the license at https://opensource.org/licenses/MIT
 
 import re
+from numbers import Real
 from pathlib import Path
 from tkinter import messagebox
 
 import numpy as np
 import pandas as pd
 import openpyxl
+import NO_constants
 
 # TODO - Add functionality to GUI or command line to create multiple input files from a Next-In Excel file
 class Next_In:
@@ -20,6 +22,7 @@ class Next_In:
         self.ses_version = ses_version
         self.save_path = iteration_path
         self.next_in_path = next_in_path
+        self.Form_SI_2_IP = NO_constants.Form_SI_2_IP
         self.read_in_next_in()
         # Create blank dataframe with 8 columns
         self.input_df = pd.DataFrame()
@@ -81,6 +84,7 @@ class Next_In:
         number_of_rows=1,
         column_to_text=0,
         num_cells_4_text=0,
+        SI_2_IP_Units=[None]
     ):
         end_column = start_column + columns_to_read
         end_row = start_row + number_of_rows
@@ -90,12 +94,20 @@ class Next_In:
                 row_list = worksheet_df.iloc[
                     start_row, start_column:end_column
                 ].values.tolist()
-                for i in range(columns_to_read, 8):
-                    row_list.append(np.nan)
+                if self.ses_version == "SI_2_IP" and SI_2_IP_Units != [None]:
+                    row_list = self.convert_2_SI(row_list, SI_2_IP_Units)
+                if columns_to_read < 8: # If there are less than 8 entries, add blanks
+                    row_list.extend([np.nan] * (8 - columns_to_read))
                 self.input_df.loc[len(self.input_df)] = row_list
             else:
                 df = worksheet_df.iloc[start_row:end_row, start_column:end_column]
                 df.columns = range(df.shape[1])
+                if self.ses_version == "SI_2_IP" and SI_2_IP_Units != [None]:
+                    df = df.apply(
+                        lambda row: self.convert_2_SI(row.tolist(), SI_2_IP_Units),
+                        axis=1,
+                        result_type="expand",
+                    )
                 if columns_to_read < 8:  # If there are less than 8 entries, add blanks
                     for i in range(columns_to_read, 8):
                         df.insert(i, i, np.nan)
@@ -119,6 +131,8 @@ class Next_In:
                 ].values.tolist()
                 row_list_collection[0].extend(text_input_list)
                 row_list = row_list_collection[0]
+            if self.ses_version == "SI_2_IP" and SI_2_IP_Units != [None]:
+                row_list = self.convert_2_SI(row_list, SI_2_IP_Units)
             # Add the list to the dataframe
             data_columns = len(row_list)
             for i in range(data_columns + 1, 9):
@@ -149,6 +163,64 @@ class Next_In:
                 else:
                     entry_number += 1
                 self.map_list.append(mapping)
+    
+    def convert_2_SI(self, row_list, SI_2_IP_Units):
+        converted_row_list = []  
+        for i in range(len(row_list)):
+            value = row_list[i]
+            conversion_units = SI_2_IP_Units[i]
+            conversion_value = NO_constants.SI_Conversion.get(conversion_units, 1)
+            if isinstance(value, str):
+                converted_row_list.append(value)
+            elif pd.isna(value):
+                converted_row_list.append(np.nan)
+            elif conversion_units ==1:
+                converted_row_list.append(value)
+            elif conversion_units == "C_F_Not_Zero":
+                if value != 0:
+                    converted_row_list.append((value * 1.8) + 32)
+                else:
+                    converted_row_list.append(0)
+            elif conversion_units == "C_F":
+                converted_row_list.append((value * 1.8) + 32)
+            elif conversion_units == "Thrust_2_cfm":
+                #Form 7C_1 requires a special conversion using air density
+                converted_row_list.append(
+                    self.thrust_2_cfm(thrust_N=row_list[0],velocity_m_per_s=row_list[2],density_kg_per_m3=row_list[5])   
+                )
+            elif isinstance(value, Real) and isinstance(conversion_value, Real):
+                converted_value = value * conversion_value
+                converted_row_list.append(
+                    self._round_to_sig_digits_from_original(
+                        converted_value, value, additional_significant_digits=2
+                    )
+                )
+            else:
+                converted_row_list.append(np.nan)
+        return converted_row_list
+
+    def _round_to_sig_digits_from_original(
+        self, value_to_round, original_value, additional_significant_digits=0
+    ):
+        if value_to_round == 0:
+            return 0
+        value_str = f"{float(original_value):.15g}".lower().lstrip("+-")
+        if "e" in value_str:
+            value_str = value_str.split("e")[0]
+        digits = value_str.replace(".", "").lstrip("0")
+        sig_digits = len(digits) if digits else 1
+        target_sig_digits = sig_digits + additional_significant_digits
+        return float(f"{value_to_round:.{target_sig_digits}g}")
+
+    def thrust_2_cfm(self, thrust_N, velocity_m_per_s, density_kg_per_m3):
+        #Form 7C for Jet fans requires adjustments to adjust compability with SES 6.6.8
+        flow_rate_m3_per_s = abs(thrust_N / (density_kg_per_m3 * velocity_m_per_s))
+        conversion_value = NO_constants.SI_Conversion.get("m^3/s_cfm", 1)
+        flow_rate_cfm = flow_rate_m3_per_s * conversion_value
+        flow_rate_cfm = self._round_to_sig_digits_from_original(
+                        flow_rate_cfm, velocity_m_per_s, additional_significant_digits = 2
+                    )
+        return flow_rate_cfm
 
     def columns_to_row_input(
         self,
@@ -158,6 +230,7 @@ class Next_In:
         rows_to_read,
         row_to_text=0,
         num_cells_4_text=0,
+        SI_2_IP_Units=[None]
     ):
         # TODO - Update when for over 8 data points
         # TODO - Speedup when adding an individual row as a list instead of concatting
@@ -169,9 +242,6 @@ class Next_In:
                 .transpose()
                 .values.tolist()
             )
-            for i in range(rows_to_read, 8):
-                row_list.append(np.nan)
-            self.input_df.loc[len(self.input_df)] = row_list
         elif row_to_text > 0:
             text_input = worksheet_df.at[start_row + row_to_text - 1, start_column]
             text_input_list = self.split_text_to_list(text_input, num_cells_4_text)
@@ -192,10 +262,12 @@ class Next_In:
                 row_list_collection.extend(text_input_list)
                 row_list = row_list_collection
             # Add the list to the dataframe
-            data_columns = len(row_list)
-            for i in range(data_columns + 1, 9):
-                row_list.extend([np.nan])
-            self.input_df.loc[len(self.input_df)] = row_list
+        if self.ses_version == "SI_2_IP" and SI_2_IP_Units != [None]:
+            row_list = self.convert_2_SI(row_list, SI_2_IP_Units)
+        number_of_columns = len(row_list)
+        for i in range(number_of_columns + 1, 9):
+            row_list.extend([np.nan])
+        self.input_df.loc[len(self.input_df)] = row_list
         # If there is text in the input, use this function
 
         # Map values from next-in to input file
@@ -275,7 +347,7 @@ class Next_In:
                         True  # You found the bottom line with text. Stop deleting text
                     )
         row = row_1B
-        rows_to_read_dict = {
+        Form_1B_2_Form_1H = {
             "Form 1B": 3,
             "Form 1C": 8,
             "Form 1D": 7,
@@ -284,13 +356,13 @@ class Next_In:
             "Form 1G": 8,
             "Form 1H": 5,
         }
-        difference_4_ip = ["Form 1D", "Form 1H"]
-        for key, value in rows_to_read_dict.items():
+        difference_4_ip = ["Form 1D", "Form 1H"] #Form differences between SES 6 and 4.1
+        for key, value in Form_1B_2_Form_1H.items():
             rows_to_read = value
             # IP version has a different in Form 1D and does not use Form 1H
-            if self.ses_version == "SI" or key not in difference_4_ip:
-                self.columns_to_row_input(worksheet_df, row, column, rows_to_read)
-            elif self.ses_version == "IP" and key == "Form 1D":  # IF IP and Form 1D
+            if self.ses_version in ["SI"] or key not in difference_4_ip:
+                self.columns_to_row_input(worksheet_df, row, column, rows_to_read, SI_2_IP_Units=self.Form_SI_2_IP[key])
+            elif self.ses_version in ["IP", "SI_2_IP"] and key == "Form 1D":  # IF IP and Form 1D
                 self.columns_to_row_input(worksheet_df, row, column, rows_to_read)
                 last_input = len(self.input_df) - 1
                 for si_col in range(6, 4, -1):
@@ -375,12 +447,19 @@ class Next_In:
                 # Form 3A Part 2
                 column = end_column
                 columns_to_read = 5
+                self.rows_to_input_df(worksheet_df, row, column, columns_to_read, SI_2_IP_Units=self.Form_SI_2_IP["Form_3A_2"])
+                # Form 3B Part 1
+                column = column + columns_to_read
+                columns_to_read = 8
+                self.rows_to_input_df(worksheet_df, row, column, columns_to_read, SI_2_IP_Units=self.Form_SI_2_IP["Form_3B_1"])
+                # Form 3B Part 2
+                column = column + columns_to_read
+                columns_to_read = 8
+                self.rows_to_input_df(worksheet_df, row, column, columns_to_read, SI_2_IP_Units=self.Form_SI_2_IP["Form_3B_2"])
+                # Form 3C 
+                column = column + columns_to_read
+                columns_to_read = 7
                 self.rows_to_input_df(worksheet_df, row, column, columns_to_read)
-                # Form 3B and 3C
-                for i in [8, 8, 7]:
-                    column = column + columns_to_read  # Starting point for column
-                    columns_to_read = i
-                    self.rows_to_input_df(worksheet_df, row, column, columns_to_read)
 
                 # Form 3C Get data to read next information
                 number_of_subsegments = worksheet_df.iloc[row, column + 5]
@@ -391,8 +470,6 @@ class Next_In:
                 # Form 3D
                 column = column + columns_to_read
                 columns_to_read = 6
-                # if number_of_heat_sources == 1:
-                #    self.rows_to_input_df(worksheet_df, row, column, columns_to_read, number_of_rows=1, column_to_text=6, num_cells_4_text=0)
                 if number_of_heat_sources > 0:
                     row_heat_source = row
                     for i in range(0, number_of_heat_sources):
@@ -405,6 +482,7 @@ class Next_In:
                             number_of_rows=1,
                             column_to_text=6,
                             num_cells_4_text=3,
+                            SI_2_IP_Units=self.Form_SI_2_IP["Form_3D"],
                         )
                 # Form 3E
                 column = column + columns_to_read
@@ -414,7 +492,7 @@ class Next_In:
                 while end_subsegment < number_of_subsegments:  # Inner loop.
                     row_2_read = row + number_of_subsegment_entries
                     self.rows_to_input_df(
-                        worksheet_df, row_2_read, column, columns_to_read
+                        worksheet_df, row_2_read, column, columns_to_read, SI_2_IP_Units=self.Form_SI_2_IP["Form_3E"]
                     )
                     end_subsegment = worksheet_df.loc[row_2_read, column + 1]
                     number_of_subsegment_entries += 1
@@ -423,7 +501,7 @@ class Next_In:
                 if self.environmental_control_load in [1, 2]:
                     column = column + columns_to_read
                     columns_to_read = 7
-                    self.rows_to_input_df(worksheet_df, row, column, columns_to_read)
+                    self.rows_to_input_df(worksheet_df, row, column, columns_to_read, SI_2_IP_Units=self.Form_SI_2_IP["Form_3F"])
                 # Determine where to restart from in Form 3A
                 number_of_rows_down = max(
                     1, number_of_subsegment_entries, number_of_heat_sources
@@ -449,12 +527,12 @@ class Next_In:
             )
             column = column + columns_to_read
             columns_to_read = 6
-            self.rows_to_input_df(worksheet_df, row, column, columns_to_read)
+            self.rows_to_input_df(worksheet_df, row, column, columns_to_read, SI_2_IP_Units=self.Form_SI_2_IP["Form_4B"])
             row += 1
 
     def form_05(self):
         worksheet_df = self.read_worksheet("F05")
-        # Form 3A line - requires extra attention because of text
+        # Form 5A line - requires extra attention because of text
         row = 4
         while row < len(worksheet_df):
             column = 1
@@ -475,7 +553,7 @@ class Next_In:
                 # Form 5B
                 column = end_column
                 columns_to_read = 8
-                self.rows_to_input_df(worksheet_df, row, column, columns_to_read)
+                self.rows_to_input_df(worksheet_df, row, column, columns_to_read, SI_2_IP_Units=self.Form_SI_2_IP["Form_5B"])
                 end_column = column + columns_to_read
                 number_of_sub = worksheet_df.at[row, column]
                 # Form 5C
@@ -495,7 +573,7 @@ class Next_In:
                 for i in range(0, number_of_sub):
                     read_row = row + i
                     self.rows_to_input_df(
-                        worksheet_df, read_row, column, columns_to_read
+                        worksheet_df, read_row, column, columns_to_read, SI_2_IP_Units=self.Form_SI_2_IP["Form_5D"]
                     )
             row = row + max(number_of_sub, 1)
 
@@ -525,7 +603,7 @@ class Next_In:
                 if thermo_type == 3:
                     column = column + columns_to_read
                     columns_to_read = 6
-                    self.rows_to_input_df(worksheet_df, row, column, columns_to_read)
+                    self.rows_to_input_df(worksheet_df, row, column, columns_to_read, SI_2_IP_Units=self.Form_SI_2_IP["Form_6B"])
                 if aero_type in node_to_column.keys():
                     column = node_to_column[aero_type][0]
                     columns_to_read = node_to_column[aero_type][1]
@@ -554,11 +632,12 @@ class Next_In:
                     number_of_rows=1,
                     column_to_text=1,
                     num_cells_4_text=4,
+                    SI_2_IP_Units=self.Form_SI_2_IP["Form_7A"]
                 )
                 for i in [8, 8]:
                     column = column + columns_to_read  # Starting point for column
                     columns_to_read = i
-                    self.rows_to_input_df(worksheet_df, row, column, columns_to_read)
+                    self.rows_to_input_df(worksheet_df, row, column, columns_to_read, SI_2_IP_Units=self.Form_SI_2_IP["Form_7B"])
             row += 1
 
     def form_07c(self):
@@ -569,8 +648,9 @@ class Next_In:
             if not pd.isna(worksheet_df.iloc[row, column]):
                 column = 1
                 columns_to_read = 7
-                self.rows_to_input_df(worksheet_df, row, column, columns_to_read)
+                self.rows_to_input_df(worksheet_df, row, column, columns_to_read, SI_2_IP_Units=self.Form_SI_2_IP["Form_7C"])
             row += 1
+        #TODO Write conversion for SI to IP Fans
 
     def form_07d(self):
         worksheet_df = self.read_worksheet("F07D")
@@ -613,7 +693,7 @@ class Next_In:
                     )
                     column = column + columns_to_read
                     columns_to_read = 7
-                    self.rows_to_input_df(F08A_df, row_8A, column, columns_to_read)
+                    self.rows_to_input_df(F08A_df, row_8A, column, columns_to_read, SI_2_IP_Units=self.Form_SI_2_IP["Form_8A_2"])
                     groups_of_trains = F08A_df.iloc[row_8A, column + 1]
                     track_sections = F08A_df.iloc[row_8A, column + 2]
                     # Form 8B
@@ -638,6 +718,7 @@ class Next_In:
                             col_8C,
                             columns_to_read,
                             number_of_rows=track_sections,
+                            SI_2_IP_Units=self.Form_SI_2_IP["Form_8C"]
                         )
                     col_8C = col_8C + columns_to_read
                     # form 8D
@@ -657,6 +738,7 @@ class Next_In:
                                 col_8D,
                                 columns_to_read,
                                 number_of_rows=scheduled_stops,
+                                SI_2_IP_Units=self.Form_SI_2_IP["Form_8D"]
                             )
                         col_8D = col_8D + columns_to_read
                     # form 8E
@@ -679,14 +761,16 @@ class Next_In:
                                 col_8E,
                                 columns_to_read,
                                 number_of_rows=speed_time_points,
+                                SI_2_IP_Units=self.Form_SI_2_IP["Form_8E"]
                             )
                         col_8E = col_8E + 5
                     # Form 8F
                     row_first = 1
                     rows_to_read = 2
                     worksheet_df = self.read_worksheet("F08F")
+                    #TODO Convert Form 8F so distance is in feet instead of meters
                     self.columns_to_row_input(
-                        worksheet_df, row_first, col_8F, rows_to_read
+                        worksheet_df, row_first, col_8F, rows_to_read, SI_2_IP_Units=self.Form_SI_2_IP["Form_8F_1"]
                     )
                     number_of_sections = int(worksheet_df.iloc[row_first, col_8F])
                     columns_to_read = 1
@@ -720,12 +804,21 @@ class Next_In:
                         rows_to_read,
                         row_to_text=1,
                         num_cells_4_text=4,
+                        SI_2_IP_Units=self.Form_SI_2_IP["Form_9A"]
                     )
                     row += rows_to_read
-                    # Form 9B, C, D, E
-                    for rows_to_read in [5, 6, 8, 8, 6]:
-                        self.columns_to_row_input(worksheet_df, row, col, rows_to_read)
-                        row += rows_to_read
+                    # Form 9B, C, D, E read in a loop using Dictionary Form: Rows to Read
+                    Form_9B_2_9E = { 
+                        "Form_9B":   5,
+                        "Form_9C":   6,	
+                        "Form_9D_1": 8, 
+                        "Form_9D_2": 8,
+                        "Form_9E": 	 6,
+                    }
+                    for key, value in Form_9B_2_9E.items():
+                         rows_to_read = value
+                         self.columns_to_row_input(worksheet_df, row, col, rows_to_read, SI_2_IP_Units=self.Form_SI_2_IP[key])
+                         row += rows_to_read
                     # Form 9F Line 1
                     if self.train_performance_option != 3:
                         rows_to_read = 3
@@ -736,26 +829,36 @@ class Next_In:
                             rows_to_read,
                             row_to_text=1,
                             num_cells_4_text=4,
+                            SI_2_IP_Units=self.Form_SI_2_IP["Form_9F_1"]
                         )
                         row += rows_to_read
+                        #TODO REstart here with Form 9F
                         # Form 9F Line 2, G lines 1, 2, and 3
-                        for rows_to_read in [5, 4, 4, 4]:
+                        Form_9B_2_9D = { 
+                            "Form_9F_2" : 5,
+                            "Form_9G_1" : 4,
+                            "Form_9G_2" : 4,
+                            "Form_9G_3" : 4,
+                            "Form_9G_4" : 1     
+                        }
+                        for key, value in Form_9B_2_9D.items():
+                            rows_to_read = value
+                            self.columns_to_row_input(worksheet_df, row, col, rows_to_read, SI_2_IP_Units=self.Form_SI_2_IP[key])
+                            row += rows_to_read
+                        # Form 9H
+                        train_controller = worksheet_df.iloc[row - 1, col]
+                        if train_controller == 2:
+                            #Form 9H_1
+                            rows_to_read =5
                             self.columns_to_row_input(
-                                worksheet_df, row, col, rows_to_read
+                                worksheet_df, row, col, rows_to_read, SI_2_IP_Units=self.Form_SI_2_IP["Form_9H_1"]
                             )
                             row += rows_to_read
-                        # Form 9G, last line (4)
-                        rows_to_read = 1
-                        self.columns_to_row_input(worksheet_df, row, col, rows_to_read)
-                        train_controller = worksheet_df.iloc[row, col]
-                        row += rows_to_read
-                        # Form 9H
-                        if train_controller == 2:
-                            for rows_to_read in [5, 5]:
-                                self.columns_to_row_input(
-                                    worksheet_df, row, col, rows_to_read
-                                )
-                                row += rows_to_read
+                            #Form 9H_2
+                            self.columns_to_row_input(
+                                worksheet_df, row, col, rows_to_read, SI_2_IP_Units=self.Form_SI_2_IP["Form_9H_2"]
+                            )
+                            row += rows_to_read
                             onboard_flywheel = worksheet_df.iloc[row - 1, col]
                         elif train_controller == 3:
                             row += 10  # move to form 9H-A
@@ -773,16 +876,22 @@ class Next_In:
                             row = row_form9J
                             rows_to_read = 5
                             self.columns_to_row_input(
-                                worksheet_df, row, col, rows_to_read
+                                worksheet_df, row, col, rows_to_read, SI_2_IP_Units=self.Form_SI_2_IP["Form_9J"]
                             )
                         # Form 9K
                         if onboard_flywheel == 2:
                             row = row_form9K
-                            for rows_to_read in [5, 7]:
-                                self.columns_to_row_input(
-                                    worksheet_df, row, col, rows_to_read
-                                )
-                                row += rows_to_read
+                            rows_to_read = 5
+                            self.columns_to_row_input(
+                                worksheet_df, row, col, rows_to_read, SI_2_IP_Units=self.Form_SI_2_IP["Form_9K"]
+                            )
+                            row += rows_to_read
+                            # Form 9L
+                            rows_to_read = 7
+                            self.columns_to_row_input(
+                                worksheet_df, row, col, rows_to_read
+                            )
+                            row += rows_to_read
                 row = 2
                 col += 1
 
@@ -795,7 +904,7 @@ class Next_In:
             if not pd.isna(worksheet_df.iloc[row, column]):
                 column = 1
                 columns_to_read = 8
-                self.rows_to_input_df(worksheet_df, row, column, columns_to_read)
+                self.rows_to_input_df(worksheet_df, row, column, columns_to_read, SI_2_IP_Units=self.Form_SI_2_IP["Form_10"])
             row += 1
 
     def form_11(self):
@@ -809,7 +918,7 @@ class Next_In:
             if not pd.isna(worksheet_df_f11A.iloc[row_F11A, col_F11A]):
                 columns_to_read = 6
                 self.rows_to_input_df(
-                    worksheet_df_f11A, row_F11A, col_F11A, columns_to_read
+                    worksheet_df_f11A, row_F11A, col_F11A, columns_to_read, SI_2_IP_Units=self.Form_SI_2_IP["Form_11A"] 
                 )
                 number_sections = worksheet_df_f11A.iloc[row_F11A, col_F11A + 1]
                 read_sections = 0
@@ -830,14 +939,14 @@ class Next_In:
 
     def form_12(self):
         worksheet_df = self.read_worksheet("F12")
-        self.columns_to_row_input(worksheet_df, 1, 3, 2)
+        self.columns_to_row_input(worksheet_df, 1, 3, 2, SI_2_IP_Units=self.Form_SI_2_IP["Form_12"])
         row = 4
         column = 1
         while row < len(worksheet_df):
             if not pd.isna(worksheet_df.iloc[row, column]):
                 column = 1
                 columns_to_read = 7
-                self.rows_to_input_df(worksheet_df, row, column, columns_to_read)
+                self.rows_to_input_df(worksheet_df, row, column, columns_to_read,     )
             row += 1
 
     def form_13(self):
@@ -1060,9 +1169,10 @@ def create_iterations_from_next_in(next_in_path, iteration_path, ses_version):
     messagebox.showinfo("Iterations Created", f"{number_of_iterations} iterations are created")
 
 if __name__ == "__main__":
-    ses_version = "SI"
-    directory_string = "C:/simulations/test/"
-    file_name = "test.xlsm"
+    ses_version = "SI_2_IP"
+    directory_string = "C:/Users/msn/OneDrive/Never Gray/Software Development/Next-Out/2026-05-20 SI_2_IP/"
+    excel_file_name = "Next-In 4.3.xlsm"
+    input_file_name = "normal2SI2IP.inp"
     visio_template_name = "test.vsdx"
     settings = {
         "ses_output_str": "",
@@ -1070,16 +1180,18 @@ if __name__ == "__main__":
         "simtime": -1,
         "conversion": "",
         "output": ["Visio", "H5_file"],
-        "file_type": "iteration",
-        "path_exe": "C:/Simulations/_Exe/SESV6_32.exe",
+        "file_type": "input",
+        "path_exe": "C:/Simulations/_Exe/SES41.exe",
     }
-    next_in_path = Path(directory_string + file_name)
+    next_in_path = Path(directory_string + excel_file_name)
+    input_path = Path(directory_string + input_file_name)
     save_path = Path(directory_string)
     next_in = Next_In(next_in_path, save_path, ses_version)
-    input_string_list = next_in.create_iterations("Iteration")
-    settings["ses_output_str"] = input_string_list
+    next_in.save_base_file_as_input(input_path)
+    #input_string_list = next_in.create_iterations("Iteration")
+    #settings["ses_output_str"] = input_string_list
     # Ask the user to start multifile monitor to process files.
-    import NO_GUI_multifile_monitor
-    app = NO_GUI_multifile_monitor.App(settings)
-    app.mainloop()
-    print("app.mainloop finished")
+    #import NO_GUI_multifile_monitor
+    #app = NO_GUI_multifile_monitor.App(settings)
+    #app.mainloop()
+    #print("app.mainloop finished")
