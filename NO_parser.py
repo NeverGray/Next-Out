@@ -22,6 +22,14 @@ import logging
     level=logging.DEBUG, format=" %(asctime)s - %(levelname)s - %(message)s"
 )'''
 
+CURRENT_PARSE_FILE_NAME = ""
+
+def with_file_name(message, file_name=""):
+    tagged_file_name = file_name or CURRENT_PARSE_FILE_NAME
+    if tagged_file_name:
+        return f"{message} [{tagged_file_name}]"
+    return message
+
 # Second by Second parser definitions
 PIT = {
     "time": re.compile(
@@ -407,7 +415,9 @@ HE = {
 }
 
 def parse_file(file_path, gui="", conversion_setting=""):  # Parser
+    global CURRENT_PARSE_FILE_NAME
     file_name = file_path.name
+    CURRENT_PARSE_FILE_NAME = file_name
     NO_run.run_msg(gui, "Parsing data from " + file_name + ".")
     # Variables for all referenced functions
     data_pit = []  # All Point in Time data
@@ -434,82 +444,85 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
         file_time_str = datetime.datetime.fromtimestamp(file_time_seconds).strftime('%Y-%m-%d, %H:%M:%S')
         output_meta_data.update({"file_time": file_time_str})
     # Read input verification information from outputfile before Form 1
+    input_end = get_end_of_input_verification(lines)
     version = select_version(lines)
     output_meta_data.update({"ses_version": version})
     ambient_temperature = get_ambient_temperature(lines)
     # Read segment titles from Form 3 and Form 5 and types from Form 3
-    segment_titles, form3_type, form3_pressure = get_titles_and_form3(lines, version)
+    segment_titles, form3_type, form3_pressure = get_titles_and_form3(lines, input_end, version)
     output_meta_data['form3_pressure'] = form3_pressure
     # Determine the Fire Simulation Option
    
     try:
-        form4_df = get_form4(lines)
+        form4_df = get_form4(lines, input_end)
         if form4_df is not None:
             output_meta_data.update({"form4_df": form4_df})
     except:
         msg = 'Error processing Form 4 position'
-        NO_run.run_msg(gui, msg)
+        NO_run.run_msg(gui, with_file_name(msg, file_name))
 
     # Read damper position and fan data from Form 5
     try:
-        damper_position_dict, form5_fan_data_df = get_form5(lines)
+        damper_position_dict, form5_fan_data_df = get_form5(lines, input_end)
         output_meta_data.update({"damper_position": damper_position_dict})
         output_meta_data.update({"form5_fan_data": form5_fan_data_df})
     except:
         msg = 'Error processing Form 5 position'
-        NO_run.run_msg(gui, msg)
+        NO_run.run_msg(gui, with_file_name(msg, file_name))
     # Read jet fan data from Form 7C
     try:
-        form7c_data = get_form7c(lines)
+        form7c_data = get_form7c(lines, input_end)
         if len(form7c_data) > 0:
             jet_fan_data = get_jet_fan_data(form7c_data, form3_type)
             output_meta_data.update({"jet_fan_data": jet_fan_data})
     except:
         msg = 'Error processing Form 7C, Jet Fan Data'
-        NO_run.run_msg(gui, msg)
+        NO_run.run_msg(gui, with_file_name(msg, file_name))
 
     # Read route data from Form 8F
     try:
-        form8f_df_segment, form8f_df_section = get_form8fs(lines)
+        form8f_df_segment, form8f_df_section = get_form8fs(lines, input_end)
         output_meta_data.update({"form_8f_segment": form8f_df_segment})
         output_meta_data.update({"form_8f_section": form8f_df_section})
     except:
         msg = 'Error Processing Form 8F'
-        NO_run.run_msg(gui, msg)
+        NO_run.run_msg(gui, with_file_name(msg, file_name))
 
     # Read route data from Form 9A
     try:
-        form9_df = get_form9(lines)
+        form9_df = get_form9(lines, input_end)
         output_meta_data.update({"form9_df": form9_df})
     except:
         msg = 'Error Processing Form 9'
-        NO_run.run_msg(gui, msg)
+        NO_run.run_msg(gui, with_file_name(msg, file_name))
 
     # Determine the supplementary option to check if sectional pressure changes data is present
     rx = INPUT["f1c"]
     i = 0
     m = None
-    while m is None and i < len(lines):
+    while m is None and i < input_end:
         m = rx.match(lines[i])  # Find supplement output option line
         if m is not None:
              supplementary_output_option = int(m.group("supplement_option"))
-             i = len(lines) + 1  # Exit while loop
+             i = input_end + 1  # Exit while loop
         i += 1
 
     # Determine if there are abbreviated prints from Form 12.
     m = None  # Sets the value equal to none to start while loop
     rx = INPUT["f12"]  # Matching string for Form 12 Output
     i = 0  # Start at first line
-    while m is None and i < len(lines):
+    while m is None and i < input_end:
         m = rx.match(lines[i])
         i += 1
-        assert i < (len(lines) - 1), "Cannot find Form 12! Line variable " + str(i)
+        assert i < (len(lines) - 1), with_file_name(
+            "Cannot find Form 12! Line variable " + str(i), file_name
+        )
     summary = False
     abbreviated = False
     rx = PIT["time"]
     rx2 = INPUT["sum_op"]
     m = None
-    while m is None and i < len(lines):
+    while m is None and i < input_end:
         m = rx.match(lines[i])  # Find time variable for start of simulation output
         m2 = rx2.match(lines[i])
         if m2 is not None:
@@ -521,12 +534,12 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
         if i > (len(lines) - 1):
             NO_run.run_msg(
                 gui,
-                "Error in reading output file "
-                + file_name
-                + ". Simulation never started.",
+                with_file_name("Error in reading output file. Simulation never started.", file_name),
             )
             return []
-        assert i < (len(lines)), "Cannot find first time! Line variable " + str(i)
+        assert i < (len(lines)), with_file_name(
+            "Cannot find first time! Line variable " + str(i), file_name
+        )
     time = float(m.group("Time"))  # Finds first line with simulation output with Time.
     # To reduce search times, eliminate items from search dictionaries
     PIT_for_search = PIT.copy()
@@ -595,7 +608,12 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
                                 s = lines[k].split()
                                 sub_temperature= s[0:]
                                 k += 1
-                                sub_humidity = lines[k].split()
+                                # Check if there is a page break in IP files
+                                second_line = re.compile(r"\s{37}").match(lines[k]) 
+                                while second_line is None:
+                                    k += 1
+                                    second_line = re.compile(r"\s{37}").match(lines[k])
+                                sub_humidity = lines[k].split() 
                                 for j in range(len(sub_temperature)):
                                     current_sub_segment = last_sub_segment + j + 1
                                     m_copy = m_dict.copy()  # keep existing data
@@ -629,7 +647,7 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
                         ):  # Find the lines containing the percentage of time data
                             assert end_line < (
                                 len(lines)
-                            ), "Error with Train Energy Summary, Line " + str(i)
+                            ), with_file_name("Error with Train Energy Summary, Line " + str(i), file_name)
                             m_sum = PIT["time"].match(lines[end_line + 1])
                             if (m_sum is not None) or (
                                     end_line > len(lines) - 3
@@ -744,6 +762,14 @@ def parse_file(file_path, gui="", conversion_setting=""):  # Parser
     NO_run.run_msg(gui, "Finished importing data from " + file_name + ".")
     return data, output_meta_data
 
+def get_end_of_input_verification(lines):
+    end_of_input_rx = PIT["time"]
+    time_match = None
+    i = 0
+    while time_match is None and i < len(lines):
+        time_match = end_of_input_rx.match(lines[i])
+        i += 1
+    return i
 
 def create_dictionary_from_list(df_list):
     df_dict = {}
@@ -770,7 +796,7 @@ def get_segment_titles(lines):
         i += 1
     return segment_titles
 
-def get_titles_and_form3(lines, version="SI"):
+def get_titles_and_form3(lines, input_end, version="SI"):
     title_rx = INPUT["f3a"]
     form_6_start = INPUT["f6"]
     form_6_match = None
@@ -778,7 +804,7 @@ def get_titles_and_form3(lines, version="SI"):
     segment_titles = {}
     form3_type = {}
     form3_pressure = {}
-    while form_6_match is None and i < len(lines):
+    while form_6_match is None and i < input_end:
         title_match = title_rx.match(lines[i])
         form_6_match = form_6_start.match(lines[i])
         if title_match is not None:
@@ -808,7 +834,7 @@ def get_titles_and_form3(lines, version="SI"):
     return segment_titles, form3_type, form3_pressure
 
 
-def get_form4(lines):
+def get_form4(lines, input_end):
     time_rx = PIT["time"]  # signals start of simualtion and end of input
     next_form_rx = INPUT['f5a']  # signals start of form 5 and end of Form 4
     first_line_rx = INPUT["f4_location"]  # Start of Form 4
@@ -818,15 +844,15 @@ def get_form4(lines):
     i = 0
     m = None
     INPUT_for_search = INPUT.copy()  # Copy the INPUT dictionary to search for Form 4
-    while m is None and i < len(lines):
+    while m is None and i < input_end:
         m = rx.search(lines[i])  # Find supplement output option line
         if m is not None:
             if int(m.group("fire_simulation_option")) == 0:
                 INPUT_for_search.pop("f4_flame")
                 INPUT_for_search.pop("f4_area")
-            i = len(lines) + 1  # Exit while loop
+            i = input_end + 1  # Exit while loop
         i += 1
-    form4_data = form_parse(lines, time_rx, next_form_rx, first_line_rx, key_prefix, input_search=INPUT_for_search)
+    form4_data = form_parse(lines, input_end, time_rx, next_form_rx, first_line_rx, key_prefix, input_search=INPUT_for_search)
     if len(form4_data) > 0:
         form4_df = pd.DataFrame(form4_data)
         form4_df = form4_df.apply(pd.to_numeric, errors="coerce")
@@ -836,7 +862,7 @@ def get_form4(lines):
     return form4_df
 
 
-def get_form5(lines):
+def get_form5(lines, input_end):
     title_rx = INPUT["f5a"]
     f5d_head_loss = INPUT["f5d_head_loss"]
     time_rx = PIT["time"]  # signals start of simualtion and end of input
@@ -847,7 +873,7 @@ def get_form5(lines):
     segment_number = 0
     # Default dictionary values if the Form 5C fan direction is 0, and not activated
     fan_dict_off = {'fan_on': '0', 'fan_off': '0', 'fan_direction': '1'}
-    while time_match is None and i < len(lines):
+    while time_match is None and i < input_end:
         title_match = title_rx.match(lines[i])
         head_loss_match = f5d_head_loss.match(lines[i])
         time_match = time_rx.match(lines[i])
@@ -885,22 +911,19 @@ def get_form5(lines):
     return form5_data, form5_fan_data_df
 
 
-def get_form7c(lines):
+def get_form7c(lines, input_end):
     time_rx = PIT["time"]  # signals start of simualtion and end of input
     next_form_rx = INPUT['f8a']
     first_line_rx = INPUT["f7c_A"]
     key_prefix = 'f7c_'
-    form7c_data = form_parse(lines, time_rx, next_form_rx, first_line_rx, key_prefix)
+    form7c_data = form_parse(lines, input_end, time_rx, next_form_rx, first_line_rx, key_prefix)
     return form7c_data
 
-def form_parse(lines, time_rx, next_form_rx, first_line_rx, key_prefix, i=0,input_search=INPUT):
-    end_of_form = False
+def form_parse(lines, input_end, time_rx, next_form_rx, first_line_rx, key_prefix, i=0,input_search=INPUT):
     form_data = []
-    while not end_of_form or i < len(lines):
-        time_match = time_rx.match(lines[i])
+    while i < input_end:
         next_form_match = next_form_rx.match(lines[i])
-        if (next_form_match is not None) or (time_match is not None):
-            end_of_form = True
+        if (next_form_match is not None):
             break
         first_line_match = first_line_rx.match(lines[i])
         if first_line_match is not None:
@@ -908,7 +931,7 @@ def form_parse(lines, time_rx, next_form_rx, first_line_rx, key_prefix, i=0,inpu
             for key, value in input_search.items():
                 if key_prefix in key:
                     match = value.search(lines[i])
-                    while match is None and i < len(lines) - 1:
+                    while match is None and i < input_end - 1:
                         i += 1
                         match = value.match(lines[i])
                     form_row.update(match.groupdict())
@@ -929,7 +952,7 @@ def get_jet_fan_data(form7c_data, form3_type):
     return jet_fan_data
 
 
-def get_form8fs(lines):
+def get_form8fs(lines, input_end):
     title_rx = INPUT["f8a"]
     form_8f = INPUT["f8f"]
     form_9a_start = INPUT["f9a_1"]
@@ -938,7 +961,7 @@ def get_form8fs(lines):
     form8f_data_segment = []
     form8f_data_section = []
     route_number = None
-    while form_9a_match is None and i < len(lines):
+    while form_9a_match is None and i < input_end:
         title_match = title_rx.match(lines[i])
         form_8f_match = form_8f.match(lines[i])
         form_9a_match = form_9a_start.match(lines[i])
@@ -993,12 +1016,12 @@ def get_form8fs(lines):
     return form8f_df_segment, form8f_df_section
 
 
-def get_form9(lines):
+def get_form9(lines, input_end):
     time_rx = PIT["time"]  # signals start of simualtion and end of input
     next_form_rx = INPUT['f12']  # signals start of form 5 and end of Form 4
     first_line_rx = INPUT["f9a_1"]  # Start of Form 4
     key_prefix = 'f9a_'
-    form9_data = form_parse(lines, time_rx, next_form_rx, first_line_rx, key_prefix)
+    form9_data = form_parse(lines, input_end, time_rx, next_form_rx, first_line_rx, key_prefix)
     if len(form9_data) > 0:
         form9_df = pd.DataFrame(form9_data)
         form9_df = form9_df.apply(pd.to_numeric, errors="coerce")
@@ -1014,6 +1037,7 @@ def create_ss_dfs(
 ):
     df_pit = to_dataframe2(data_pit)
     df_ssp = pd.DataFrame()
+    df_ssp.name = "SSP"
     if len(pressure_pit) > 0:
         df_ssp = to_dataframe2(pressure_pit, ["Section"], ["Time", "Section"])
         df_ssp.name = "SSP"
@@ -1167,7 +1191,7 @@ def sum_parser(lines, time):  # Parser for summary portion of output, between ti
                                 end_line += 1
                             assert i < (
                                     len(lines) - 1
-                            ), "Error with Summary of Simulation, Line " + str(i)
+                                ), with_file_name("Error with Summary of Simulation, Line " + str(i))
                         success = summary_of_simulation_parser(lines[start_line:end_line], time)
                         i = end_line
                     elif key == "train_energy":
@@ -1187,7 +1211,7 @@ def sum_parser(lines, time):  # Parser for summary portion of output, between ti
                                 end_found = True
                             assert i < (
                                     len(lines) - 1
-                            ), "Error with Train Energny Summary, Line " + str(i)
+                                ), with_file_name("Error with Train Energny Summary, Line " + str(i))
                         train_energy = te_parser(lines[start_line:end_line], time)
                         for item in train_energy:
                             data_te.append(item)
@@ -1228,8 +1252,9 @@ def summary_of_simulation_parser(p_lines, time):
                         while (p_lines[end_line] != "\n"):
                             end_line += 1
                             assert i < (len(p_lines) - 1), (
-                                    "Error with precentage of time temperature is above, line "
-                                    + str(i)
+                                    with_file_name(
+                                    "Error with precentage of time temperature is above, line " + str(i)
+                                    )
                             )
                         percentage = percentage_parser(p_lines[start_line:end_line], time)
                         for item in percentage:
@@ -1349,11 +1374,12 @@ def calculate_actual_airflow(SST, SSA, ambient_temperature, version):
 
 if __name__ == "__main__":
     directory_string = "C:\\simulations\\test\\"
-    file_name = "test.out"
+    file_name = "test.prn"
     path_string = directory_string + file_name
     file_path = Path(path_string)
-    d, output_meta_data = parse_file(file_path, gui="", conversion_setting="SI")
-    print('Finished')
+    d, output_meta_data = parse_file(file_path, gui="", conversion_setting="")
+    print(output_meta_data)
+    print("test finished")
 
     '''instructions for timing program
     import cProfile

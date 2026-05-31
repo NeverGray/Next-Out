@@ -96,8 +96,8 @@ class Next_In:
                 ].values.tolist()
                 if self.ses_version == "SI_2_IP" and SI_2_IP_Units != [None]:
                     row_list = self.convert_2_SI(row_list, SI_2_IP_Units)
-                if columns_to_read < 8: # If there are less than 8 entries, add blanks
-                    row_list.extend([np.nan] * (8 - columns_to_read))
+                if len(row_list) < 8: # If there are less than 8 entries, add blanks
+                    row_list.extend([np.nan] * (8 - len(row_list)))
                 self.input_df.loc[len(self.input_df)] = row_list
             else:
                 df = worksheet_df.iloc[start_row:end_row, start_column:end_column]
@@ -946,7 +946,7 @@ class Next_In:
             if not pd.isna(worksheet_df.iloc[row, column]):
                 column = 1
                 columns_to_read = 7
-                self.rows_to_input_df(worksheet_df, row, column, columns_to_read,     )
+                self.rows_to_input_df(worksheet_df, row, column, columns_to_read)
             row += 1
 
     def form_13(self):
@@ -1172,7 +1172,7 @@ if __name__ == "__main__":
     ses_version = "SI_2_IP"
     directory_string = "C:/Users/msn/OneDrive/Never Gray/Software Development/Next-Out/2026-05-20 SI_2_IP/"
     excel_file_name = "Next-In 4.3.xlsm"
-    input_file_name = "normal2SI2IP.inp"
+    input_file_name = "inferno2SI2IP.inp"
     visio_template_name = "test.vsdx"
     settings = {
         "ses_output_str": "",

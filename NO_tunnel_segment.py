@@ -60,7 +60,7 @@ def create_train_truths(output_meta_data, data, simtime):
         if len(segments_with_trains) > 0:
             train_truth_table_segment = pd.Series(index = segments_with_trains, dtype = bool, name="train_present").fillna(value=True)
         else:
-            train_truth_table_segment = None
+            train_truth_table_sepgment = None
     else:
         train_truth_table_segment = None
     return train_truth_table_segment

@@ -5,11 +5,12 @@
 # This file is licensed under the MIT License.
 # You may obtain a copy of the license at https://opensource.org/licenses/MIT
 
-VERSION_NUMBER = "2.3 F"
+VERSION_NUMBER = "2.3"
 #Added pressure data to summary file.
 #Added next-in iterations from command line
 #Version C is skipped. New Version is D.
 #Next-In SI inputs to IP
+#Optimized for large files
 
 #Column name : [SI Unit, IP Unit]
 COLUMN_UNITS={
@@ -182,7 +183,7 @@ SI_Conversion = {
     "m_ft":         3.28084,
     "mm_ft":        0.00328084,
     "mm_in":        0.0393701,
-    "N-m^2_lbs-ft^2": 0.04214, # Reverse calculated from normal2SI.inp
+    "N-m^2_lbs-ft^2": 23.730, # Reverse calculated from normal2SI.inp (250/10.535)
     "N_lbs":        0.224809,
     "Pa_inwg":      0.00401463,
     "tonnes_tons":  1.10231,

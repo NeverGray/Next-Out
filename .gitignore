@@ -1,4 +1,8 @@
 # Code for Next-out
+.vscode/settings.json
+.vscode/launch.json
+*.code-workspace
+
 *.out
 *.prn
 *.inp
