@@ -180,11 +180,11 @@ def auto_adjust_column_widths(worksheet, df):
     """
     # Auto-size data columns
     for idx, col in enumerate(df.columns):
-        # Calculate max length for column
-        max_length = max(
-            df[col].astype(str).apply(len).max(),
-            len(str(col))
-        )
+        # Select by position so duplicate column names do not return a DataFrame.
+        col_values = df.iloc[:, idx]
+        # Convert each value safely to text and treat missing values as blank.
+        max_data_length = col_values.map(lambda value: 0 if pd.isna(value) else len(str(value))).max()
+        max_length = max(max_data_length, len(str(col)))
         # Set column width (add padding)
         worksheet.set_column(idx, idx, max_length + 2)
 
