@@ -217,7 +217,7 @@ Form_SI_2_IP = {
     "Form_6B": ["C_F_Not_Zero"] * 6,
     "Form_7A": [1,1,1,1,"kg/m^3_lb/ft^3",1,"m^3/s_cfm","m^3/s_cfm"],
     "Form_7B": ["Pa_inwg", "m^3/s_cfm"] *4,
-    "Form_7C": ["Thrust_2_cfm",1,"m/s_fpm",1,1,"Zero","Zero"],
+    "Form_7C": ["Thrust_2_cfm",1,"m/s_fpm",1,1,"air_density","Zero"],
     #TODO Form 7C Change "Zero" to "One" when jet fan derating is added.
     "Form_8A_2": ["m_ft",1,1,1,1,"kph_mph",1],
     "Form_8C": ["m_ft", "m_ft",1,"m_ft","kph_mph",1,1,1],
