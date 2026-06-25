@@ -17,10 +17,10 @@ import NO_constants
 
 # TODO - Add functionality to GUI or command line to create multiple input files from a Next-In Excel file
 class Next_In:
-    def __init__(self, next_in_path, iteration_path, input_type):
+    def __init__(self, next_in_path, iteration_path, ses_version):
         # Read in next-in excel to a dataframe
-        self.input_type = input_type
-        if self.input_type in ["SI_2_IP", "IP_2_SI"]:
+        self.ses_version = ses_version
+        if self.ses_version in ["SI_2_IP", "IP_2_SI"]:
             self.conversion = True
         else:
             self.conversion = False
@@ -183,33 +183,33 @@ class Next_In:
                 converted_row_list.append(value)
             elif conversion_units == "C_F_Not_Zero":
                 if value != 0:
-                    if self.input_type == "SI_2_IP":
+                    if self.ses_version == "SI_2_IP":
                         converted_row_list.append((value * 1.8) + 32)
                     else:
                         converted_row_list.append((value - 32) / 1.8)
                 else:
                     converted_row_list.append(0)
             elif conversion_units == "C_F":
-                if self.input_type == "SI_2_IP":
+                if self.ses_version == "SI_2_IP":
                     converted_row_list.append((value * 1.8) + 32)
                 else:
                     converted_row_list.append((value - 32) / 1.8)
             #TODO - Update for jet fans IP 2 SI
             elif conversion_units == "Thrust_2_cfm":
-                if self.input_type == "SI_2_IP":
+                if self.ses_version == "SI_2_IP":
                 #Form 7C_1 requires a special conversion using air density
                     converted_row_list.append(
                         self.thrust_2_cfm(thrust_N=row_list[0],velocity_m_per_s=row_list[2],density_kg_per_m3=row_list[5])   
                     )
-                elif self.input_type == "IP_2_SI":
+                elif self.ses_version == "IP_2_SI":
                     converted_row_list.append(
                         self.cfm_2_thrust(airflow_cfm=row_list[0],velocity_fpm=row_list[2], density_kg_per_m3 = self.ambient_density)   
                     )
             elif conversion_units == "air_density":
-                if self.input_type == "SI_2_IP":
+                if self.ses_version == "SI_2_IP":
                     converted_row_list.append(np.nan)
             elif isinstance(value, Real) and isinstance(conversion_value, Real):
-                if self.input_type == "SI_2_IP":
+                if self.ses_version == "SI_2_IP":
                     converted_value = value * conversion_value
                 else:
                     converted_value = value / conversion_value
@@ -399,9 +399,9 @@ class Next_In:
         for key, value in Form_1B_2_Form_1H.items():
             rows_to_read = value
             # IP version has a different in Form 1D and does not use Form 1H
-            if self.input_type in ["SI", "IP_2_SI"] or key not in difference_4_ip:
+            if self.ses_version in ["SI", "IP_2_SI"] or key not in difference_4_ip:
                 self.columns_to_row_input(worksheet_df, row, column, rows_to_read, SI_2_IP_Units=self.Form_SI_2_IP[key])
-            elif self.input_type in ["IP", "SI_2_IP"] and key == "Form 1D":  # IF IP and Form 1D
+            elif self.ses_version in ["IP", "SI_2_IP"] and key == "Form 1D":  # IF IP and Form 1D
                 self.columns_to_row_input(worksheet_df, row, column, rows_to_read)
                 last_input = len(self.input_df) - 1
                 for si_col in range(6, 4, -1):
@@ -438,7 +438,7 @@ class Next_In:
         for key, value in variable_row.items():
             exec(f"self.{key} = worksheet_df.iloc[{value},column]")
         self.restart_file_name = worksheet_df.iloc[47, 6]
-        if self.input_type == "IP_2_SI":
+        if self.ses_version == "IP_2_SI":
             self.ambient_density = self.calculate_ambient_density()
 
 
@@ -695,7 +695,7 @@ class Next_In:
                 columns_to_read = 7
                 self.rows_to_input_df(worksheet_df, row, column, columns_to_read, SI_2_IP_Units=self.Form_SI_2_IP["Form_7C"])
                 #Add density if we are converint IP to an SI file.
-                if self.input_type == "IP_2_SI":
+                if self.ses_version == "IP_2_SI":
                     self.input_df.iat[len(self.input_df) - 1, 5] = self.ambient_density
             row += 1
         #TODO Write conversion for SI to IP Fans
@@ -1209,12 +1209,17 @@ class Next_In:
         with open(save_name, "w") as f:
             f.write(string)
 
-def create_iterations_from_next_in(next_in_path, iteration_path, input_type):
+def create_iterations_from_next_in(next_in_path, iteration_path, ses_version):
     iteration_path = Path(iteration_path)
-    next_in = Next_In(next_in_path, iteration_path, input_type)
+    next_in = Next_In(next_in_path, iteration_path, ses_version)
     input_string_list = next_in.create_iterations("Iteration")
     number_of_iterations = len(input_string_list)
     messagebox.showinfo("Iterations Created", f"{number_of_iterations} iterations are created")
+
+def create_input_files(next_in_path, input_file_path, ses_version):
+    next_in = Next_In(next_in_path, input_file_path, ses_version)
+    input_path = Path(input_file_path)
+    next_in.save_base_file_as_input(input_path)
 
 if __name__ == "__main__":
     #TODO Test "IP_2_SI" conversion.  Then get Jet fan to work. 
@@ -1227,9 +1232,9 @@ if __name__ == "__main__":
         "ses_output_str": "",
         "visio_template": directory_string + visio_template_name,
         "simtime": -1,
-        "conversion": "",
+        "output_conversion": "",
         "output": ["Visio", "H5_file"],
-        "file_type": "input",
+        "file_type": "next_in",
         "path_exe": "C:/Simulations/_Exe/SES41.exe",
     }
     next_in_path = Path(directory_string + excel_file_name)

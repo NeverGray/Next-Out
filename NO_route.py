@@ -135,12 +135,12 @@ if __name__ == "__main__":
         'ses_output_str': one_output_file, 
         'visio_template': 'C:/Simulations/Demonstration/Next Vis Samples1p21.vsdx', 
         'simtime': -1, 
-        'conversion': '', 
+        'output_conversion': '', 
         'control': 'First', 
         'output': ['Excel', 'Visio', '', '', 'Route', '', '', '', ''], 
         'file_type':'', #'input_file', 
         'path_exe': 'C:/Simulations/_Exe/SVSV6_32.exe'}
     file_path = Path(settings['ses_output_str'][0])
-    data, output_meta_data = NO_parser.parse_file(file_path, gui="", conversion_setting=settings.get('conversion', ''))
+    data, output_meta_data = NO_parser.parse_file(file_path, gui="", conversion_setting=settings.get('output_conversion', ''))
     create_route_excel(settings, data, output_meta_data)
     print('Finished')

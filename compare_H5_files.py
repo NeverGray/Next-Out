@@ -62,7 +62,7 @@ def compare_h5_versions(old_dir, new_dir, old_ext=".no", new_ext=".h5"):
             "ses_output_str": [str(old_file), str(new_file)],
             "visio_template": None,
             "simtime": 9999.0,
-            "conversion": "",
+            "output_conversion": "",
             "output": ["Compare"],
             "file_type": "H5_file",
             "path_exe": ""

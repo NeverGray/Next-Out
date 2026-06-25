@@ -89,12 +89,12 @@ if __name__ == "__main__":
         "ses_output_str": [file_path_string],
         "visio_template": "/".join([visio_template_folder, visio_template]),
         "simtime": 500.0,
-        "conversion": "",
+        "output_conversion": "",
         "control": "First",
         "output": ["Visio"],
     }
     file_path = Path(settings['ses_output_str'][0])
-    conversion_setting = settings.get('conversion', '')
+    conversion_setting = settings.get('output_conversion', '')
     data, output_meta_data = NO_parser.parse_file(file_path, gui="",conversion_setting=conversion_setting)
     simtime = NO_visio.valid_simtime(settings["simtime"], data["SSA"], gui="")
     segment_time_df = create_segment_info(data, output_meta_data, simtime)

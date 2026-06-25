@@ -132,7 +132,7 @@ if __name__ == "__main__":
         "ses_output_str": [file_path_string],
         "visio_template": visio_template,
         "simtime": 9999.0,
-        "conversion": "SI_TO_IP",
+        "output_conversion": "SI_TO_IP",
         "control": "First",
         "output": ["Excel"],
     }
@@ -140,7 +140,7 @@ if __name__ == "__main__":
     import time
 
     import NO_parser
-    conversion_setting = settings["conversion"]
+    conversion_setting = settings["output_conversion"]
     file_path = Path(settings['ses_output_str'][0])
     data, output_meta_data = NO_parser.parse_file(file_path, gui="", conversion_setting=conversion_setting)
     file_name = file_path.name

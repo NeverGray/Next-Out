@@ -159,7 +159,7 @@ if __name__ == "__main__":
     directory_str = "C:\\simulations\\test\\"
     input_file_name = "test.out"
     settings = {
-        'conversion': '',
+        'output_conversion': '',
         'file_type': 'output_file',
         'output': ['Excel', 'H5_file','no_file', 'test_output_files', '', '', '', '', ''],
         'path_exe': 'C:/Simulations/_Exe/SESV6_32.exe',

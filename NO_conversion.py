@@ -92,14 +92,14 @@ if __name__ == "__main__":
         "ses_output_str": [file_path_string],
         "visio_template": visio_template,
         "simtime": 9999.0,
-        "conversion": "SI_TO_IP",
+        "output_conversion": "SI_TO_IP",
         "control": "First",
         "output": ["Excel"],
     }
     file_path = Path(settings['ses_output_str'][0])
     data, output_meta_data = nvp.parse_file(file_path)
     #TODO Transfer new data created in function
-    conversion_setting = settings["conversion"]
+    conversion_setting = settings["output_conversion"]
     new_data, new_output_meta_data = convert_output_units(conversion_setting, data, output_meta_data, gui="")
     import NO_Excel_R01 as NV_excel
     NV_excel.create_excel(settings, data, output_meta_data)

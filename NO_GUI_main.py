@@ -610,7 +610,7 @@ class Start_Screen(tk.Tk):
             "ses_output_str": self.ses_output_str,
             "visio_template": self.path_visio.get(),
             "simtime": -1,
-            "conversion": self.conversion.get(),
+            "output_conversion": self.conversion.get(),
             "output": pp_list,
             "file_type": self.file_type.get(),
             "path_exe": self.path_exe.get(),

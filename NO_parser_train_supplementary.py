@@ -78,10 +78,10 @@ if __name__ == "__main__":
     file_path_string = "C:\\simulations\\test\\test.PRN"
     settings = {
         "ses_output_str": [file_path_string],
-        "conversion": "IP_TO_SI",
+        "output_conversion": "IP_TO_SI",
         "output": ["Excel"]
     }
-    conversion_setting = settings["conversion"]
+    conversion_setting = settings["output_conversion"]
     file_path = Path(settings["ses_output_str"][0])
     d, output_meta_data = NO_parser.parse_file(file_path, gui="", conversion_setting=conversion_setting)
     create_excel(settings, d, output_meta_data)

@@ -108,7 +108,7 @@ def single_process(
             else:
                 #Parse the data from the output file
                 data, output_meta_data = NO_parser.parse_file(
-                    file_path, gui="", conversion_setting=settings["conversion"]
+                    file_path, gui="", conversion_setting=settings["output_conversion"]
                 )
                 #Create NO File if it is an output
                 if "H5_file" in settings["output"] or "Average" in settings["output"]:

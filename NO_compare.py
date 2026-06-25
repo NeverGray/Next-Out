@@ -192,7 +192,7 @@ if __name__ == "__main__":
         "ses_output_str": ses_output_list,
         "visio_template": None,
         "simtime": 9999.0,
-        "conversion": "",
+            "output_conversion": "",
         "output": [""],
         "file_type": "H5_file",
         "path_exe": "C:\\Simulations\\_EXE\\SESV6_32.exe"
