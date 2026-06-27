@@ -56,6 +56,6 @@ if __name__ == "__main__":
     "C:\Simulations\_exe\Next-Out.exe" --settings "{'output_conversion': '', 'file_type': 'output_file', 'output': [' '], 'path_exe': '', 'results_folder_str': None, 'ses_output_str': ['C:/Simulations/Test/test2.inp'], 'simtime': -1, 'visio_template': ''}"
     
     Testing Conversions
-    python main.py --settings "{'file_type': 'next_in', 'next_in_path': 'c:/simulations/test/test.xlsm', 'input_file_path': 'c:/simulations/test/test2si.inp', 'ses_version':'IP_2_SI', 'ses_output_str': ['C:/Simulations/Test/test2.inp']}"
-    "C:\Simulations\_exe\Next-Out 3A.exe --settings "{'file_type': 'next_in', 'next_in_path': 'c:/simulations/test/test.xlsm', 'input_file_path': 'c:/simulations/test/test2si.inp', 'ses_version':'IP_2_SI', 'ses_output_str': ['C:/Simulations/Test/test2.inp']}"
+    python main.py --settings "{'file_type': 'next_in', 'next_in_path': 'c:/simulations/test/test.xlsm', 'input_file_path': 'c:/simulations/test/test2si.inp', 'ses_version':'IP_TO_SI', 'ses_output_str': ['C:/Simulations/Test/test2.inp']}"
+    "C:\Simulations\_exe\Next-Out 3A.exe --settings "{'file_type': 'next_in', 'next_in_path': 'c:/simulations/test/test.xlsm', 'input_file_path': 'c:/simulations/test/test2si.inp', 'ses_version':'IP_TO_SI', 'ses_output_str': ['C:/Simulations/Test/test2.inp']}"
     '''

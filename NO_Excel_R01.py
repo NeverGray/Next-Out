@@ -66,6 +66,8 @@ def create_excel(settings, data, output_meta_data, gui=""):
             format_index_header = writer.book.add_format() #Index on lefthand side
             format_index_header.set_bold()
             format_index_header.set_bg_color(color_code)
+            format_index_values = writer.book.add_format() #Index values in dataframe body
+            format_index_values.set_bold()
             format_value_header = writer.book.add_format() #Values to right of index
             format_value_header.set_bold()
             format_value_header.set_bg_color(color_code)
@@ -86,6 +88,9 @@ def create_excel(settings, data, output_meta_data, gui=""):
                 # Freeze cells
                 freeze_column_max = len(item.index.names)
                 worksheet.freeze_panes(df_startrow + 1,freeze_column_max)
+                # Keep dataframe index columns bold (matching historical output behavior).
+                if freeze_column_max > 0:
+                    worksheet.set_column(0, freeze_column_max - 1, None, format_index_values)
                 # Add autofilters to header row only (more efficient than entire dataset)
                 max_col = freeze_column_max + len(item.columns) - 1
                 worksheet.autofilter(df_startrow, 0, df_startrow, max_col)
@@ -132,7 +137,7 @@ if __name__ == "__main__":
         "ses_output_str": [file_path_string],
         "visio_template": visio_template,
         "simtime": 9999.0,
-        "output_conversion": "SI_TO_IP",
+        "output_conversion": "",
         "control": "First",
         "output": ["Excel"],
     }

@@ -36,7 +36,11 @@ def single_sim(settings, gui=""):
         file_path = Path(settings['ses_output_str'][0])
         file_name = file_path.name
         if settings["file_type"] == "output_file": 
-            data, output_meta_data = NO_parser.parse_file(file_path, gui, settings.get('output_conversion', ''))
+            data, output_meta_data = NO_parser.parse_file(
+                file_path,
+                gui,
+                settings.get('output_conversion', ''),
+            )
             #Create no file if this is selected.
             if "H5_file" in settings["output"]:
                 try:
