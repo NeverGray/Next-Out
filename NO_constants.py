@@ -5,7 +5,8 @@
 # This file is licensed under the MIT License.
 # You may obtain a copy of the license at https://opensource.org/licenses/MIT
 
-VERSION_NUMBER = "3B"
+VERSION_NUMBER = "5C"
+#5B changes compile commands
 #Added pressure data to summary file.
 #Added next-in iterations from command line
 #Version C is skipped. New Version is D.
@@ -197,6 +198,12 @@ SI_Conversion = {
     "Zero": 0, # Use to erase values, such as Air Density in Form 7C.
     #TODO Inferno and Normal give difference values for equivalent mass
 }
+#Form conversion key from SI to IP
+#For temperature:
+    #"C_F" is when the number is always converted from abolute temperature, such as 0 C = 32 F
+    #"C_F_Not_Zero" convert from abolute temperature except when the initial value is zero. 
+        #Zero can mean use the ambient temperature, such as for node temperatures
+    #"C_F_Increment" means to convert the value to an increment 1 C = 1.8 F
 Form_SI_2_IP = {
     "Form 1B": [1]*3,
     "Form 1C": [1]*8,
@@ -228,7 +235,7 @@ Form_SI_2_IP = {
     "Form_9B": ["m_ft",1,"m^2_ft^2",1,1],
     "Form_9C": ["W_Btu/hr","W_Btu/hr","W_Btu/hr","W_Btu/hr",1,1],
     "Form_9D_1": ["kg_lbs","kg_lbs","mm_in","mm_in","m^2_ft^2","m^2_ft^2","m^2_ft^2","m^2_ft^2"],
-    "Form_9D_2": [1,1,"J/kg-K_Btu/lb-F","J/kg-K_Btu/lb-F","C_F","C_F","m/s_fpm","m/s_fpm"],
+    "Form_9D_2": [1,1,"J/kg-K_Btu/lb-F","J/kg-K_Btu/lb-F","C_F_Not_Zero","C_F_Not_Zero","m/s_fpm","m/s_fpm"],
     "Form_9E"  :   ["tonnes_tons",1,"Rolling_C1","Rolling_C2","Rolling_C3","Equivalent_Mass"],
     "Form_9F_1" : [1,1,1,1,"mm_in","mm_in"],
     "Form_9F_2" : [1] * 5,

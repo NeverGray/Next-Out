@@ -6,6 +6,7 @@
 # You may obtain a copy of the license at https://opensource.org/licenses/MIT
 
 import re
+import os
 from numbers import Real
 from pathlib import Path
 from tkinter import messagebox
@@ -61,7 +62,6 @@ class Next_In:
         return list_of_input_paths
 
     def read_in_next_in(self):
-        #TODO Add check if file is open in Excel
         try:
             self.next_in = pd.read_excel(
                 self.next_in_path,
@@ -71,8 +71,9 @@ class Next_In:
                 header=None,
             )
             self.next_in_openpyxl = openpyxl.load_workbook(self.next_in_path)
-        except FileNotFoundError:
-            print("File not found. Please provide the correct file path.")
+        except Exception as e:
+            print("Error loading Next-In Excel file:", e)
+            raise
 
     def read_worksheet(self, name):
         worksheet_df = self.next_in[name]
@@ -1115,10 +1116,9 @@ class Next_In:
 
     # Used to save base file as input
     def save_base_file_as_input(self, file_path):
-        input_file_path = file_path.with_suffix(".inp")
-        with open(input_file_path, "w") as f:
+        with open(file_path, "w") as f:
             f.write(self.base_string)
-        return input_file_path
+        return file_path
 
     # Used if trouble shooting is needed between file creation and formatting
     def save_unformatted_input_file(self):
@@ -1218,7 +1218,7 @@ def create_iterations_from_next_in(next_in_path, iteration_path, ses_version):
 
 def create_input_files(next_in_path, input_file_path, ses_version):
     next_in = Next_In(next_in_path, input_file_path, ses_version)
-    input_path = Path(input_file_path)
+    input_path = Path(os.path.normpath(input_file_path))
     next_in.save_base_file_as_input(input_path)
 
 if __name__ == "__main__":
