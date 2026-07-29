@@ -5,7 +5,7 @@
 # This file is licensed under the MIT License.
 # You may obtain a copy of the license at https://opensource.org/licenses/MIT
 
-VERSION_NUMBER = "5C"
+VERSION_NUMBER = "5D"
 #5B changes compile commands
 #Added pressure data to summary file.
 #Added next-in iterations from command line
@@ -17,6 +17,8 @@ VERSION_NUMBER = "5C"
 COLUMN_UNITS={
     "Airflow":	["m^3/s","kcfm","SSA"], #SSA Values
     "Air_Velocity":["m/s","fpm","SSA"],
+    "Buoyancy":["Pa","IN. WG","SSA"],
+    "Pressure_Change":["Pa","IN. WG","SSA"],
     "Segment":["#","#","SSA"],
     "Sub":["#","#","SSA"],
     "Sensible":["W","Btu/s","SSA"],

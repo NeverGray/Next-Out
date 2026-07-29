@@ -185,17 +185,18 @@ class Next_In:
             elif conversion_units == "C_F_Not_Zero":
                 if value != 0:
                     if self.ses_version == "SI_TO_IP":
-                        converted_row_list.append((value * 1.8) + 32)
+                        converted_value = (value * 1.8) + 32
                     else:
-                        converted_row_list.append((value - 32) / 1.8)
+                        converted_value = (value - 32) / 1.8
+                    converted_row_list.append(round(converted_value, 2)) #round to 2 decimal places
                 else:
                     converted_row_list.append(0)
             elif conversion_units == "C_F":
                 if self.ses_version == "SI_TO_IP":
-                    converted_row_list.append((value * 1.8) + 32)
+                    converted_value = (value * 1.8) + 32
                 else:
-                    converted_row_list.append((value - 32) / 1.8)
-            #TODO - Update for jet fans IP 2 SI
+                    converted_value = (value - 32) / 1.8
+                converted_row_list.append(round(converted_value, 2)) #round to 2 decimal places
             elif conversion_units == "Thrust_2_cfm":
                 if self.ses_version == "SI_TO_IP":
                 #Form 7C_1 requires a special conversion using air density
@@ -216,7 +217,7 @@ class Next_In:
                     converted_value = value / conversion_value
                 converted_row_list.append(
                     self._round_to_sig_digits_from_original(
-                        converted_value, value, additional_significant_digits=2
+                        converted_value, value, additional_significant_digits=1
                     )
                 )
             else:
@@ -426,6 +427,7 @@ class Next_In:
             "vent_sections": 35,
             "nodes": 15,
             "unsteady_heat_sources": 38,
+            "number_of_fan_types": 39,
             "environment_control_zones": 42,
             "trains_in_operation": 44,
             "impulse_fan_types": 45,
@@ -508,10 +510,8 @@ class Next_In:
                 self.rows_to_input_df(worksheet_df, row, column, columns_to_read)
 
                 # Form 3C Get data to read next information
-                number_of_subsegments = worksheet_df.iloc[row, column + 5]
-                number_of_heat_sources = worksheet_df.iloc[
-                    row, column + 6
-                ]  # Number of subsegments
+                number_of_subsegments = int(worksheet_df.iloc[row, column + 5])
+                number_of_heat_sources = int(worksheet_df.iloc[row, column + 6])
 
                 # Form 3D
                 column = column + columns_to_read
@@ -540,7 +540,7 @@ class Next_In:
                     self.rows_to_input_df(
                         worksheet_df, row_2_read, column, columns_to_read, SI_2_IP_Units=self.Form_SI_2_IP["Form_3E"]
                     )
-                    end_subsegment = worksheet_df.loc[row_2_read, column + 1]
+                    end_subsegment = int(worksheet_df.loc[row_2_read, column + 1])
                     number_of_subsegment_entries += 1
 
                 # Form 3F
@@ -610,7 +610,7 @@ class Next_In:
                     self.rows_to_input_df(
                         worksheet_df, row, column + off_set, columns_to_read
                     )
-                else:
+                elif self.number_of_fan_types > 0:
                     self.rows_to_input_df(worksheet_df, row, column, columns_to_read)
                 end_column = column + columns_to_read + off_set
                 # Form 5D
@@ -743,8 +743,8 @@ class Next_In:
                     column = column + columns_to_read
                     columns_to_read = 7
                     self.rows_to_input_df(F08A_df, row_8A, column, columns_to_read, SI_2_IP_Units=self.Form_SI_2_IP["Form_8A_2"])
-                    groups_of_trains = F08A_df.iloc[row_8A, column + 1]
-                    track_sections = F08A_df.iloc[row_8A, column + 2]
+                    groups_of_trains = int(F08A_df.iloc[row_8A, column + 1])
+                    track_sections = int(F08A_df.iloc[row_8A, column + 2])
                     # Form 8B
                     columns_to_read = 3
                     if groups_of_trains > 1:
@@ -778,7 +778,7 @@ class Next_In:
                         self.columns_to_row_input(
                             worksheet_df, row_first, col_8D + 2, rows_to_read
                         )
-                        scheduled_stops = worksheet_df.iloc[row_first, col_8D + 2]
+                        scheduled_stops = int(worksheet_df.iloc[row_first, col_8D + 2])
                         columns_to_read = 3
                         if scheduled_stops > 0:
                             self.rows_to_input_df(
@@ -969,7 +969,7 @@ class Next_In:
                 self.rows_to_input_df(
                     worksheet_df_f11A, row_F11A, col_F11A, columns_to_read, SI_2_IP_Units=self.Form_SI_2_IP["Form_11A"] 
                 )
-                number_sections = worksheet_df_f11A.iloc[row_F11A, col_F11A + 1]
+                number_sections = int(worksheet_df_f11A.iloc[row_F11A, col_F11A + 1])
                 read_sections = 0
                 row_F11B = row_F11B_start
                 if self.environment_control_zones > 1:
@@ -1037,8 +1037,8 @@ class Next_In:
                         worksheet_df, row_14AB, col_14AB, columns_to_read
                     )
                     # Form 14B
-                    inlets = worksheet_df.iloc[row_14AB, col_14AB]
-                    sections = worksheet_df.iloc[row_14AB, col_14AB + 1]
+                    inlets = int(worksheet_df.iloc[row_14AB, col_14AB])
+                    sections = int(worksheet_df.iloc[row_14AB, col_14AB + 1])
                     col_14AB += columns_to_read
                     columns_to_read = 3
                     if inlets > 0:
