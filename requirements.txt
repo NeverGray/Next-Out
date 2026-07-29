@@ -1,6 +1,7 @@
 pandas
 XlsxWriter
 pyinstaller
+debugpy
 openpyxl
 pywin32
 tomli-w

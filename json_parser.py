@@ -43,6 +43,15 @@ OPTIONAL_SEGMENT_KEYS = [
     "Number_Of_Trains",
 ]
 
+OPTIONAL_SUBSEGMENT_KEYS = [
+    "Subsegment_ID",
+    "Air_Temp",
+    "Humidity",
+    "Sensible",
+    "Latent",
+    "Wall_Temp",
+]
+
 
 class JsonParserError(Exception):
     """Raised when the JSON file cannot be loaded."""
@@ -77,6 +86,16 @@ def _collect_pit_warnings(record: dict[str, Any], index: int) -> list[str]:
                 if key not in first_row:
                     warnings.append(
                         f"pit[{index}].Segment_Data[0] missing optional key: {key}"
+                    )
+
+    subsegment_rows = record.get("Subsegment_Data")
+    if isinstance(subsegment_rows, list) and subsegment_rows:
+        first_row = subsegment_rows[0]
+        if isinstance(first_row, dict):
+            for key in OPTIONAL_SUBSEGMENT_KEYS:
+                if key not in first_row:
+                    warnings.append(
+                        f"pit[{index}].Subsegment_Data[0] missing optional key: {key}"
                     )
 
     return warnings
@@ -192,6 +211,24 @@ def _safe_float(value: Any) -> float | None:
         return None
 
 
+def _parse_subsegment_id(subsegment_id: Any) -> tuple[Any, Any, Any]:
+    """Return (section, segment, sub) parsed from values like '1 -  3 - 10'."""
+    if not isinstance(subsegment_id, str):
+        return None, None, None
+
+    parts = [part.strip() for part in subsegment_id.split("-")]
+    if len(parts) < 3:
+        return None, None, None
+
+    values: list[Any] = []
+    for part in parts[:3]:
+        try:
+            values.append(int(float(part)))
+        except (TypeError, ValueError):
+            values.append(part)
+    return values[0], values[1], values[2]
+
+
 def _iter_pit_records(data_dictionary: Any):
     if isinstance(data_dictionary, list):
         for record in data_dictionary:
@@ -270,11 +307,120 @@ def create_ssa_dataframe(data_dictionary: Any) -> pd.DataFrame:
     return pd.DataFrame(rows, columns=ordered_columns)
 
 
+def create_sst_dataframe(data_dictionary: Any) -> pd.DataFrame:
+    """Create an SST dataframe from SES JSON dictionary data.
+
+    Uses Subsegment_Data rows and keeps compatibility with parser-style columns
+    while allowing additional Phase 3 fields to flow through automatically.
+    """
+    rows: list[dict[str, Any]] = []
+    additional_columns: list[str] = []
+    seen_additional: set[str] = set()
+
+    for pit_record in _iter_pit_records(data_dictionary):
+        time_value = pit_record.get("Pit")
+        subsegment_data = pit_record.get("Subsegment_Data")
+        subsegment_rows = subsegment_data if isinstance(subsegment_data, list) else []
+
+        for subsegment_row in subsegment_rows:
+            if not isinstance(subsegment_row, dict):
+                continue
+
+            _, segment_value, sub_value = _parse_subsegment_id(
+                subsegment_row.get("Subsegment_ID")
+            )
+            if segment_value is None or sub_value is None:
+                continue
+
+            row: dict[str, Any] = {
+                "Time": _safe_float(time_value),
+                "Segment": segment_value,
+                "Sub": sub_value,
+                "Air_Temp": subsegment_row.get("Air_Temp"),
+                "Humidity": subsegment_row.get("Humidity"),
+                "Sensible": subsegment_row.get("Sensible"),
+                "Latent": subsegment_row.get("Latent"),
+                "Wall_Temp": subsegment_row.get("Wall_Temp"),
+                # Keep convection mapping strict until field semantics are verified.
+                "Convection_to_Wall": subsegment_row.get("Convection_to_Wall"),
+                # Empirical match against NO_parser output indicates Qradss is
+                # radiation in Btu/s, while SST Radiation_to_Wall uses Btu/h.
+                "Radiation_to_Wall": subsegment_row.get("Radiation_to_Wall", (
+                    (_safe_float(subsegment_row.get("Qradss")) * 3600)
+                    if _safe_float(subsegment_row.get("Qradss")) is not None
+                    else None
+                )),
+            }
+
+            reserved = {
+                "Subsegment_ID",
+                "Air_Temp",
+                "Humidity",
+                "Sensible",
+                "Latent",
+                "Wall_Temp",
+                "Convection_to_Wall",
+                "Radiation_to_Wall",
+            }
+            for key, value in subsegment_row.items():
+                if key in reserved:
+                    continue
+                row[key] = value
+                if key not in seen_additional:
+                    seen_additional.add(key)
+                    additional_columns.append(key)
+
+            rows.append(row)
+
+    df_sst = pd.DataFrame(rows)
+    if df_sst.empty:
+        return df_sst
+
+    for column in ["Time", "Segment", "Sub"]:
+        df_sst[column] = pd.to_numeric(df_sst[column], errors="coerce")
+    df_sst["Segment"] = pd.to_numeric(df_sst["Segment"], downcast="integer")
+    df_sst["Sub"] = pd.to_numeric(df_sst["Sub"], downcast="integer")
+
+    df_sst = df_sst.set_index(["Time", "Segment", "Sub"]).sort_index()
+    df_sst["ID"] = (
+        df_sst.index.get_level_values(0).astype(str)
+        + "_"
+        + df_sst.index.get_level_values(1).astype(str)
+        + "_"
+        + df_sst.index.get_level_values(2).astype(str)
+    )
+
+    sst_first_columns = [
+        "ID",
+        "Air_Temp",
+        "Humidity",
+        "Sensible",
+        "Latent",
+        "Wall_Temp",
+        "Convection_to_Wall",
+        "Radiation_to_Wall",
+        "Working_Fluid_Temp",
+        "Heat_Absorbed_by_Pipe",
+    ]
+    remaining_columns: list[str] = []
+    seen_remaining: set[str] = set()
+    for col in df_sst.columns.tolist() + additional_columns:
+        if col in sst_first_columns or col in seen_remaining:
+            continue
+        if col in df_sst.columns:
+            remaining_columns.append(col)
+            seen_remaining.add(col)
+    ordered_columns = sst_first_columns + remaining_columns
+    df_sst = df_sst[ordered_columns]
+    df_sst.name = "SST"
+    return df_sst
+
+
 def create_h5_from_json(
     json_path: str | Path,
     h5_path: str | Path | None = None,
 ) -> tuple[Path, dict[str, Any]]:
-    """Read SES JSON and write an H5 file with an SSA dataframe.
+    """Read SES JSON and write an H5 file with SSA/SST dataframes.
 
     Returns:
         (created_h5_path, diagnostics)
@@ -282,6 +428,7 @@ def create_h5_from_json(
     source_path = Path(json_path)
     data_dictionary, diagnostics = read_json_to_dict(source_path)
     df_ssa = create_ssa_dataframe(data_dictionary)
+    df_sst = create_sst_dataframe(data_dictionary)
 
     if h5_path is None:
         output_base_path = source_path
@@ -289,6 +436,8 @@ def create_h5_from_json(
         output_base_path = Path(h5_path)
 
     data = {"SSA": df_ssa}
+    if not df_sst.empty:
+        data["SST"] = df_sst
     output_meta_data: dict[str, Any] = {
         "file_path": output_base_path,
         "source_file_path": str(source_path),
@@ -354,9 +503,13 @@ def main() -> int:
 
     _print_summary(diagnostics, verbose=args.verbose)
     df_ssa = create_ssa_dataframe(data_dictionary)
+    df_sst = create_sst_dataframe(data_dictionary)
     print(f"ssa_shape: {df_ssa.shape}")
     if not df_ssa.empty:
         print(f"ssa_columns: {', '.join(df_ssa.columns)}")
+    print(f"sst_shape: {df_sst.shape}")
+    if not df_sst.empty:
+        print(f"sst_columns: {', '.join(df_sst.columns)}")
 
     if args.create_h5:
         created_h5_path, _ = create_h5_from_json(

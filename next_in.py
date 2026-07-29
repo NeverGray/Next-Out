@@ -217,7 +217,7 @@ class Next_In:
                     converted_value = value / conversion_value
                 converted_row_list.append(
                     self._round_to_sig_digits_from_original(
-                        converted_value, value, additional_significant_digits=1
+                        converted_value, value, additional_significant_digits=2
                     )
                 )
             else:
@@ -945,16 +945,17 @@ class Next_In:
                 col += 1
 
     def form_10(self):
-        worksheet_df = self.read_worksheet("F10")
-        # Form 3A line - requires extra attention because of text
-        row = 4
-        column = 1
-        while row < len(worksheet_df):
-            if not pd.isna(worksheet_df.iloc[row, column]):
-                column = 1
-                columns_to_read = 8
-                self.rows_to_input_df(worksheet_df, row, column, columns_to_read, SI_2_IP_Units=self.Form_SI_2_IP["Form_10"])
-            row += 1
+        if self.train_performance_option > 0:
+            worksheet_df = self.read_worksheet("F10")
+            # Form 3A line - requires extra attention because of text
+            row = 4
+            column = 1
+            while row < len(worksheet_df):
+                if not pd.isna(worksheet_df.iloc[row, column]):
+                    column = 1
+                    columns_to_read = 8
+                    self.rows_to_input_df(worksheet_df, row, column, columns_to_read, SI_2_IP_Units=self.Form_SI_2_IP["Form_10"])
+                row += 1
 
     def form_11(self):
         row_F11A = 4
