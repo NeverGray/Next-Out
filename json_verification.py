@@ -23,8 +23,8 @@ from json_parser import create_ssa_dataframe, read_json_to_dict
 # =============================================================
 # USER INPUTS (EDIT THESE TWO PATHS EACH PHASE)
 # =============================================================
-FILE1_IP_JSON_PATH = Path(r"c:\simulations\test\inferno_IP_P2.JSON")
-FILE2_SI_JSON_PATH = Path(r"c:\simulations\test\inferno_SI_P2.JSON")
+FILE1_IP_JSON_PATH = Path(r"C:\Users\msn\OneDrive\Never Gray\Software Development\OpenSES\verification\Phase 2 SI Verification\inferno_IP_P2.JSON")
+FILE2_SI_JSON_PATH = Path(r"C:\Users\msn\OneDrive\Never Gray\Software Development\OpenSES\verification\Phase 2 SI Verification\inferno_SI_P2.JSON")
 
 # File 1 converted H5 name rule requested by user:
 # FILE1_IP_JSON_PATH stem + "_2_SI" + ".h5"

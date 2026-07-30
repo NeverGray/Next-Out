@@ -7,7 +7,7 @@
 
 param(
     [string]$VenvRoot = "C:\venv",
-    [string]$EnvName = "next-out-py3.13"
+    [string]$EnvName = "next-out-prod-py313"
 )
 
 Set-Location "c:\bin\code"

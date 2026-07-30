@@ -3,7 +3,6 @@ annotated-types==0.7.0
 blosc2==4.5.1
 certifi==2026.6.17
 charset-normalizer==3.4.7
-debugpy==1.8.21
 et_xmlfile==2.0.0
 idna==3.18
 linkify-it-py==2.1.0

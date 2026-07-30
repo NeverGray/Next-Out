@@ -5,7 +5,7 @@
 # This file is licensed under the MIT License.
 # You may obtain a copy of the license at https://opensource.org/licenses/MIT
 
-VERSION_NUMBER = "5E"
+VERSION_NUMBER = "5F"
 #5B changes compile commands
 #Added pressure data to summary file.
 #Added next-in iterations from command line

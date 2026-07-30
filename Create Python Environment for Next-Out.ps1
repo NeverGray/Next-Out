@@ -1,37 +1,65 @@
 param(
-	[string]$VenvRoot = "C:\venv",
-	[string]$EnvName = "next-out-py3.13",
-	[string]$PythonVersion = "3.13"
+    [string]$VenvRoot = "C:\venv",
+    [string]$PythonVersion = "3.13",
+    [string]$DevEnvName = "next-out-dev-py313",
+    [string]$ProdEnvName = "next-out-prod-py313",
+    [switch]$Dev,
+    [switch]$Prod
 )
 
 $ErrorActionPreference = "Stop"
 
-# Defaults keep the venv outside OneDrive while allowing overrides.
+if (-not $Dev -and -not $Prod) {
+    $Dev = $true
+    $Prod = $true
+}
+
 $ProjectRoot = $PSScriptRoot
-$VenvPath = Join-Path $VenvRoot $EnvName
-$RequirementsPath = Join-Path $ProjectRoot "requirements.txt"
+$DevRequirementsPath = Join-Path $ProjectRoot "requirements.txt"
+$ProdRequirementsPath = Join-Path $ProjectRoot "requirements_in_exe.txt"
 
-if (-not (Test-Path $RequirementsPath)) {
-	throw "requirements.txt not found at: $RequirementsPath"
+if (-not (Test-Path $DevRequirementsPath)) {
+    throw "Development requirements file not found: $DevRequirementsPath"
 }
 
-if (-not (Test-Path $VenvPath)) {
-	Write-Host "Creating Python $PythonVersion virtual environment at $VenvPath"
-	py -$PythonVersion -m venv $VenvPath
-} else {
-	Write-Host "Using existing virtual environment at $VenvPath"
+if (-not (Test-Path $ProdRequirementsPath)) {
+    throw "Production requirements file not found: $ProdRequirementsPath"
 }
 
-$PythonExe = Join-Path $VenvPath "Scripts\python.exe"
-if (-not (Test-Path $PythonExe)) {
-	throw "Virtual environment python executable not found: $PythonExe"
+function New-Environment {
+    param(
+        [string]$EnvName,
+        [string]$RequirementsPath,
+        [string]$Label
+    )
+
+    $VenvPath = Join-Path $VenvRoot $EnvName
+    if (-not (Test-Path $VenvPath)) {
+        Write-Host "Creating $Label environment at $VenvPath"
+        py -$PythonVersion -m venv $VenvPath
+    } else {
+        Write-Host "Using existing $Label environment at $VenvPath"
+    }
+
+    $PythonExe = Join-Path $VenvPath "Scripts\python.exe"
+    if (-not (Test-Path $PythonExe)) {
+        throw "Python executable not found for ${EnvName}: $PythonExe"
+    }
+
+    Write-Host "Upgrading pip/setuptools/wheel for $EnvName"
+    & $PythonExe -m pip install --upgrade pip setuptools wheel
+
+    Write-Host "Installing $Label dependencies from $RequirementsPath"
+    & $PythonExe -m pip install -r $RequirementsPath
+
+    Write-Host "$Label environment ready."
+    Write-Host "Activate with: & '$VenvPath\Scripts\Activate.ps1'"
 }
 
-Write-Host "Upgrading pip/setuptools/wheel"
-& $PythonExe -m pip install --upgrade pip setuptools wheel
+if ($Dev) {
+    New-Environment -EnvName $DevEnvName -RequirementsPath $DevRequirementsPath -Label "development"
+}
 
-Write-Host "Installing dependencies from $RequirementsPath"
-& $PythonExe -m pip install -r $RequirementsPath
-
-Write-Host "Environment ready."
-Write-Host "Activate with: & '$VenvPath\Scripts\Activate.ps1'"
+if ($Prod) {
+    New-Environment -EnvName $ProdEnvName -RequirementsPath $ProdRequirementsPath -Label "production"
+}
