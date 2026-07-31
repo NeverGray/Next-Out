@@ -1094,26 +1094,38 @@ class Next_In:
         formated_entry = ""
         if str(col) == "nan":
             formated_entry = "".ljust(10)
-        elif type(col) is int:
-            if abs(col) > 99999999 or (abs(col) < 0.00001 and col != 0):
-                value = "{:.3E}".format(col)
-                formated_entry = str(value).ljust(10)
-            else:
-                col = str(col) + "."
-                formated_entry = col.ljust(10)
-        elif type(col) is float:
-            if col == 0:
-                value = "0."
-            elif abs(col) > 99999999 or (abs(col) < 0.00001):
-                value = "{:.3E}".format(col)
-            elif col == int(col):  # If the value can be represented by an integer
-                value = "{:.0f}".format(col) + "."
-            else:
-                value = col
-            formated_entry = str(value)[:9].ljust(10) #Formats text within 9 characters
+        elif isinstance(col, Real) and not isinstance(col, bool):
+            value = self._format_numeric_entry(float(col))
+            formated_entry = value.ljust(10)
         else:  # line is a string and needs additional spaces
-            formated_entry = col.ljust(10)
+            formated_entry = str(col).ljust(10)
         return formated_entry
+
+    def _format_numeric_entry(self, value):
+        if value == 0:
+            return "0."
+
+        abs_value = abs(value)
+
+        # Prefer fixed-point for "normal" values (roughly mirroring the VBA range).
+        if 1e-4 <= abs_value < 1e6:
+            for decimals in range(7, -1, -1):
+                fixed = f"{value:.{decimals}f}".rstrip("0").rstrip(".")
+                if "." not in fixed:
+                    fixed += "."
+                if len(fixed) <= 9:
+                    return fixed
+
+        # Fall back to scientific notation and reduce mantissa precision until it fits.
+        for decimals in range(4, -1, -1):
+            mantissa, exponent_text = f"{value:.{decimals}E}".split("E")
+            scientific = f"{mantissa}E{int(exponent_text):+d}"
+            if len(scientific) <= 9:
+                return scientific
+
+        # Last-resort fallback for extreme magnitudes.
+        mantissa, exponent_text = f"{value:.0E}".split("E")
+        return f"{mantissa}E{int(exponent_text):+d}"
 
     # Used to save base file as input
     def save_base_file_as_input(self, file_path):
@@ -1224,19 +1236,17 @@ def create_input_files(next_in_path, input_file_path, ses_version):
 
 if __name__ == "__main__":
     #TODO Test "IP_TO_SI" conversion.  Then get Jet fan to work. 
-    input_type = "SI_TO_IP"
+    input_type = "IP_TO_SI"
     directory_string = "C:/simulations/test/"
     excel_file_name = "test.xlsm"
-    input_file_name = "normal2SI_new.inp"
-    visio_template_name = "test.vsdx"
+    input_file_name = "test_IP_2_SI.inp"
     settings = {
         "ses_output_str": "",
-        "visio_template": directory_string + visio_template_name,
         "simtime": -1,
         "output_conversion": "",
-        "output": ["Visio", "H5_file"],
+        "output": ["H5_file"],
         "file_type": "next_in",
-        "path_exe": "C:/Simulations/_Exe/SES41.exe",
+        "path_exe": "",
     }
     next_in_path = Path(directory_string + excel_file_name)
     input_path = Path(directory_string + input_file_name)
