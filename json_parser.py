@@ -4,9 +4,9 @@ Scope for this module:
 - Read SES JSON into native Python objects (dict/list).
 - Provide lightweight diagnostics and warnings.
 - Build SSA dataframe from JSON segment/section data.
+- Create H5 from JSON and optionally convert H5 outputs from IP to SI.
 
 Out of scope for this module:
-- Unit conversion.
 - Integration with NO_run pipeline.
 """
 
@@ -18,6 +18,8 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import NO_conversion
+import NO_Excel_R01
 import NO_file_tools
 
 OPTIONAL_PIT_KEYS = [
@@ -399,18 +401,18 @@ def create_sst_dataframe(data_dictionary: Any) -> pd.DataFrame:
         "Wall_Temp",
         "Convection_to_Wall",
         "Radiation_to_Wall",
-        "Working_Fluid_Temp",
-        "Heat_Absorbed_by_Pipe",
     ]
+    preferred_existing = [col for col in sst_first_columns if col in df_sst.columns]
+
     remaining_columns: list[str] = []
     seen_remaining: set[str] = set()
     for col in df_sst.columns.tolist() + additional_columns:
-        if col in sst_first_columns or col in seen_remaining:
+        if col in preferred_existing or col in seen_remaining:
             continue
         if col in df_sst.columns:
             remaining_columns.append(col)
             seen_remaining.add(col)
-    ordered_columns = sst_first_columns + remaining_columns
+    ordered_columns = preferred_existing + remaining_columns
     df_sst = df_sst[ordered_columns]
     df_sst.name = "SST"
     return df_sst
@@ -419,6 +421,7 @@ def create_sst_dataframe(data_dictionary: Any) -> pd.DataFrame:
 def create_h5_from_json(
     json_path: str | Path,
     h5_path: str | Path | None = None,
+    ses_version: str = "IP",
 ) -> tuple[Path, dict[str, Any]]:
     """Read SES JSON and write an H5 file with SSA/SST dataframes.
 
@@ -442,9 +445,89 @@ def create_h5_from_json(
         "file_path": output_base_path,
         "source_file_path": str(source_path),
         "source_file_type": "json",
+        "ses_version": ses_version,
+        "SES_version": ses_version,
     }
     NO_file_tools.save_h5_file(data, output_meta_data)
     return output_base_path.with_suffix(".h5"), diagnostics
+
+
+def convert_h5_ip_to_si_and_save_outputs(
+    h5_path: str | Path,
+    create_excel: bool = True,
+) -> tuple[Path, Path | None]:
+    """Convert an H5 dataset from IP to SI and save converted H5 and Excel.
+
+    Returns:
+        (converted_h5_path, converted_excel_path_or_none)
+    """
+    source_h5_path = Path(h5_path)
+    data, output_meta_data = NO_file_tools.read_h5_file(source_h5_path)
+
+    # JSON-created H5 files may not have ses_version; assume IP for this workflow.
+    output_meta_data.setdefault("ses_version", "IP")
+    output_meta_data["SES_version"] = output_meta_data.get("ses_version", "IP")
+
+    data, output_meta_data = NO_conversion.convert_output_units(
+        "IP_TO_SI",
+        data,
+        output_meta_data,
+    )
+    output_meta_data["SES_version"] = output_meta_data.get("ses_version", "IP")
+
+    NO_file_tools.save_h5_file(data, output_meta_data, settings={})
+    converted_h5_path = NO_file_tools.get_results_path2(output_meta_data, ".h5")
+
+    converted_excel_path: Path | None = None
+    if create_excel:
+        NO_Excel_R01.create_excel({}, data, output_meta_data)
+        converted_excel_path = NO_file_tools.get_results_path2(
+            output_meta_data,
+            ".xlsx",
+        )
+
+    return converted_h5_path, converted_excel_path
+
+
+def create_ip_to_si_outputs_from_json(
+    json_path: str | Path,
+    h5_path: str | Path | None = None,
+    create_excel: bool = True,
+) -> tuple[Path, Path, Path | None, dict[str, Any]]:
+    """Create JSON H5, then convert that H5 from IP to SI and save outputs.
+
+    Returns:
+        (created_h5_path, converted_h5_path, converted_excel_path_or_none, diagnostics)
+    """
+    created_h5_path, diagnostics = create_h5_from_json(
+        json_path,
+        h5_path=h5_path,
+        ses_version="IP",
+    )
+    converted_h5_path, converted_excel_path = convert_h5_ip_to_si_and_save_outputs(
+        created_h5_path,
+        create_excel=create_excel,
+    )
+    return created_h5_path, converted_h5_path, converted_excel_path, diagnostics
+
+
+def run_json_to_si_outputs(
+    json_path: str | Path,
+    h5_path: str | Path | None = None,
+    create_excel: bool = True,
+) -> tuple[Path, Path, Path | None, dict[str, Any]]:
+    """Main-style workflow entry point for JSON -> SI outputs.
+
+    This is a top-level orchestrator that:
+    1) builds an IP-tagged H5 from JSON,
+    2) converts that H5 to SI,
+    3) optionally writes SI Excel output.
+    """
+    return create_ip_to_si_outputs_from_json(
+        json_path=json_path,
+        h5_path=h5_path,
+        create_excel=create_excel,
+    )
 
 
 def _print_summary(diagnostics: dict[str, Any], verbose: bool = False) -> None:
@@ -483,7 +566,7 @@ def _build_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--create-h5",
         action="store_true",
-        help="Create an H5 file containing the SSA dataframe from the JSON input",
+        help="Create an H5 file containing SSA/SST dataframes from the JSON input",
     )
     parser.add_argument(
         "--h5-path",
@@ -515,6 +598,7 @@ def main() -> int:
         created_h5_path, _ = create_h5_from_json(
             args.json_path,
             h5_path=args.h5_path,
+            ses_version="IP",
         )
         print(f"h5_created: {created_h5_path}")
     return 0

@@ -39,13 +39,13 @@ def create_excel(settings, data, output_meta_data, gui=""):
     NO_run.run_msg(gui, "Creating Excel file " + excel_results_path.name)
     TITLES = {
         "File Name:" : output_meta_data['file_path'].name,
-        "File Time:" : output_meta_data['file_time'],
+        "File Time:" : output_meta_data.get('file_time', "unknown"),
         "Data:": "From worksheet name",
-        "Units:": output_meta_data['ses_version']
+        "Units:": output_meta_data.get('ses_version',"unknown")
         }
     df_startrow = len(TITLES)
     #Select index for units in NO_constants.COLUMN_UNITS value
-    if output_meta_data['ses_version'] in ['IP','IP from SI']:
+    if output_meta_data.get('ses_version',"unkonwon") in ['IP','IP from SI']:
         unit_index = 1
     else:
         unit_index = 0
@@ -54,9 +54,9 @@ def create_excel(settings, data, output_meta_data, gui=""):
         bio = BytesIO()
         with pd.ExcelWriter(bio, engine="xlsxwriter", engine_kwargs={'options': {'strings_to_numbers': False}}) as writer:
             # Set color based on SES Version of IP or SI
-            if output_meta_data['ses_version'] == "SI from IP":
+            if output_meta_data.get('ses_version',"unknown") == "SI from IP":
                 color_code = "#4BACC6" #Blue
-            elif output_meta_data['ses_version'] == "IP from SI":
+            elif output_meta_data.get('ses_version',"unknown") == "IP from SI":
                 color_code = "#8064A2" #Purple
             else:
                 color_code = "#F07F09" #Orange

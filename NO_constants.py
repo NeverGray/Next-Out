@@ -5,7 +5,7 @@
 # This file is licensed under the MIT License.
 # You may obtain a copy of the license at https://opensource.org/licenses/MIT
 
-VERSION_NUMBER = "5G"
+VERSION_NUMBER = "5H"
 #5B changes compile commands
 #Added pressure data to summary file.
 #Added next-in iterations from command line
@@ -28,6 +28,7 @@ COLUMN_UNITS={
     "Wall_Temp":["\u00B0C","\u00B0F","SST"],
     "Convection_to_Wall":["W","Btu/h","SST"],
     "Radiation_to_Wall":["W","Btu/h","SST"],
+    "Heat_Transfer_Coeff":["W/m^2-K","Btu/h-ft^2-F","SST"],
     "Working_Fluid_Temp":["\u00B0C","\u00B0F","SST"],
     "Heat_Absorbed_by_Pipe":["W","Btu/h","SST"],
     "Actual_Airflow_NO":["m^3/s","kcfm","SST"], #Next-Out calculated data
@@ -157,6 +158,7 @@ IP_TO_SI={
     "Btu/s":	    1055.056, 
     "Btu/s-train":  1.055056, # Convert Btu/s-train to kW/train
     "Btu/s-ft":	    3463.123, # Convert to watts per meter
+    "Btu/h-ft^2-F": 5.678263, # Convert to W/m^2-K
     "fpm":	        0.00508,
     "ft":	        0.3048,
     "IN. WG":       249.08976,
