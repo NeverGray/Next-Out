@@ -43,6 +43,16 @@ def validate_settings(settings):
             elif not os.path.exists(exe_path_string):
                 msg = msg + "Select an SES executable to perform simulations.\n"
                 valid = False
+        h5_required_options = ["Average", "Compare", "Summary"]
+        if any(option in settings["output"] for option in h5_required_options):
+            if "H5_file" not in settings["output"]:
+                settings["output"].append("H5_file")
+        if "Average" in settings["output"] and len(settings["ses_output_str"]) < 2:
+            msg = msg + "Need at least 2 files for average analysis.\n"
+            valid = False
+        if "Compare" in settings["output"] and len(settings["ses_output_str"]) != 2:
+            msg = msg + "Need exactly 2 files to compare files.\n"
+            valid = False
         if not valid:
             messagebox.showinfo(title="Error with settings", message=msg)
         return valid
