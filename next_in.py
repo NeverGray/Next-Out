@@ -9,12 +9,15 @@ import re
 import os
 from numbers import Real
 from pathlib import Path
+import tkinter as tk
 from tkinter import messagebox
 
 import numpy as np
 import pandas as pd
 import openpyxl
 import NO_constants
+import NO_GUI_command_line
+import NO_GUI_multifile_monitor
 
 # TODO - Add functionality to GUI or command line to create multiple input files from a Next-In Excel file
 class Next_In:
@@ -1222,12 +1225,67 @@ class Next_In:
         with open(save_name, "w") as f:
             f.write(string)
 
-def create_iterations_from_next_in(next_in_path, iteration_path, ses_version):
-    iteration_path = Path(iteration_path)
+def create_iterations_from_next_in(settings):
+    """Create iteration input files from a Next-In workbook.
+
+    Requires 'next_in_path', 'iteration_path' and 'ses_version' in settings.
+    With file_type 'iteration' the files are only created. With
+    'iteration_then_simulate' the user is asked to confirm, then the created
+    files are simulated and post-processed using 'output' and 'path_exe'.
+    """
+    next_in_path = settings["next_in_path"]
+    iteration_path = Path(settings["iteration_path"])
+    ses_version = settings["ses_version"]
     next_in = Next_In(next_in_path, iteration_path, ses_version)
     input_string_list = next_in.create_iterations("Iteration")
     number_of_iterations = len(input_string_list)
-    messagebox.showinfo("Iterations Created", f"{number_of_iterations} iterations are created")
+    file_type = settings.get("file_type")
+    if file_type == "iteration":
+        messagebox.showinfo("Iterations Created", f"{number_of_iterations} iterations are created")
+    elif file_type == "iteration_then_simulate":
+        root = tk.Tk()
+        try:
+            import sys
+
+            if getattr(sys, "frozen", False):
+                icon_path = Path(sys._MEIPASS) / "NO_Icon.ico"
+            else:
+                icon_path = Path(__file__).parent / "NO_Icon.ico"
+            if icon_path.exists():
+                root.iconbitmap(str(icon_path))
+        except Exception:
+            pass
+        root.withdraw()
+        proceed = messagebox.askyesno(
+            "Iterations Created",
+            f"{number_of_iterations} iterations are created.\n\n"
+            f"Start simulations and post-processing for these {number_of_iterations} files?",
+            parent=root,
+        )
+        if not proceed:
+            root.destroy()
+            return
+        settings["ses_output_str"] = input_string_list
+        settings["file_type"] = "input_file"
+        # Keys required by the monitor that the VBA caller may omit.
+        settings.setdefault("simtime", -1)
+        settings.setdefault("visio_template", "")
+        settings.setdefault("output_conversion", "")
+        if not NO_GUI_command_line.validate_settings(settings):
+            root.destroy()
+            return
+        if "visio_open" in settings["output"]:
+            settings["output"].remove("visio_open")
+        manager = NO_GUI_multifile_monitor.Manager_Class()
+        window = NO_GUI_multifile_monitor.Monitor_GUI(root, manager, settings)
+        window.focus_force()
+        window.grab_set()
+        window.bind("<Destroy>", lambda event: root.quit() if event.widget is window else None)
+        try:
+            root.mainloop()
+        finally:
+            root.destroy()
+
 
 def create_input_files(next_in_path, input_file_path, ses_version):
     next_in = Next_In(next_in_path, input_file_path, ses_version)

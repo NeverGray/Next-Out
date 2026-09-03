@@ -15,6 +15,42 @@ import NO_run
 import test_output_files
 from NO_constants import VERSION_NUMBER
 
+
+def validate_settings(settings):
+    try:
+        # Add "H5_file" for backward compatibility with Next-In 4.1 that used "no_file".
+        if "no_file" in settings["output"]:
+            settings["output"].append("H5_file")
+        valid = True
+        msg = ""
+        if "Visio" in settings["output"]:
+            if settings["visio_template"] == "":
+                msg = msg + "No Visio Template File is Specified. \n"
+                valid = False
+        if not isinstance(settings["simtime"], (int, float)):
+            msg = msg + "Simulation Time is not a number. \n"
+            valid = False
+        if len(settings["ses_output_str"]) == 0:
+            msg = (
+                msg + "Files to process. Check if input or output files are present.\n"
+            )
+            valid = False
+        if settings["file_type"] == "input_file":
+            exe_path_string = settings["path_exe"]
+            if exe_path_string == "":
+                msg = msg + "Select an SES executable to perform simulations.\n"
+                valid = False
+            elif not os.path.exists(exe_path_string):
+                msg = msg + "Select an SES executable to perform simulations.\n"
+                valid = False
+        if not valid:
+            messagebox.showinfo(title="Error with settings", message=msg)
+        return valid
+    except:
+        messagebox.showinfo(message="Error with Validation")
+        return False
+
+
 class command_line_screen(tk.Tk):
     def __init__(self, settings):
         super().__init__()
@@ -107,40 +143,7 @@ class command_line_screen(tk.Tk):
     # Function to check that settings allows a successful simulation and post-processing to start
     #TODO Change Validation in NO_Gui to a standalone function that can be called here or in NO_run. 
     def validation(self, settings):
-        try:
-            # Add "H5_file" for backward compatibility with Next-In 4.1 that used "no_file".
-            if "no_file" in settings['output']:
-                settings['output'].append("H5_file")
-            valid = True
-            msg = ""
-            # Check if settings are valid for Visio Files
-            if "Visio" in settings["output"]:
-                if settings["visio_template"] == "":
-                    msg = msg + "No Visio Template File is Specified. \n"
-                    valid = False
-            if not isinstance(settings["simtime"], (int, float)):
-                msg = msg + "Simulation Time is not a number. \n"
-                valid = False
-            if len(settings["ses_output_str"]) == 0:
-                msg = (
-                    msg + "Files to process. Check if input or output files are present.\n"
-                )
-                valid = False
-            # If using input file, check the executable exists
-            if self.settings["file_type"] == "input_file":
-                exe_path_string = settings["path_exe"]
-                if exe_path_string == "":
-                    msg = msg + "Select an SES executable to perform simulations.\n"
-                    valid = False
-                elif not os.path.exists(exe_path_string):
-                    msg = msg + "Select an SES executable to perform simulations.\n"
-                    valid = False
-            if not valid:
-                messagebox.showinfo(title="Error with settings", message=msg)
-            return valid
-        except:
-            msg = "Error with Validation"
-            messagebox.showinfo(message=msg)
+        return validate_settings(settings)
     
     def gui_text(self, status):
         self.txt_status["state"] = tk.NORMAL

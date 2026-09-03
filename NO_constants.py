@@ -5,7 +5,8 @@
 # This file is licensed under the MIT License.
 # You may obtain a copy of the license at https://opensource.org/licenses/MIT
 
-VERSION_NUMBER = "5H"
+VERSION_NUMBER = "5J"
+#5I - Allows iteration and then simulations
 #5B changes compile commands
 #Added pressure data to summary file.
 #Added next-in iterations from command line

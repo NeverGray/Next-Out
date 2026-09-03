@@ -26,15 +26,13 @@ def main():
         settings = ast.literal_eval(args.settings)
         # Call the function with the parsed settings
         #TODO Test iteration. Worked with previous version, before conversions.
-        if settings.get("file_type") == "iteration":
-            next_in_path = settings['next_in_path']
-            iteration_path = settings['iteration_path']
-            ses_version = settings['ses_version']
-            next_in.create_iterations_from_next_in(next_in_path, iteration_path, ses_version)
-        elif settings.get("file_type") == "next_in":
-            next_in_path = settings['next_in_path']
-            input_file_path = settings['ses_output_str'][0]
-            ses_version = settings['ses_version']
+        file_type = settings.get("file_type")
+        if file_type == "iteration" or file_type == "iteration_then_simulate":
+            next_in.create_iterations_from_next_in(settings)
+        elif file_type == "next_in":
+            next_in_path = settings.get['next_in_path']
+            input_file_path = settings.get['ses_output_str'][0]
+            ses_version = settings.get['ses_version']
             next_in.create_input_files(next_in_path, input_file_path, ses_version)
             print("Created input file ", input_file_path)
         else:
@@ -42,7 +40,6 @@ def main():
             app.mainloop()
     else:
         # Launch the GUI
-        multiprocessing.freeze_support()
         NO_GUI_main.launch_window()  # Assuming this is your GUI launch function
 
 if __name__ == "__main__":
@@ -50,7 +47,11 @@ if __name__ == "__main__":
     main()
     r'''
     Use the text below in a terminal to test the command line options.
-    python main.py --settings "{'conversion': '', 'file_type': 'iteration', 'output': ['Excel', 'Visio', 'H5_file', 'test_output_files', '', '', '', '', ''], 'path_exe': 'C:/Simulations/_Exe/SESV6_32.exe', 'ses_output_str': ['C:/simulations/test/test.xlsm'], 'simtime': -1, 'visio_template': 'C:/Simulations/Test/Test.vsdx', 'save_path': path(c:/simulations/test'), 'ses_version': 'SI'    }"
+    Create iteration input files only.
+    python main.py --settings "{'file_type': 'iteration', 'next_in_path': 'c:/simulations/test/test.xlsm', 'iteration_path': 'c:/simulations/test', 'ses_version': 'SI'}"
+
+    Create iteration input files, then confirm to simulate and post-process them.
+    python main.py --settings "{'file_type': 'iteration_then_simulate', 'next_in_path': 'c:/simulations/test/test.xlsm', 'iteration_path': 'c:/simulations/test', 'ses_version': 'SI', 'output': ['Excel', 'H5_file'], 'path_exe': 'C:/Simulations/_Exe/SESV6_32.exe', 'simtime': -1, 'visio_template': '', 'output_conversion': ''}"
 
     Use the text below to run from the executable
     "C:\Simulations\_exe\Next-Out.exe" --settings "{'output_conversion': '', 'file_type': 'output_file', 'output': [' '], 'path_exe': '', 'results_folder_str': None, 'ses_output_str': ['C:/Simulations/Test/test2.inp'], 'simtime': -1, 'visio_template': ''}"
